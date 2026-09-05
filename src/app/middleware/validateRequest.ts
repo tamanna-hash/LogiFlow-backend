@@ -1,25 +1,57 @@
-import type { NextFunction, Request, Response } from "express";
-import httpStatus from "http-status";
-import type z from "zod";
-import { AppError } from "../utils/AppError";
-import { catchAsync } from "../utils/catchAsync";
+import type { NextFunction, Request, Response } from 'express';
+import { z } from 'zod';
+import { ValidationError } from '../errors';
 
-export const validateRequest = (zodSchema: z.ZodObject) => {
-	return catchAsync((req: Request, res: Response, next: NextFunction) => {
-		// const payload = req.body ? req.body : {}
-		const payload = req.body ?? {};
+type RequestPart = 'body' | 'params' | 'query';
 
-		const result = zodSchema.safeParse(payload);
+interface ValidationSchemas {
+  body?: z.ZodTypeAny;
+  params?: z.ZodTypeAny;
+  query?: z.ZodTypeAny;
+}
 
-		if (!result.success) {
-			console.log(result.error);
-			console.log(result.error.issues);
+/**
+ * validateRequest — validates req.body, req.params, and/or req.query with Zod schemas.
+ * Strips unknown fields from body (security: no extra data passes through).
+ * Returns structured field-level errors on failure.
+ *
+ * Usage:
+ *   validateRequest({ body: createShipmentSchema })
+ *   validateRequest({ body: someSchema, query: paginationSchema })
+ *   validateRequest({ params: z.object({ id: z.string().cuid() }) })
+ */
+export const validateRequest = (schemas: ValidationSchemas) => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    const parts: RequestPart[] = ['body', 'params', 'query'];
 
-			throw new AppError(httpStatus.BAD_REQUEST, result.error.issues[0].message);
-		}
+    for (const part of parts) {
+      const schema = schemas[part];
+      if (!schema) continue;
 
-		req.body = result.data;
+      const result = schema.safeParse(req[part]);
 
-		next();
-	});
+      if (!result.success) {
+        const fieldErrors = result.error.errors.map((e) => ({
+          field: e.path.join('.') || part,
+          message: e.message,
+        }));
+        return next(new ValidationError(`Validation failed on ${part}`, fieldErrors));
+      }
+
+      // Replace the request part with the parsed (and stripped) data
+      (req as Record<string, unknown>)[part] = result.data;
+    }
+
+    next();
+  };
 };
+
+/**
+ * Convenience — validate body only (most common case)
+ */
+export const validateBody = (schema: z.ZodTypeAny) => validateRequest({ body: schema });
+
+/**
+ * Convenience — validate params only
+ */
+export const validateParams = (schema: z.ZodTypeAny) => validateRequest({ params: schema });

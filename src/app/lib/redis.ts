@@ -1,11 +1,57 @@
-import { createClient } from "redis";
-import config from "../config";
+import { Redis } from '@upstash/redis';
+import { env } from '../config/env';
 
-export const redisClient = createClient({
-	username: config.redis_user,
-	password: config.redis_password,
-	socket: {
-		host: config.redis_host,
-		port: Number(config.redis_port),
-	},
+// Upstash Redis — HTTP-based, no persistent TCP connection required
+export const redis = new Redis({
+  url: env.UPSTASH_REDIS_REST_URL,
+  token: env.UPSTASH_REDIS_REST_TOKEN,
 });
+
+/**
+ * Safe cache get — returns null on any Redis failure.
+ * Redis is a performance layer; failures must never break request flow.
+ */
+export async function cacheGet<T>(key: string): Promise<T | null> {
+  try {
+    return await redis.get<T>(key);
+  } catch (err) {
+    console.warn(`[Redis] GET failed for key "${key}":`, err);
+    return null;
+  }
+}
+
+/**
+ * Safe cache set — silently fails on Redis error.
+ */
+export async function cacheSet(
+  key: string,
+  value: unknown,
+  ttlSeconds: number,
+): Promise<void> {
+  try {
+    await redis.set(key, value, { ex: ttlSeconds });
+  } catch (err) {
+    console.warn(`[Redis] SET failed for key "${key}":`, err);
+  }
+}
+
+/**
+ * Safe cache delete — silently fails on Redis error.
+ */
+export async function cacheDel(...keys: string[]): Promise<void> {
+  try {
+    if (keys.length > 0) await redis.del(...keys);
+  } catch (err) {
+    console.warn(`[Redis] DEL failed for keys [${keys.join(', ')}]:`, err);
+  }
+}
+
+// Centralised cache key factories — prevent key typos across modules
+export const CacheKeys = {
+  tracking: (trackingNumber: string) => `tracking:${trackingNumber}`,
+  shipmentTracking: (shipmentId: string) => `shipment:tracking:${shipmentId}`,
+  pricingCalc: (key: string) => `pricing:calc:${key}`,
+  adminStats: () => 'admin:stats',
+  bkashIdToken: () => 'bkash:idToken',
+  bkashRefreshToken: () => 'bkash:refreshToken',
+};

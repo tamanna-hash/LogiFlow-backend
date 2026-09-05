@@ -1,9 +1,9 @@
-import { prisma } from '../config/database';
+import { prisma } from '../lib/prisma';
 
 /**
  * Generates a unique tracking number in format: LF-YYYYMMDD-XXXXXXXX
  * e.g. LF-20260905-A3F7B2C1
- * Checks DB for uniqueness and retries up to 5 times (statistically safe with 8 hex chars = 4 billion combos)
+ * Retries up to 5 times if collision detected (statistically negligible with 8 hex chars)
  */
 export async function generateTrackingNumber(): Promise<string> {
   const MAX_ATTEMPTS = 5;
