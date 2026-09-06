@@ -155,6 +155,7 @@ export async function updateShipmentStatus(
   newStatus: ShipmentStatus,
   reason: string | undefined,
   actorId: string,
+  actorRole: Role = 'OPERATIONS_MANAGER',
 ) {
   const shipment = await prisma.shipment.findUnique({
     where: { id: shipmentId, deletedAt: null },
@@ -162,10 +163,19 @@ export async function updateShipmentStatus(
   });
   if (!shipment) throw new NotFoundError('Shipment not found.');
 
-  const isOverride = !isValidTransition(shipment.status, newStatus);
+  const isValidNext = isValidTransition(shipment.status, newStatus);
 
-  if (isOverride && !reason) {
-    throw new BadRequestError('A reason is required when overriding an invalid state transition.');
+  // Only ADMIN can perform overrides (jumps to non-adjacent states)
+  // OPS_MANAGER can only advance to valid next states
+  if (!isValidNext) {
+    if (actorRole !== 'ADMIN') {
+      throw new BadRequestError(
+        `Invalid transition: ${shipment.status} → ${newStatus}. Only ADMIN can override state transitions.`,
+      );
+    }
+    if (!reason) {
+      throw new BadRequestError('Admin override requires a reason.');
+    }
   }
 
   await prisma.$transaction(async (tx) => {
@@ -176,7 +186,7 @@ export async function updateShipmentStatus(
         status: newStatus,
         description: reason ?? `Status updated to ${newStatus}`,
         actorId,
-        metadata: isOverride ? { override: true, reason } : undefined,
+        metadata: !isValidNext ? { override: true, reason, actorRole } : undefined,
       },
     });
   });
@@ -184,12 +194,12 @@ export async function updateShipmentStatus(
   await cacheDel(CacheKeys.tracking(shipment.trackingNumber));
   await createAuditLog({
     actorId,
-    action: isOverride ? 'SHIPMENT_ADMIN_OVERRIDE' : 'SHIPMENT_STATUS_CHANGED',
+    action: !isValidNext ? 'SHIPMENT_ADMIN_OVERRIDE' : 'SHIPMENT_STATUS_CHANGED',
     resourceType: 'Shipment',
     resourceId: shipmentId,
     before: { status: shipment.status },
     after: { status: newStatus },
-    metadata: { reason, override: isOverride },
+    metadata: { reason, override: !isValidNext, actorRole },
   });
 }
 

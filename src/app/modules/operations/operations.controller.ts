@@ -16,7 +16,10 @@ export async function cancelAssignment(req: Request, res: Response): Promise<voi
 }
 
 export async function updateShipmentStatus(req: Request, res: Response): Promise<void> {
-  await opsService.updateShipmentStatus(String(req.params.id), req.body.status, req.body.reason, req.user!.id);
+  await opsService.updateShipmentStatus(
+    String(req.params.id), req.body.status, req.body.reason,
+    req.user!.id, req.user!.role as Role,
+  );
   sendSuccess(res, null, 'Shipment status updated');
 }
 
