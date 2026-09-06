@@ -2,7 +2,7 @@
 .env
 .env.local
 .env.*.local
-
+LogiFlow_Agentic_Development_Prompts_v2.md
 # Build output
 dist/
 
