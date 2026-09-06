@@ -1,7 +1,7 @@
 import type { Role } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { uploadToCloudinary } from '../../lib/cloudinary';
-import { NotFoundError, ConflictError, BadRequestError } from '../../errors';
+import { NotFoundError, BadRequestError } from '../../errors';
 import { createAuditLog } from '../audit/audit.service';
 import { safeUserSelect } from '../../types';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';

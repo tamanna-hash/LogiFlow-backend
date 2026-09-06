@@ -8,7 +8,6 @@ import { createAuditLog } from '../audit/audit.service';
 import { safeUserSelect } from '../../types';
 import type { RegisterInput, LoginInput, ChangePasswordInput } from './auth.schema';
 import type { TokenPair } from '../../types';
-import { env } from '../../config/env';
 
 const REFRESH_TOKEN_TTL_DAYS = 7;
 

@@ -1,5 +1,4 @@
-import type { DeliveryType, ParcelType } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+import type { DeliveryType } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { cacheGet, cacheSet, CacheKeys } from '../../lib/redis';
 import { NotFoundError, BadRequestError } from '../../errors';

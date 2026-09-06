@@ -2,20 +2,19 @@ import type { NextFunction, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthenticationError, AuthorizationError } from '../errors';
 import { verifyAccessToken } from '../lib/jwt';
-import type { Role } from '../types';
+import type { Role } from '@prisma/client';
 
 /**
  * authenticate — verifies JWT, loads req.user from DB.
- * Always checks deletedAt and isActive — a deactivated user cannot pass this middleware.
- * For HUB_MANAGER: also fetches hubId from HubManagerProfile (never trusted from JWT).
+ * Checks deletedAt and isActive on every request.
+ * For HUB_MANAGER: fetches hubId from DB — never from JWT.
  */
 export const authenticate = async (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction,
 ): Promise<void> => {
   try {
-    // Accept token from Authorization header (Bearer) or cookie
     const raw =
       req.cookies?.accessToken ??
       (req.headers.authorization?.startsWith('Bearer ')
@@ -28,8 +27,6 @@ export const authenticate = async (
 
     const payload = verifyAccessToken(raw);
 
-    // DB check on every request — ensures deactivated/deleted users are rejected
-    // even within the 15-minute access token window
     const user = await prisma.user.findUnique({
       where: { id: payload.sub },
       select: {
@@ -40,23 +37,13 @@ export const authenticate = async (
         role: true,
         isActive: true,
         deletedAt: true,
-        hubManagerProfile: {
-          select: { hubId: true },
-        },
+        hubManagerProfile: { select: { hubId: true } },
       },
     });
 
-    if (!user) {
-      throw new AuthenticationError('User not found. Please log in again.');
-    }
-
-    if (user.deletedAt !== null) {
-      throw new AuthenticationError('This account has been deactivated.');
-    }
-
-    if (!user.isActive) {
-      throw new AuthenticationError('This account has been suspended. Please contact support.');
-    }
+    if (!user) throw new AuthenticationError('User not found. Please log in again.');
+    if (user.deletedAt !== null) throw new AuthenticationError('This account has been deactivated.');
+    if (!user.isActive) throw new AuthenticationError('This account has been suspended.');
 
     req.user = {
       id: user.id,
@@ -64,7 +51,6 @@ export const authenticate = async (
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
-      // hubId is DB-fetched — cannot be spoofed via JWT manipulation
       hubId: user.hubManagerProfile?.hubId ?? null,
     };
 
@@ -75,24 +61,14 @@ export const authenticate = async (
 };
 
 /**
- * authorize — RBAC middleware factory.
- * Must be used AFTER authenticate.
- * Usage: authorize('ADMIN', 'OPS_MANAGER')
+ * authorize — RBAC middleware factory. Must be used after authenticate.
  */
 export const authorize = (...allowedRoles: Role[]) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
-    if (!req.user) {
-      return next(new AuthenticationError('Authentication required.'));
-    }
-
+    if (!req.user) return next(new AuthenticationError('Authentication required.'));
     if (!allowedRoles.includes(req.user.role as Role)) {
-      return next(
-        new AuthorizationError(
-          `Access denied. Required role: ${allowedRoles.join(' or ')}.`,
-        ),
-      );
+      return next(new AuthorizationError(`Access denied. Required role: ${allowedRoles.join(' or ')}.`));
     }
-
     next();
   };
 };

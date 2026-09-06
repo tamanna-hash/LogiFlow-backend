@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import * as opsService from './operations.service';
 import { sendSuccess, sendCreated } from '../../utils/response';
 import { paginationSchema } from '../../utils/pagination';
-import type { Role, CourierAvailability } from '@prisma/client';
+import type { CourierAvailability, Role } from '@prisma/client';
 
 export async function assignCourier(req: Request, res: Response): Promise<void> {
   const user = req.user!;
@@ -11,12 +11,12 @@ export async function assignCourier(req: Request, res: Response): Promise<void> 
 }
 
 export async function cancelAssignment(req: Request, res: Response): Promise<void> {
-  await opsService.cancelAssignment(req.params.id, req.body.reason, req.user!.id);
+  await opsService.cancelAssignment(String(req.params.id), req.body.reason, req.user!.id);
   sendSuccess(res, null, 'Assignment cancelled');
 }
 
 export async function updateShipmentStatus(req: Request, res: Response): Promise<void> {
-  await opsService.updateShipmentStatus(req.params.id, req.body.status, req.body.reason, req.user!.id);
+  await opsService.updateShipmentStatus(String(req.params.id), req.body.status, req.body.reason, req.user!.id);
   sendSuccess(res, null, 'Shipment status updated');
 }
 
@@ -37,8 +37,10 @@ export async function listCouriers(req: Request, res: Response): Promise<void> {
 export async function updateCourierAvailability(req: Request, res: Response): Promise<void> {
   const user = req.user!;
   await opsService.updateCourierAvailability(
-    req.params.courierProfileId, req.body.availability as CourierAvailability,
-    user.role as Role, user.hubId,
+    String(req.params.courierProfileId),
+    req.body.availability as CourierAvailability,
+    user.role as Role,
+    user.hubId,
   );
   sendSuccess(res, null, 'Courier availability updated');
 }

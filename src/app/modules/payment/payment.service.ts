@@ -2,9 +2,9 @@ import { prisma } from '../../lib/prisma';
 import { createBkashPayment, executeBkashPayment } from '../../lib/bkash';
 import { NotFoundError, BadRequestError, AuthorizationError, ConflictError } from '../../errors';
 import { createAuditLog } from '../audit/audit.service';
-import { notifyPaymentCompleted, notifyGeneric } from '../notification/notification.service';
+import { notifyPaymentCompleted } from '../notification/notification.service';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
-import { env } from '../../config/env';
+import type { PaymentStatus } from '@prisma/client';
 
 export async function initiatePayment(shipmentId: string, userId: string) {
   const shipment = await prisma.shipment.findUnique({
@@ -168,7 +168,7 @@ export async function listPayments(params: {
 }) {
   const { page, limit, status, fromDate, toDate, search } = params;
   const where = {
-    ...(status && { status }),
+    ...(status && { status: status as PaymentStatus }),
     ...((fromDate || toDate) && { createdAt: { ...(fromDate && { gte: new Date(fromDate) }), ...(toDate && { lte: new Date(toDate) }) } }),
     ...(search && { bkashTransactionId: { contains: search } }),
   };

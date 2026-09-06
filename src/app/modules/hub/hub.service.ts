@@ -96,7 +96,7 @@ export async function deactivateHub(id: string, actorId: string) {
 
 // ── Zone CRUD ─────────────────────────────────────────────────────────────────
 
-export async function createZone(input: CreateZoneInput, actorId: string) {
+export async function createZone(input: CreateZoneInput, _actorId: string) {
   const hub = await prisma.hub.findUnique({ where: { id: input.hubId, ...notDeleted() }, select: { id: true } });
   if (!hub) throw new NotFoundError('Hub not found.');
 
@@ -129,13 +129,13 @@ export async function listZones(params: { hubId?: string; isActive?: boolean; pa
   return { zones, meta: buildPaginationMeta(total, page, limit) };
 }
 
-export async function updateZone(id: string, input: Partial<Omit<CreateZoneInput, 'hubId'>>, actorId: string) {
+export async function updateZone(id: string, input: Partial<Omit<CreateZoneInput, 'hubId'>>, _actorId: string) {
   const zone = await prisma.zone.findUnique({ where: { id }, select: { id: true } });
   if (!zone) throw new NotFoundError('Zone not found.');
   return prisma.zone.update({ where: { id }, data: input, select: { id: true, name: true, code: true, isActive: true } });
 }
 
-export async function deleteZone(id: string, actorId: string) {
+export async function deleteZone(id: string, _actorId: string) {
   const zone = await prisma.zone.findUnique({ where: { id }, select: { id: true } });
   if (!zone) throw new NotFoundError('Zone not found.');
 

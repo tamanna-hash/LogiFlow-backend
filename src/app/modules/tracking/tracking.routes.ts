@@ -9,7 +9,7 @@ router.get('/:trackingNumber',
   rateLimiter('publicTracking'),
   async (req, res, next) => {
     try {
-      const data = await getPublicTracking(req.params.trackingNumber);
+      const data = await getPublicTracking(String(req.params.trackingNumber));
       sendSuccess(res, data, 'Tracking information fetched');
     } catch (err) {
       next(err);

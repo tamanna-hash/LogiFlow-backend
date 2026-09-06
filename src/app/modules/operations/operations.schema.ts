@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AssignmentType, ShipmentStatus, CourierAvailability } from '@prisma/client';
+import { AssignmentType, ShipmentStatus } from '@prisma/client';
 
 export const createAssignmentSchema = z.object({
   shipmentId: z.string().cuid('Invalid shipment ID'),

@@ -1,12 +1,11 @@
 import { prisma } from '../../lib/prisma';
 import { NotFoundError, AuthorizationError, BadRequestError } from '../../errors';
 import { createAuditLog } from '../audit/audit.service';
-import { notifyDelivered, notifyDeliveryFailed, notifyOutForDelivery } from '../notification/notification.service';
+import { notifyDelivered, notifyDeliveryFailed } from '../notification/notification.service';
 import { cacheDel, CacheKeys } from '../../lib/redis';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
 import { uploadToCloudinary } from '../../lib/cloudinary';
-import { env } from '../../config/env';
-import type { DeliveryFailureReason } from '@prisma/client';
+import type { AssignmentStatus, AssignmentType, DeliveryFailureReason } from '@prisma/client';
 
 async function getCourierProfile(userId: string) {
   const profile = await prisma.courierProfile.findUnique({
@@ -32,8 +31,8 @@ export async function getAssignments(userId: string, params: { page: number; lim
 
   const where = {
     courierProfileId: profile.id,
-    ...(status && { status }),
-    ...(type && { type }),
+    ...(status && { status: status as AssignmentStatus }),
+    ...(type && { type: type as AssignmentType }),
   };
 
   const [assignments, total] = await Promise.all([
@@ -119,7 +118,7 @@ export async function confirmPickup(shipmentId: string, userId: string) {
   });
 
   await cacheDel(CacheKeys.tracking(shipment.trackingNumber));
-  await createAuditLog({ actorId: userId, action: 'PICKUP_CONFIRMED', resourceType: 'Shipment', resourceId: shipmentId });
+  await createAuditLog({ actorId: userId, action: 'PICKUP_COMPLETED', resourceType: 'Shipment', resourceId: shipmentId });
 }
 
 export async function recordDelivery(shipmentId: string, userId: string, notes?: string, proofBuffer?: Buffer) {

@@ -12,13 +12,7 @@ interface ValidationSchemas {
 
 /**
  * validateRequest — validates req.body, req.params, and/or req.query with Zod schemas.
- * Strips unknown fields from body (security: no extra data passes through).
- * Returns structured field-level errors on failure.
- *
- * Usage:
- *   validateRequest({ body: createShipmentSchema })
- *   validateRequest({ body: someSchema, query: paginationSchema })
- *   validateRequest({ params: z.object({ id: z.string().cuid() }) })
+ * Strips unknown fields from body. Returns structured field-level errors on failure.
  */
 export const validateRequest = (schemas: ValidationSchemas) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
@@ -31,27 +25,19 @@ export const validateRequest = (schemas: ValidationSchemas) => {
       const result = schema.safeParse(req[part]);
 
       if (!result.success) {
-        const fieldErrors = result.error.errors.map((e) => ({
+        const fieldErrors = result.error.issues.map((e) => ({
           field: e.path.join('.') || part,
           message: e.message,
         }));
         return next(new ValidationError(`Validation failed on ${part}`, fieldErrors));
       }
 
-      // Replace the request part with the parsed (and stripped) data
-      (req as Record<string, unknown>)[part] = result.data;
+      req[part] = result.data as typeof req[typeof part];
     }
 
     next();
   };
 };
 
-/**
- * Convenience — validate body only (most common case)
- */
 export const validateBody = (schema: z.ZodTypeAny) => validateRequest({ body: schema });
-
-/**
- * Convenience — validate params only
- */
 export const validateParams = (schema: z.ZodTypeAny) => validateRequest({ params: schema });

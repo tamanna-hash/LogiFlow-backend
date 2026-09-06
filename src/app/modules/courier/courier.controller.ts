@@ -15,12 +15,12 @@ export async function getAssignments(req: Request, res: Response): Promise<void>
 }
 
 export async function acceptAssignment(req: Request, res: Response): Promise<void> {
-  await courierService.acceptAssignment(req.params.id, req.user!.id);
+  await courierService.acceptAssignment(String(req.params.id), req.user!.id);
   sendSuccess(res, null, 'Assignment accepted');
 }
 
 export async function rejectAssignment(req: Request, res: Response): Promise<void> {
-  await courierService.rejectAssignment(req.params.id, req.user!.id, req.body.reason);
+  await courierService.rejectAssignment(String(req.params.id), req.user!.id, req.body.reason);
   sendSuccess(res, null, 'Assignment rejected');
 }
 
@@ -30,23 +30,24 @@ export async function updateAvailability(req: Request, res: Response): Promise<v
 }
 
 export async function confirmPickup(req: Request, res: Response): Promise<void> {
-  await courierService.confirmPickup(req.params.shipmentId, req.user!.id);
+  await courierService.confirmPickup(String(req.params.shipmentId), req.user!.id);
   sendSuccess(res, null, 'Pickup confirmed');
 }
 
 export async function recordDelivery(req: Request, res: Response): Promise<void> {
   await courierService.recordDelivery(
-    req.params.shipmentId, req.user!.id,
-    req.body.notes, req.file?.buffer,
+    String(req.params.shipmentId), req.user!.id,
+    req.body.notes as string | undefined,
+    req.file?.buffer,
   );
   sendSuccess(res, null, 'Delivery recorded');
 }
 
 export async function recordDeliveryFailed(req: Request, res: Response): Promise<void> {
   await courierService.recordDeliveryFailed(
-    req.params.shipmentId, req.user!.id,
+    String(req.params.shipmentId), req.user!.id,
     req.body.failureReason as DeliveryFailureReason,
-    req.body.notes,
+    req.body.notes as string | undefined,
   );
   sendSuccess(res, null, 'Delivery failure recorded');
 }

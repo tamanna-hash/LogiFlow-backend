@@ -21,35 +21,35 @@ export async function listShipments(req: Request, res: Response): Promise<void> 
 
 export async function getShipment(req: Request, res: Response): Promise<void> {
   const user = req.user!;
-  const shipment = await shipmentService.getShipmentById(req.params.id, user.role as Role, user.id, user.hubId);
+  const shipment = await shipmentService.getShipmentById(String(req.params.id), user.role as Role, user.id, user.hubId);
   sendSuccess(res, shipment, 'Shipment fetched');
 }
 
 export async function updateShipment(req: Request, res: Response): Promise<void> {
   const user = req.user!;
-  const shipment = await shipmentService.updateShipment(req.params.id, req.body, user.role as Role, user.id);
+  const shipment = await shipmentService.updateShipment(String(req.params.id), req.body, user.role as Role, user.id);
   sendSuccess(res, shipment, 'Shipment updated');
 }
 
 export async function cancelShipment(req: Request, res: Response): Promise<void> {
   const user = req.user!;
-  await shipmentService.cancelShipment(req.params.id, req.body.reason, user.role as Role, user.id);
+  await shipmentService.cancelShipment(String(req.params.id), req.body.reason, user.role as Role, user.id);
   sendSuccess(res, null, 'Shipment cancelled');
 }
 
 export async function requestPickup(req: Request, res: Response): Promise<void> {
   const user = req.user!;
-  const pickup = await shipmentService.requestPickup(req.params.id, req.body, user.role as Role, user.id);
+  const pickup = await shipmentService.requestPickup(String(req.params.id), req.body, user.role as Role, user.id);
   sendCreated(res, pickup, 'Pickup requested');
 }
 
 export async function getTracking(req: Request, res: Response): Promise<void> {
   const user = req.user!;
-  const events = await shipmentService.getShipmentTracking(req.params.id, user.role as Role, user.id, user.hubId);
+  const events = await shipmentService.getShipmentTracking(String(req.params.id), user.role as Role, user.id, user.hubId);
   sendSuccess(res, events, 'Tracking events fetched');
 }
 
 export async function initiateReturn(req: Request, res: Response): Promise<void> {
-  await shipmentService.initiateReturn(req.params.id, req.body.reason, req.user!.id);
+  await shipmentService.initiateReturn(String(req.params.id), req.body.reason, req.user!.id);
   sendSuccess(res, null, 'Return initiated');
 }

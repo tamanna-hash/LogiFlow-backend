@@ -2,21 +2,18 @@ import type { Role, ShipmentStatus } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { calculatePrice } from '../pricing/pricing.service';
 import { generateTrackingNumber } from '../../utils/trackingNumber';
-import { notDeleted } from '../../utils/notDeleted';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
 import {
   NotFoundError, AuthorizationError, BadRequestError,
 } from '../../errors';
 import { createAuditLog } from '../audit/audit.service';
-import { notifyShipmentCreated, notifyGeneric } from '../notification/notification.service';
+import { notifyShipmentCreated } from '../notification/notification.service';
 import { cacheDel, CacheKeys } from '../../lib/redis';
 import {
   CUSTOMER_CANCELLABLE_STATUSES, CUSTOMER_EDITABLE_STATUSES,
   isValidTransition,
 } from '../../types/enums';
 import type { CreateShipmentInput } from './shipment.schema';
-
-const env = { MAX_DELIVERY_ATTEMPTS: Number(process.env.MAX_DELIVERY_ATTEMPTS ?? 3) };
 
 const shipmentListSelect = {
   id: true, trackingNumber: true, status: true, paymentStatus: true,
@@ -210,7 +207,17 @@ export async function updateShipment(
     }
   }
 
-  return prisma.shipment.update({ where: { id }, data: input, select: shipmentDetailSelect });
+  return prisma.shipment.update({
+    where: { id },
+    data: {
+      recipientName: input.recipientName,
+      recipientPhone: input.recipientPhone,
+      recipientAddress: input.recipientAddress,
+      recipientCity: input.recipientCity,
+      specialInstructions: input.specialInstructions,
+    },
+    select: shipmentDetailSelect,
+  });
 }
 
 export async function cancelShipment(

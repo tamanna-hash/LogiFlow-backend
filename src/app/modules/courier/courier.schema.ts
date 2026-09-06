@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CourierAvailability, DeliveryFailureReason } from '@prisma/client';
+import { DeliveryFailureReason } from '@prisma/client';
 
 export const updateAvailabilitySchema = z.object({
   availability: z.enum(['AVAILABLE', 'UNAVAILABLE'] as const),
@@ -21,6 +21,6 @@ export const deliveryConfirmSchema = z.object({
 export const earningsQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(10),
-  fromDate: z.string().datetime().optional(),
-  toDate: z.string().datetime().optional(),
+  fromDate: z.string().optional(),
+  toDate: z.string().optional(),
 });

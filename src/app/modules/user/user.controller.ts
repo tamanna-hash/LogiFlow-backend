@@ -21,16 +21,16 @@ export async function listUsers(req: Request, res: Response): Promise<void> {
 }
 
 export async function getUserById(req: Request, res: Response): Promise<void> {
-  const user = await userService.getUserById(req.params.id);
+  const user = await userService.getUserById(String(req.params.id));
   sendSuccess(res, user, 'User fetched');
 }
 
 export async function updateUserRole(req: Request, res: Response): Promise<void> {
-  const updated = await userService.updateUserRole(req.params.id, req.body, req.user!.id);
+  const updated = await userService.updateUserRole(String(req.params.id), req.body, req.user!.id);
   sendSuccess(res, updated, 'User role updated');
 }
 
 export async function deleteUser(req: Request, res: Response): Promise<void> {
-  await userService.softDeleteUser(req.params.id, req.user!.id);
+  await userService.softDeleteUser(String(req.params.id), req.user!.id);
   sendSuccess(res, null, 'User deactivated successfully');
 }

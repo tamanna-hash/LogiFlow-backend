@@ -22,12 +22,12 @@ export async function listRules(req: Request, res: Response): Promise<void> {
 }
 
 export async function updateRule(req: Request, res: Response): Promise<void> {
-  const rule = await pricingService.updatePricingRule(req.params.id, req.body, req.user!.id);
+  const rule = await pricingService.updatePricingRule(String(req.params.id), req.body, req.user!.id);
   sendSuccess(res, rule, 'Pricing rule updated');
 }
 
 export async function deleteRule(req: Request, res: Response): Promise<void> {
-  await pricingService.deactivatePricingRule(req.params.id, req.user!.id);
+  await pricingService.deactivatePricingRule(String(req.params.id), req.user!.id);
   sendSuccess(res, null, 'Pricing rule deactivated');
 }
 

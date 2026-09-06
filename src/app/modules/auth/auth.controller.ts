@@ -1,4 +1,4 @@
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import passport from 'passport';
 import * as authService from './auth.service';
 import { signAccessToken, generateRefreshToken } from '../../lib/jwt';
@@ -6,36 +6,25 @@ import { hashToken } from '../../lib/argon2';
 import { prisma } from '../../lib/prisma';
 import { sendSuccess, sendCreated } from '../../utils/response';
 import { env } from '../../config/env';
-import { validateRequest } from '../../middleware/validateRequest';
-import {
-  registerSchema, loginSchema, refreshTokenSchema,
-  logoutSchema, changePasswordSchema,
-} from './auth.schema';
 
 export async function register(req: Request, res: Response): Promise<void> {
-  const ip = req.ip;
-  const userAgent = req.headers['user-agent'];
-  const { user, tokens } = await authService.register(req.body, { ip, userAgent });
+  const { user, tokens } = await authService.register(req.body, { ip: req.ip, userAgent: req.headers['user-agent'] });
   sendCreated(res, { user, ...tokens }, 'Registration successful');
 }
 
 export async function login(req: Request, res: Response): Promise<void> {
-  const ip = req.ip;
-  const userAgent = req.headers['user-agent'];
-  const { user, tokens } = await authService.login(req.body, { ip, userAgent });
+  const { user, tokens } = await authService.login(req.body, { ip: req.ip, userAgent: req.headers['user-agent'] });
   sendSuccess(res, { user, ...tokens }, 'Login successful');
 }
 
 export async function refreshToken(req: Request, res: Response): Promise<void> {
-  const { refreshToken: rawToken } = req.body;
-  const ip = req.ip;
-  const userAgent = req.headers['user-agent'];
-  const tokens = await authService.refreshTokens(rawToken, { ip, userAgent });
+  const { refreshToken: rawToken } = req.body as { refreshToken: string };
+  const tokens = await authService.refreshTokens(rawToken, { ip: req.ip, userAgent: req.headers['user-agent'] });
   sendSuccess(res, tokens, 'Token refreshed');
 }
 
 export async function logout(req: Request, res: Response): Promise<void> {
-  const { refreshToken: rawToken } = req.body;
+  const { refreshToken: rawToken } = req.body as { refreshToken: string };
   await authService.logout(req.user!.id, rawToken);
   sendSuccess(res, null, 'Logged out successfully');
 }
@@ -47,11 +36,11 @@ export async function changePassword(req: Request, res: Response): Promise<void>
 
 // ── Google OAuth handlers ─────────────────────────────────────────────────────
 
-export function googleAuth(req: Request, res: Response, next: Parameters<typeof passport.authenticate>[2]): void {
+export function googleAuth(req: Request, res: Response, next: NextFunction): void {
   passport.authenticate('google', { scope: ['email', 'profile'], state: 'logiflow' })(req, res, next);
 }
 
-export function googleCallback(req: Request, res: Response, next: Parameters<typeof passport.authenticate>[2]): void {
+export function googleCallback(req: Request, res: Response, next: NextFunction): void {
   passport.authenticate('google', { session: false }, async (err: Error | null, user: { id: string; role: string } | null) => {
     try {
       if (err || !user) {
@@ -79,8 +68,7 @@ export function googleCallback(req: Request, res: Response, next: Parameters<typ
         },
       });
 
-      const redirectUrl = `${env.FRONTEND_URL}/auth/callback?accessToken=${accessToken}&refreshToken=${rawRefreshToken}`;
-      res.redirect(redirectUrl);
+      res.redirect(`${env.FRONTEND_URL}/auth/callback?accessToken=${accessToken}&refreshToken=${rawRefreshToken}`);
     } catch (callbackErr) {
       next(callbackErr);
     }

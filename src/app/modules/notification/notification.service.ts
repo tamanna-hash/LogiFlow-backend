@@ -31,7 +31,7 @@ export async function createNotification(input: CreateNotificationInput): Promis
       type: input.type,
       title: input.title,
       message: input.message,
-      metadata: input.metadata,
+      metadata: input.metadata ? (input.metadata as object) : undefined,
     },
   });
 

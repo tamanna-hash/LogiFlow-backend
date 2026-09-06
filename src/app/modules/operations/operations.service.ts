@@ -1,5 +1,4 @@
-import type { AssignmentType, CourierAvailability, Role, ShipmentStatus } from '@prisma/client';
-import { prisma } from '../../lib/prisma';
+import type { AssignmentType, CourierAvailability, Role, ShipmentStatus } from '@prisma/client';import { prisma } from '../../lib/prisma';
 import { NotFoundError, BadRequestError, ConflictError, AuthorizationError } from '../../errors';
 import { createAuditLog } from '../audit/audit.service';
 import { notifyCourierAssigned, notifyOutForDelivery } from '../notification/notification.service';
@@ -205,7 +204,7 @@ export async function listCouriers(params: {
 
   const where = {
     ...(scopedHubId && { hubId: scopedHubId }),
-    ...(availability && { availability }),
+    ...(availability && { availability: availability as CourierAvailability }),
     user: {
       ...notDeleted(),
       isActive: true,

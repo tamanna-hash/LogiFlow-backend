@@ -35,7 +35,7 @@ export async function bkashCallback(req: Request, res: Response): Promise<void> 
 
 export async function getPaymentByShipment(req: Request, res: Response): Promise<void> {
   const isAdmin = req.user!.role === 'ADMIN';
-  const payment = await paymentService.getPaymentByShipment(req.params.shipmentId, req.user!.id, isAdmin);
+  const payment = await paymentService.getPaymentByShipment(String(req.params.shipmentId), req.user!.id, isAdmin);
   sendSuccess(res, payment, 'Payment fetched');
 }
 
