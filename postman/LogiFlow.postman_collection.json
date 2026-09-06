@@ -1,0 +1,931 @@
+{
+  "info": {
+    "name": "LogiFlow — Courier & Logistics Management API",
+    "description": "Complete REST API collection for LogiFlow backend. Import alongside LogiFlow.postman_environment.json.\n\n## Authentication\nAll protected endpoints require `Bearer {{accessToken}}` in the Authorization header.\nRun 'Register' or 'Login' first — the test scripts auto-populate `accessToken` and `refreshToken`.\n\n## Happy Path Flow\n1. Register (CUSTOMER)\n2. Login\n3. Create Shipment\n4. Calculate Price (optional preview)\n5. Initiate bKash Payment → complete on bKash sandbox\n6. Request Pickup\n7. (Admin) Create Hub + Zone\n8. (Admin/OPS) Assign Courier\n9. (Courier) Confirm Pickup\n10. (HUB) Create Transfer → Confirm Arrival\n11. (OPS) Assign Delivery Courier\n12. (Courier) Record Delivery\n13. Track Shipment (public)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "logiflow-collection-001",
+    "version": { "major": 1, "minor": 0, "patch": 0 }
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "{{baseUrl}}" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": { "type": "text/javascript", "exec": [""] }
+    }
+  ],
+  "item": [
+
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register (Customer)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "if (pm.response.code === 201) {",
+              "  const body = pm.response.json();",
+              "  pm.environment.set('accessToken', body.data.accessToken);",
+              "  pm.environment.set('refreshToken', body.data.refreshToken);",
+              "  pm.environment.set('userId', body.data.user.id);",
+              "  pm.test('Registration successful', () => pm.response.to.have.status(201));",
+              "  pm.test('Returns access token', () => pm.expect(body.data.accessToken).to.be.a('string'));",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Rahim\",\n  \"lastName\": \"Uddin\",\n  \"email\": \"rahim@example.com\",\n  \"password\": \"SecurePass123\",\n  \"phone\": \"01712345678\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "body": "{\"success\":true,\"message\":\"Registration successful\",\"data\":{\"user\":{\"id\":\"...\",\"email\":\"rahim@example.com\",\"firstName\":\"Rahim\",\"role\":\"CUSTOMER\"},\"accessToken\":\"eyJ...\",\"refreshToken\":\"abc123...\"}}"
+            },
+            {
+              "name": "409 Email Already Exists",
+              "status": "Conflict",
+              "code": 409,
+              "body": "{\"success\":false,\"message\":\"An account with this email already exists.\",\"errors\":[]}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "if (pm.response.code === 200) {",
+              "  const body = pm.response.json();",
+              "  pm.environment.set('accessToken', body.data.accessToken);",
+              "  pm.environment.set('refreshToken', body.data.refreshToken);",
+              "  pm.environment.set('userId', body.data.user.id);",
+              "  pm.test('Login successful', () => pm.response.to.have.status(200));",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rahim@example.com\",\n  \"password\": \"SecurePass123\"\n}"
+            }
+          },
+          "response": [
+            { "name": "200 OK", "code": 200, "body": "{\"success\":true,\"message\":\"Login successful\",\"data\":{\"user\":{\"id\":\"...\",\"role\":\"CUSTOMER\"},\"accessToken\":\"eyJ...\",\"refreshToken\":\"abc...\"}}" },
+            { "name": "401 Invalid Credentials", "code": 401, "body": "{\"success\":false,\"message\":\"Invalid email or password.\",\"errors\":[]}" }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "if (pm.response.code === 200) {",
+              "  const body = pm.response.json();",
+              "  pm.environment.set('accessToken', body.data.accessToken);",
+              "  pm.environment.set('refreshToken', body.data.refreshToken);",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/refresh",
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/logout",
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/change-password",
+            "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"SecurePass123\",\n  \"newPassword\": \"NewSecurePass456\"\n}" }
+          }
+        },
+        {
+          "name": "Google OAuth — Initiate",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/google",
+            "description": "Redirects to Google consent screen. Open in browser — not testable via Postman directly."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "2. Users & Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('No passwordHash in response', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.data).to.not.have.property('passwordHash');",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/me"
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/users/me",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "firstName", "value": "Updated", "type": "text" },
+                { "key": "lastName", "value": "Name", "type": "text" },
+                { "key": "phone", "value": "01812345678", "type": "text" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/users?page=1&limit=10&role=CUSTOMER&search=rahim",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "role", "value": "CUSTOMER" },
+                { "key": "search", "value": "rahim" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID (Admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Update User Role (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/users/{{userId}}/role",
+            "body": { "mode": "raw", "raw": "{\n  \"role\": \"COURIER\"\n}" }
+          }
+        },
+        {
+          "name": "Soft Delete User (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/users/{{userId}}"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "3. Shipments",
+      "item": [
+        {
+          "name": "Create Shipment",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "if (pm.response.code === 201) {",
+              "  const body = pm.response.json();",
+              "  pm.environment.set('shipmentId', body.data.id);",
+              "  pm.environment.set('trackingNumber', body.data.trackingNumber);",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/shipments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderName\": \"Rahim Uddin\",\n  \"senderPhone\": \"01712345678\",\n  \"senderAddress\": \"House 5, Road 3, Dhanmondi\",\n  \"senderCity\": \"Dhaka\",\n  \"originZoneId\": \"{{zoneId}}\",\n  \"recipientName\": \"Karim Ahmed\",\n  \"recipientPhone\": \"01912345678\",\n  \"recipientAddress\": \"House 12, Block B, Agrabad\",\n  \"recipientCity\": \"Chittagong\",\n  \"destinationZoneId\": \"{{zoneId}}\",\n  \"deliveryType\": \"STANDARD\",\n  \"parcelType\": \"REGULAR\",\n  \"declaredWeightKg\": 2.5,\n  \"description\": \"Important documents\",\n  \"items\": [\n    {\n      \"description\": \"Documents\",\n      \"weightKg\": 2.5,\n      \"quantity\": 1,\n      \"parcelType\": \"DOCUMENT\"\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "List My Shipments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/shipments?page=1&limit=10&status=CREATED&sortBy=createdAt&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["shipments"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "CREATED" },
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "sortOrder", "value": "desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Shipment by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}"
+          }
+        },
+        {
+          "name": "Update Shipment (before pickup)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"recipientAddress\": \"Updated Address, Block C\",\n  \"specialInstructions\": \"Handle with care\"\n}" }
+          }
+        },
+        {
+          "name": "Cancel Shipment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/cancel",
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Changed delivery address\"\n}" }
+          }
+        },
+        {
+          "name": "Request Pickup (after payment)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/pickup-request",
+            "body": { "mode": "raw", "raw": "{\n  \"notes\": \"Please call before coming\"\n}" }
+          }
+        },
+        {
+          "name": "Get Shipment Tracking (authenticated)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/tracking"
+          }
+        },
+        {
+          "name": "Initiate Return (OPS_MANAGER)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/return",
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Max delivery attempts exceeded\"\n}" }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "4. Public Tracking",
+      "item": [
+        {
+          "name": "Track Shipment (Public — no auth)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('No personal data exposed', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.data).to.not.have.property('senderPhone');",
+              "  pm.expect(body.data).to.not.have.property('recipientPhone');",
+              "  pm.expect(body.data).to.not.have.property('senderAddress');",
+              "});"
+            ]}
+          }],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/tracking/{{trackingNumber}}",
+            "description": "Public endpoint — no authentication required. Returns limited status info only."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "5. Payments",
+      "item": [
+        {
+          "name": "Initiate bKash Payment",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "if (pm.response.code === 201) {",
+              "  const body = pm.response.json();",
+              "  pm.environment.set('paymentId', body.data.paymentId);",
+              "  pm.test('Returns bKash URL', () => pm.expect(body.data.bkashURL).to.include('bka.sh'));",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/payments/bkash/initiate",
+            "body": { "mode": "raw", "raw": "{\n  \"shipmentId\": \"{{shipmentId}}\"\n}" },
+            "description": "Returns a bkashURL. Open the URL in a browser to complete payment on bKash sandbox.\nAfter completing, bKash redirects to callback URL which server processes automatically."
+          }
+        },
+        {
+          "name": "Get Payment by Shipment",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/payments/shipment/{{shipmentId}}"
+          }
+        },
+        {
+          "name": "List All Payments (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/payments?page=1&limit=10&status=COMPLETED",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "COMPLETED" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "bKash Callback (server-side — informational)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/payments/bkash/callback?paymentID=BKASH_PAYMENT_ID&status=success",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "bkash", "callback"],
+              "query": [
+                { "key": "paymentID", "value": "BKASH_PAYMENT_ID" },
+                { "key": "status", "value": "success" }
+              ]
+            },
+            "description": "This endpoint is called by bKash automatically after checkout. The server ignores the status param and calls executepayment to verify independently. Do not call this manually — it triggers a browser redirect."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "6. Courier",
+      "item": [
+        {
+          "name": "Get My Assignments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/courier/assignments?status=ACTIVE&type=PICKUP",
+              "host": ["{{baseUrl}}"],
+              "path": ["courier", "assignments"],
+              "query": [
+                { "key": "status", "value": "ACTIVE" },
+                { "key": "type", "value": "PICKUP" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Accept Assignment",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/courier/assignments/{{assignmentId}}/accept"
+          }
+        },
+        {
+          "name": "Reject Assignment",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/courier/assignments/{{assignmentId}}/reject",
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Vehicle breakdown\"\n}" }
+          }
+        },
+        {
+          "name": "Update My Availability",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/courier/availability",
+            "body": { "mode": "raw", "raw": "{\n  \"availability\": \"AVAILABLE\"\n}" }
+          }
+        },
+        {
+          "name": "Confirm Pickup",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/courier/shipments/{{shipmentId}}/pickup-confirm"
+          }
+        },
+        {
+          "name": "Record Successful Delivery",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/courier/shipments/{{shipmentId}}/deliver",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "notes", "value": "Delivered to recipient directly", "type": "text" },
+                { "key": "proofImage", "src": "", "type": "file", "description": "Optional delivery proof photo (jpg/png/webp, max 5MB)" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record Failed Delivery",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/courier/shipments/{{shipmentId}}/delivery-failed",
+            "body": { "mode": "raw", "raw": "{\n  \"failureReason\": \"NO_ONE_HOME\",\n  \"notes\": \"Called 3 times, no answer\"\n}" }
+          }
+        },
+        {
+          "name": "Get My Earnings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/courier/earnings?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["courier", "earnings"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "7. Hubs & Zones",
+      "item": [
+        {
+          "name": "Create Hub (Admin)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "if (pm.response.code === 201) {",
+              "  pm.environment.set('hubId', pm.response.json().data.id);",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/hubs",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Dhaka Central Hub\",\n  \"code\": \"DHK-01\",\n  \"address\": \"Tejgaon Industrial Area\",\n  \"city\": \"Dhaka\",\n  \"phone\": \"01700000001\"\n}" }
+          }
+        },
+        {
+          "name": "List Hubs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/hubs?page=1&limit=10&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["hubs"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "isActive", "value": "true" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Hub by ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hubs/{{hubId}}" }
+        },
+        {
+          "name": "Update Hub (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/hubs/{{hubId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"01700000002\"\n}" }
+          }
+        },
+        {
+          "name": "Deactivate Hub (Admin)",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/hubs/{{hubId}}" }
+        },
+        {
+          "name": "Create Hub Transfer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/hubs/{{hubId}}/transfers",
+            "body": { "mode": "raw", "raw": "{\n  \"shipmentId\": \"{{shipmentId}}\",\n  \"toHubId\": \"DESTINATION_HUB_ID\",\n  \"notes\": \"Regular inter-hub dispatch\"\n}" }
+          }
+        },
+        {
+          "name": "Confirm Hub Transfer Arrival",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/hubs/{{hubId}}/transfers/TRANSFER_ID/arrive"
+          }
+        },
+        {
+          "name": "Create Zone (Admin)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "if (pm.response.code === 201) {",
+              "  pm.environment.set('zoneId', pm.response.json().data.id);",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/zones",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Dhaka North Zone\",\n  \"code\": \"ZONE-DHK-N\",\n  \"hubId\": \"{{hubId}}\",\n  \"description\": \"Covers Mirpur, Uttara, Gulshan\"\n}" }
+          }
+        },
+        {
+          "name": "List Zones",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/zones?hubId={{hubId}}&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["zones"],
+              "query": [
+                { "key": "hubId", "value": "{{hubId}}" },
+                { "key": "isActive", "value": "true" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "8. Operations",
+      "item": [
+        {
+          "name": "Assign Courier to Shipment",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "if (pm.response.code === 201) {",
+              "  pm.environment.set('assignmentId', pm.response.json().data.id);",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/operations/assignments",
+            "body": { "mode": "raw", "raw": "{\n  \"shipmentId\": \"{{shipmentId}}\",\n  \"courierProfileId\": \"{{courierProfileId}}\",\n  \"type\": \"PICKUP\"\n}" }
+          }
+        },
+        {
+          "name": "Cancel Assignment",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/operations/assignments/{{assignmentId}}/cancel",
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Courier unavailable — reassigning\"\n}" }
+          }
+        },
+        {
+          "name": "Force Update Shipment Status (OPS override)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/operations/shipments/{{shipmentId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"AT_ORIGIN_HUB\",\n  \"reason\": \"Manual override — parcel confirmed at hub\"\n}" }
+          }
+        },
+        {
+          "name": "List Couriers",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/operations/couriers?availability=AVAILABLE&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["operations", "couriers"],
+              "query": [
+                { "key": "availability", "value": "AVAILABLE" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Courier Availability (OPS)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/operations/couriers/{{courierProfileId}}/availability",
+            "body": { "mode": "raw", "raw": "{\n  \"availability\": \"UNAVAILABLE\"\n}" }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "9. Pricing",
+      "item": [
+        {
+          "name": "Calculate Price (Preview)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/pricing/calculate",
+            "body": { "mode": "raw", "raw": "{\n  \"originZoneId\": \"{{zoneId}}\",\n  \"destinationZoneId\": \"{{zoneId}}\",\n  \"deliveryType\": \"STANDARD\",\n  \"parcelType\": \"REGULAR\",\n  \"weightKg\": 2.5\n}" }
+          }
+        },
+        {
+          "name": "Create Pricing Rule (Admin)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "if (pm.response.code === 201) {",
+              "  pm.environment.set('pricingRuleId', pm.response.json().data.id);",
+              "}"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/pricing/rules",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Standard Rate — Dhaka to Chittagong\",\n  \"deliveryType\": \"STANDARD\",\n  \"parcelType\": \"REGULAR\",\n  \"basePrice\": 80,\n  \"pricePerKg\": 15,\n  \"baseWeightKg\": 1,\n  \"zoneSurcharge\": 30,\n  \"deliveryTypeSurcharge\": 0\n}" }
+          }
+        },
+        {
+          "name": "List Pricing Rules",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/pricing/rules?isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["pricing", "rules"],
+              "query": [{ "key": "isActive", "value": "true" }]
+            }
+          }
+        },
+        {
+          "name": "Update Pricing Rule (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/pricing/rules/{{pricingRuleId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"basePrice\": 90,\n  \"zoneSurcharge\": 35\n}" }
+          }
+        },
+        {
+          "name": "Deactivate Pricing Rule (Admin)",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/pricing/rules/{{pricingRuleId}}" }
+        }
+      ]
+    },
+
+    {
+      "name": "10. Notifications",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/notifications?page=1&limit=10&isRead=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "isRead", "value": "false" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/notifications/{{notificationId}}/read"
+          }
+        },
+        {
+          "name": "Mark All Notifications Read",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/notifications/read-all"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "11. Admin",
+      "item": [
+        {
+          "name": "Get System Statistics",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has total shipments', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.data).to.have.property('totalShipments');",
+              "  pm.expect(body.data).to.have.property('totalRevenue');",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/stats"
+          }
+        },
+        {
+          "name": "Get Audit Logs (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/audit-logs?page=1&limit=20&action=SHIPMENT_CREATED",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "audit-logs"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "action", "value": "SHIPMENT_CREATED" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Operational Audit Logs (OPS_MANAGER)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/audit-logs/operational?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "audit-logs", "operational"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "12. Complete Happy Path",
+      "description": "Run these in order to walk through the full LogiFlow workflow from booking to delivery.",
+      "item": [
+        {
+          "name": "Step 1 — Register Customer",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Happy\",\n  \"lastName\": \"Customer\",\n  \"email\": \"happy@example.com\",\n  \"password\": \"Password123\",\n  \"phone\": \"01712000001\"\n}" }
+          }
+        },
+        {
+          "name": "Step 2 — Login",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"happy@example.com\",\n  \"password\": \"Password123\"\n}" }
+          }
+        },
+        {
+          "name": "Step 3 — Create Shipment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/shipments",
+            "body": { "mode": "raw", "raw": "{\n  \"senderName\": \"Happy Customer\",\n  \"senderPhone\": \"01712000001\",\n  \"senderAddress\": \"House 1, Gulshan\",\n  \"senderCity\": \"Dhaka\",\n  \"originZoneId\": \"{{zoneId}}\",\n  \"recipientName\": \"Joyful Recipient\",\n  \"recipientPhone\": \"01912000002\",\n  \"recipientAddress\": \"House 2, Agrabad\",\n  \"recipientCity\": \"Chittagong\",\n  \"destinationZoneId\": \"{{zoneId}}\",\n  \"deliveryType\": \"STANDARD\",\n  \"parcelType\": \"REGULAR\",\n  \"declaredWeightKg\": 1.0,\n  \"items\": [{\"description\": \"Gift\", \"weightKg\": 1.0, \"quantity\": 1, \"parcelType\": \"REGULAR\"}]\n}" }
+          }
+        },
+        {
+          "name": "Step 4 — Initiate bKash Payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/payments/bkash/initiate",
+            "body": { "mode": "raw", "raw": "{\n  \"shipmentId\": \"{{shipmentId}}\"\n}" }
+          }
+        },
+        {
+          "name": "Step 5 — Request Pickup (after bKash payment)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/shipments/{{shipmentId}}/pickup-request",
+            "body": { "mode": "raw", "raw": "{\n  \"notes\": \"Available after 2pm\"\n}" }
+          }
+        },
+        {
+          "name": "Step 6 — (OPS) Assign Pickup Courier",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/operations/assignments",
+            "body": { "mode": "raw", "raw": "{\n  \"shipmentId\": \"{{shipmentId}}\",\n  \"courierProfileId\": \"{{courierProfileId}}\",\n  \"type\": \"PICKUP\"\n}" }
+          }
+        },
+        {
+          "name": "Step 7 — (Courier) Confirm Pickup",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/courier/shipments/{{shipmentId}}/pickup-confirm"
+          }
+        },
+        {
+          "name": "Step 8 — (HUB) Create Transfer to Destination",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/hubs/{{hubId}}/transfers",
+            "body": { "mode": "raw", "raw": "{\n  \"shipmentId\": \"{{shipmentId}}\",\n  \"toHubId\": \"DEST_HUB_ID\"\n}" }
+          }
+        },
+        {
+          "name": "Step 9 — (DEST HUB) Confirm Arrival",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/hubs/DEST_HUB_ID/transfers/TRANSFER_ID/arrive"
+          }
+        },
+        {
+          "name": "Step 10 — (OPS) Assign Delivery Courier",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/operations/assignments",
+            "body": { "mode": "raw", "raw": "{\n  \"shipmentId\": \"{{shipmentId}}\",\n  \"courierProfileId\": \"{{courierProfileId}}\",\n  \"type\": \"DELIVERY\"\n}" }
+          }
+        },
+        {
+          "name": "Step 11 — (Courier) Record Delivery",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/courier/shipments/{{shipmentId}}/deliver",
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "notes", "value": "Delivered to recipient", "type": "text" }]
+            }
+          }
+        },
+        {
+          "name": "Step 12 — Track Completed Shipment (Public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/tracking/{{trackingNumber}}"
+          }
+        }
+      ]
+    }
+  ]
+}
