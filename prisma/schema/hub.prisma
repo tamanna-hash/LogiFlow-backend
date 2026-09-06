@@ -1,0 +1,44 @@
+model Hub {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  code      String    @unique
+  address   String
+  city      String
+  phone     String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  zones              Zone[]
+  couriers           CourierProfile[]
+  hubManagerProfile  HubManagerProfile?
+  shipmentsCurrently Shipment[]         @relation("CurrentHub")
+  transfersFrom      HubTransfer[]      @relation("FromHub")
+  transfersTo        HubTransfer[]      @relation("ToHub")
+
+  @@index([isActive])
+  @@index([deletedAt])
+  @@map("hubs")
+}
+
+model Zone {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  hubId       String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hub                  Hub           @relation(fields: [hubId], references: [id])
+  shipmentsOrigin      Shipment[]    @relation("OriginZone")
+  shipmentsDestination Shipment[]    @relation("DestinationZone")
+  pricingRulesOrigin   PricingRule[] @relation("OriginZonePricing")
+  pricingRulesDest     PricingRule[] @relation("DestinationZonePricing")
+
+  @@index([hubId])
+  @@index([isActive])
+  @@map("zones")
+}

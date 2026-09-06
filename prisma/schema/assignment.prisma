@@ -1,0 +1,32 @@
+model CourierAssignment {
+  id                 String           @id @default(cuid())
+  shipmentId         String
+  courierProfileId   String
+  type               AssignmentType   @default(PICKUP)
+  status             AssignmentStatus @default(ACTIVE)
+  assignedBy         String
+
+  assignedAt         DateTime  @default(now())
+  acceptedAt         DateTime?
+  rejectedAt         DateTime?
+  rejectionReason    String?
+  pickedUpAt         DateTime?
+  deliveredAt        DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shipment       Shipment       @relation(fields: [shipmentId], references: [id])
+  courierProfile CourierProfile @relation(fields: [courierProfileId], references: [id])
+
+  @@index([shipmentId])
+  @@index([courierProfileId])
+  @@index([status])
+  @@index([assignedAt])
+  // Partial unique index applied via migration SQL:
+  // CREATE UNIQUE INDEX courier_assignment_active_unique
+  // ON courier_assignments(shipment_id) WHERE status = 'ACTIVE';
+  @@map("courier_assignments")
+}

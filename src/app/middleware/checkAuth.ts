@@ -1,8 +1,9 @@
 import type { NextFunction, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthenticationError, AuthorizationError } from '../errors';
-import { verifyAccessToken } from '../lib/jwt';
+
 import type { Role } from '@prisma/client';
+import { verifyAccessToken } from '@/lib/jwt';
 
 /**
  * authenticate — verifies JWT, loads req.user from DB.

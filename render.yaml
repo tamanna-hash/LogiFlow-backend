@@ -3,7 +3,7 @@ services:
     name: logiflow-backend
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build && npx prisma migrate deploy
+    buildCommand: npm install && npm run build && npx prisma migrate deploy --schema=./prisma/schema
     startCommand: npm start
     envVars:
       - key: NODE_ENV

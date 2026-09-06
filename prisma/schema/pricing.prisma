@@ -1,0 +1,27 @@
+model PricingRule {
+  id                    String        @id @default(cuid())
+  name                  String
+  originZoneId          String?
+  destinationZoneId     String?
+  deliveryType          DeliveryType?
+  parcelType            ParcelType?
+  basePrice             Decimal       @db.Decimal(10, 2)
+  pricePerKg            Decimal       @db.Decimal(10, 2)
+  baseWeightKg          Float         @default(1.0)
+  zoneSurcharge         Decimal       @default(0) @db.Decimal(10, 2)
+  deliveryTypeSurcharge Decimal       @default(0) @db.Decimal(10, 2)
+  isActive              Boolean       @default(true)
+  isDefault             Boolean       @default(false)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  deletedAt             DateTime?
+
+  originZone      Zone? @relation("OriginZonePricing", fields: [originZoneId], references: [id])
+  destinationZone Zone? @relation("DestinationZonePricing", fields: [destinationZoneId], references: [id])
+
+  @@index([isActive])
+  @@index([originZoneId])
+  @@index([destinationZoneId])
+  @@index([deletedAt])
+  @@map("pricing_rules")
+}

@@ -1,0 +1,49 @@
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String?
+  role            Role      @default(CUSTOMER)
+  isEmailVerified Boolean   @default(false)
+  googleId        String?   @unique
+  avatarUrl       String?
+  firstName       String
+  lastName        String
+  phone           String?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  refreshTokens     RefreshToken[]
+  customerProfile   CustomerProfile?
+  courierProfile    CourierProfile?
+  hubManagerProfile HubManagerProfile?
+  shipments         Shipment[]         @relation("CustomerShipments")
+  notifications     Notification[]
+  auditLogsAsActor  AuditLog[]         @relation("AuditActor")
+
+  @@index([email])
+  @@index([googleId])
+  @@index([role])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model RefreshToken {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  tokenPrefix String
+  userId      String
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  userAgent   String?
+  ipAddress   String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([tokenPrefix])
+  @@map("refresh_tokens")
+}

@@ -1,0 +1,19 @@
+model PickupRequest {
+  id                 String              @id @default(cuid())
+  shipmentId         String              @unique
+  status             PickupRequestStatus @default(PENDING)
+  requestedAt        DateTime            @default(now())
+  scheduledAt        DateTime?
+  completedAt        DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+  notes              String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+
+  @@index([shipmentId])
+  @@index([status])
+  @@map("pickup_requests")
+}

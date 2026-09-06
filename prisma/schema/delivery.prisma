@@ -1,0 +1,19 @@
+model DeliveryAttempt {
+  id               String                 @id @default(cuid())
+  shipmentId       String
+  courierProfileId String
+  attemptNumber    Int
+  status           DeliveryAttemptStatus
+  failureReason    DeliveryFailureReason?
+  notes            String?
+  attemptedAt      DateTime               @default(now())
+  deliveredAt      DateTime?
+  proofImageUrl    String?
+
+  shipment       Shipment       @relation(fields: [shipmentId], references: [id])
+  courierProfile CourierProfile @relation(fields: [courierProfileId], references: [id])
+
+  @@index([shipmentId])
+  @@index([courierProfileId])
+  @@map("delivery_attempts")
+}

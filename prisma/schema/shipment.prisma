@@ -1,0 +1,96 @@
+model Shipment {
+  id             String         @id @default(cuid())
+  trackingNumber String         @unique
+  customerId     String
+  status         ShipmentStatus @default(CREATED)
+  paymentStatus  PaymentStatus  @default(PENDING)
+
+  senderName    String
+  senderPhone   String
+  senderAddress String
+  senderCity    String
+  originZoneId  String?
+
+  recipientName    String
+  recipientPhone   String
+  recipientAddress String
+  recipientCity    String
+  destinationZoneId String?
+
+  deliveryType     DeliveryType @default(STANDARD)
+  parcelType       ParcelType   @default(REGULAR)
+  declaredWeightKg Float
+  actualWeightKg   Float?
+  description      String?
+  specialInstructions String?
+
+  price Decimal @db.Decimal(10, 2)
+
+  currentHubId String?
+  originHubId  String?
+
+  deliveryAttemptCount Int       @default(0)
+  deliveredAt          DateTime?
+  returnedAt           DateTime?
+  cancelledAt          DateTime?
+  cancellationReason   String?
+  returnReason         String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  customer        User                    @relation("CustomerShipments", fields: [customerId], references: [id])
+  originZone      Zone?                   @relation("OriginZone", fields: [originZoneId], references: [id])
+  destinationZone Zone?                   @relation("DestinationZone", fields: [destinationZoneId], references: [id])
+  currentHub      Hub?                    @relation("CurrentHub", fields: [currentHubId], references: [id])
+  items           ShipmentItem[]
+  pickupRequest   PickupRequest?
+  assignments     CourierAssignment[]
+  trackingEvents  ShipmentTrackingEvent[]
+  hubTransfers    HubTransfer[]
+  deliveryAttempts DeliveryAttempt[]
+  payments        Payment[]
+
+  @@index([customerId])
+  @@index([trackingNumber])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([currentHubId])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("shipments")
+}
+
+model ShipmentItem {
+  id          String     @id @default(cuid())
+  shipmentId  String
+  description String
+  weightKg    Float
+  quantity    Int        @default(1)
+  parcelType  ParcelType @default(REGULAR)
+  createdAt   DateTime   @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  @@index([shipmentId])
+  @@map("shipment_items")
+}
+
+model ShipmentTrackingEvent {
+  id          String         @id @default(cuid())
+  shipmentId  String
+  status      ShipmentStatus
+  description String
+  location    String?
+  hubId       String?
+  actorId     String?
+  metadata    Json?
+  createdAt   DateTime       @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+
+  @@index([shipmentId])
+  @@index([createdAt])
+  @@map("shipment_tracking_events")
+}

@@ -1,0 +1,48 @@
+model CustomerProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  defaultAddress String?
+  city           String?
+  postalCode     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("customer_profiles")
+}
+
+model CourierProfile {
+  id              String              @id @default(cuid())
+  userId          String              @unique
+  hubId           String?
+  vehicleType     String?
+  vehicleNumber   String?
+  licenseNumber   String?
+  availability    CourierAvailability @default(AVAILABLE)
+  totalDeliveries Int                 @default(0)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hub              Hub?                @relation(fields: [hubId], references: [id])
+  assignments      CourierAssignment[]
+  deliveryAttempts DeliveryAttempt[]
+
+  @@index([hubId])
+  @@index([availability])
+  @@map("courier_profiles")
+}
+
+model HubManagerProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  hubId     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hub  Hub  @relation(fields: [hubId], references: [id])
+
+  @@map("hub_manager_profiles")
+}
