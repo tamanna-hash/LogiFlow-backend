@@ -203,19 +203,21 @@ model User {
 }
 
 model RefreshToken {
-  id        String    @id @default(cuid())
-  token     String    @unique
-  userId    String
-  expiresAt DateTime
-  revokedAt DateTime?
-  createdAt DateTime  @default(now())
-  userAgent String?
-  ipAddress String?
+  id          String    @id @default(cuid())
+  token       String    @unique
+  tokenPrefix String    // first 16 chars of raw token — plain text for efficient lookup
+  userId      String
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  userAgent   String?
+  ipAddress   String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([userId])
+  @@index([tokenPrefix])
   @@map("refresh_tokens")
 }
 
@@ -252,6 +254,7 @@ model CourierProfile {
   user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   hub         Hub?               @relation(fields: [hubId], references: [id])
   assignments CourierAssignment[]
+  deliveryAttempts DeliveryAttempt[]
 
   @@index([hubId])
   @@index([availability])

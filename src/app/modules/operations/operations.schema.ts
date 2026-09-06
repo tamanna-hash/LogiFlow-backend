@@ -16,6 +16,7 @@ export const updateShipmentStatusSchema = z.object({
   reason: z.string().max(300).optional(),
 });
 
+// ON_DELIVERY is system-managed — only AVAILABLE and UNAVAILABLE can be set manually
 export const updateCourierAvailabilitySchema = z.object({
-  availability: z.nativeEnum(CourierAvailability).exclude(['ON_DELIVERY']),
+  availability: z.enum(['AVAILABLE', 'UNAVAILABLE'] as const),
 });

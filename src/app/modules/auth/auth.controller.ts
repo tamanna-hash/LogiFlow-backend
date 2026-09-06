@@ -63,6 +63,7 @@ export function googleCallback(req: Request, res: Response, next: Parameters<typ
       const accessToken = signAccessToken({ sub: user.id, role: user.role });
       const rawRefreshToken = generateRefreshToken();
       const hashedRefreshToken = await hashToken(rawRefreshToken);
+      const tokenPrefix = rawRefreshToken.substring(0, 16);
 
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
@@ -70,6 +71,7 @@ export function googleCallback(req: Request, res: Response, next: Parameters<typ
       await prisma.refreshToken.create({
         data: {
           token: hashedRefreshToken,
+          tokenPrefix,
           userId: user.id,
           expiresAt,
           ipAddress: req.ip,

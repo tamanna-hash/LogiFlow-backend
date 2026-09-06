@@ -16,6 +16,7 @@ async function issueTokenPair(userId: string, role: string, meta?: { ip?: string
   const accessToken = signAccessToken({ sub: userId, role });
   const rawRefreshToken = generateRefreshToken();
   const hashedRefreshToken = await hashToken(rawRefreshToken);
+  const tokenPrefix = rawRefreshToken.substring(0, 16); // plain-text prefix for efficient lookup
 
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_TTL_DAYS);
@@ -23,6 +24,7 @@ async function issueTokenPair(userId: string, role: string, meta?: { ip?: string
   await prisma.refreshToken.create({
     data: {
       token: hashedRefreshToken,
+      tokenPrefix,
       userId,
       expiresAt,
       ipAddress: meta?.ip,
@@ -113,22 +115,18 @@ export async function refreshTokens(
   rawToken: string,
   meta?: { ip?: string; userAgent?: string },
 ): Promise<TokenPair> {
-  // Find all non-revoked tokens for potential match (can't look up by hash directly)
-  // Strategy: find candidate tokens by userId — but we don't have userId here.
-  // Instead: fetch recent non-revoked tokens and verify against each (max ~5 per user in practice)
-  // Better approach: store token identifier prefix in plain + hash the rest.
-  // For simplicity and correctness: find by scanning recent non-expired tokens.
-  // Production note: to avoid full table scan, store a short token ID alongside the hash.
+  // Efficient lookup: store first 16 chars of raw token as tokenPrefix (plaintext).
+  // This lets us look up a tiny set of candidates instead of scanning all tokens.
+  // Only one candidate will match per token since prefixes are sufficiently unique (2^64 space).
+  const tokenPrefix = rawToken.substring(0, 16);
 
-  // Find all non-revoked, non-expired refresh tokens
   const candidates = await prisma.refreshToken.findMany({
     where: {
+      tokenPrefix,
       revokedAt: null,
       expiresAt: { gt: new Date() },
     },
     select: { id: true, token: true, userId: true },
-    take: 1000, // safety cap — in production add token prefix index
-    orderBy: { createdAt: 'desc' },
   });
 
   let matched: (typeof candidates)[0] | undefined;

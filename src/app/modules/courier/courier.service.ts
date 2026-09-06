@@ -11,7 +11,7 @@ import type { DeliveryFailureReason } from '@prisma/client';
 async function getCourierProfile(userId: string) {
   const profile = await prisma.courierProfile.findUnique({
     where: { userId },
-    select: { id: true, availability: true },
+    select: { id: true, availability: true, totalDeliveries: true },
   });
   if (!profile) throw new NotFoundError('Courier profile not found.');
   return profile;
@@ -264,5 +264,5 @@ export async function getEarnings(userId: string, params: { page: number; limit:
     prisma.deliveryAttempt.count({ where }),
   ]);
 
-  return { deliveries, totalDeliveries: profile.availability, meta: buildPaginationMeta(total, page, limit) };
+  return { deliveries, totalDeliveries: profile.totalDeliveries, meta: buildPaginationMeta(total, page, limit) };
 }

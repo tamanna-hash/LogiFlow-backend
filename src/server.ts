@@ -10,12 +10,12 @@ async function bootstrap(): Promise<void> {
 
   const server = app.listen(PORT, () => {
     console.log(`
-╔══════════════════════════════════════════════════╗
-║         LogiFlow Backend API                     ║
-║  Environment : ${env.NODE_ENV.padEnd(32)}║
-║  Port        : ${String(PORT).padEnd(32)}║
-║  API Base    : http://localhost:${PORT}/api/v1${' '.repeat(Math.max(0, 15 - String(PORT).length))}║
-╚══════════════════════════════════════════════════╝
+
+       LogiFlow Backend API                     
+  Environment : ${env.NODE_ENV.padEnd(32)}║
+  Port        : ${String(PORT).padEnd(32)}║
+  API Base    : http://localhost:${PORT}/api/v1${' '.repeat(Math.max(0, 15 - String(PORT).length))}║
+
     `);
   });
 

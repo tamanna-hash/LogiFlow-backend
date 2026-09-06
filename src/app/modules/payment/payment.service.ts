@@ -26,13 +26,18 @@ export async function initiatePayment(shipmentId: string, userId: string) {
   });
   if (existingPayment) throw new ConflictError('A payment for this shipment is already in progress. Complete or cancel it first.');
 
-  // Create or find the PENDING payment record
-  const payment = await prisma.payment.upsert({
-    where: { id: (await prisma.payment.findFirst({ where: { shipmentId, status: 'PENDING', bkashPaymentId: null }, select: { id: true } }))?.id ?? 'new' },
-    create: { shipmentId, amount: shipment.price, status: 'PENDING' },
-    update: {},
+  // Find existing pending payment without a bKash ID, or create one
+  let payment = await prisma.payment.findFirst({
+    where: { shipmentId, status: 'PENDING', bkashPaymentId: null },
     select: { id: true, amount: true },
   });
+
+  if (!payment) {
+    payment = await prisma.payment.create({
+      data: { shipmentId, amount: shipment.price, status: 'PENDING' },
+      select: { id: true, amount: true },
+    });
+  }
 
   // Call bKash createpayment
   const bkashResult = await createBkashPayment({
