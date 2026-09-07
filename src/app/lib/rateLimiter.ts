@@ -8,45 +8,45 @@ const limiters = {
   // Auth endpoints — strict
   login: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(30, '1 h'),
+    limiter: Ratelimit.slidingWindow(60, '1 h'),
     prefix: 'rl:login',
   }),
   register: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(30, '1 h'),
+    limiter: Ratelimit.slidingWindow(60, '1 h'),
     prefix: 'rl:register',
   }),
   changePassword: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(30, '1 h'),
+    limiter: Ratelimit.slidingWindow(60, '1 h'),
     prefix: 'rl:change-password',
   }),
 
   // Payment — prevent abuse
   paymentInitiate: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(30, '1 h'),
+    limiter: Ratelimit.slidingWindow(60, '1 h'),
     prefix: 'rl:payment',
   }),
 
   // Public tracking endpoint
   publicTracking: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(30, '1 h'),
+    limiter: Ratelimit.slidingWindow(60, '1 h'),
     prefix: 'rl:tracking',
   }),
 
   // General authenticated API
   authenticated: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(30, '1 h'),
+    limiter: Ratelimit.slidingWindow(60, '1 h'),
     prefix: 'rl:auth-api',
   }),
 
   // General unauthenticated API
   unauthenticated: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(30, '1 h'),
+    limiter: Ratelimit.slidingWindow(60, '1 h'),
     prefix: 'rl:unauth-api',
   }),
 } as const;
