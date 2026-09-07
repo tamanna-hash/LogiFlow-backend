@@ -1,9 +1,11 @@
 import type { NextFunction, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthenticationError, AuthorizationError } from '../errors';
+import { verifyAccessToken } from '../lib/jwt';
 
-import type { Role } from '../../generated/prisma';
-import { verifyAccessToken } from '@/lib/jwt';
+// Role is the string union of the enum values — defined inline to avoid
+// dependency on the generated Prisma client path in middleware
+type Role = 'CUSTOMER' | 'COURIER' | 'HUB_MANAGER' | 'OPERATIONS_MANAGER' | 'ADMIN';
 
 /**
  * authenticate — verifies JWT, loads req.user from DB.
@@ -68,7 +70,9 @@ export const authorize = (...allowedRoles: Role[]) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) return next(new AuthenticationError('Authentication required.'));
     if (!allowedRoles.includes(req.user.role as Role)) {
-      return next(new AuthorizationError(`Access denied. Required role: ${allowedRoles.join(' or ')}.`));
+      return next(
+        new AuthorizationError(`Access denied. Required role: ${allowedRoles.join(' or ')}.`),
+      );
     }
     next();
   };

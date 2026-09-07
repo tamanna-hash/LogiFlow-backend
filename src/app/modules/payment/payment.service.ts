@@ -5,6 +5,7 @@ import { createAuditLog } from '../audit/audit.service';
 import { notifyPaymentCompleted } from '../notification/notification.service';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
 import type { PaymentStatus } from '../../../generated/prisma';
+import type { PrismaTx } from '../../types/prisma';
 
 export async function initiatePayment(shipmentId: string, userId: string) {
   const shipment = await prisma.shipment.findUnique({
@@ -116,7 +117,7 @@ export async function handleBkashCallback(paymentID: string) {
   }
 
   // Step 7: Atomic update of payment + shipment
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: PrismaTx) => {
     await tx.payment.update({
       where: { id: payment.id },
       data: {

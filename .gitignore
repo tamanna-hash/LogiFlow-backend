@@ -27,5 +27,8 @@ coverage/
 # Prisma
 prisma/migrations/dev.db
 
-# Prisma generated client
-src/generated/
+# Prisma generated client — commit TS files, exclude platform binaries
+src/generated/prisma/query_engine-windows.dll.node
+src/generated/prisma/query_engine-linux*
+src/generated/prisma/query_engine-darwin*
+src/generated/prisma/libquery_engine*

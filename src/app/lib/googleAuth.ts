@@ -3,6 +3,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { env } from '../config/env';
 import { prisma } from './prisma';
 import { ConflictError } from '../errors';
+import type { PrismaTx } from '../types/prisma';
 
 export interface GoogleProfile {
   id: string;
@@ -71,7 +72,7 @@ export function initGoogleStrategy(): void {
           }
 
           // Create new CUSTOMER account
-          const newUser = await prisma.$transaction(async (tx) => {
+          const newUser = await prisma.$transaction(async (tx: PrismaTx) => {
             const user = await tx.user.create({
               data: {
                 email,

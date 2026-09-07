@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     region: singapore
-    buildCommand: npm ci && npx prisma generate --schema=./prisma/schema && npx prisma migrate deploy --schema=./prisma/schema && npm run build
+    buildCommand: npm ci && npx prisma generate --schema=./prisma/schema && npx tsx scripts/postgenerate.ts && npx prisma migrate deploy --schema=./prisma/schema && npm run build
     startCommand: node dist/server.js
     envVars:
       - key: NODE_ENV

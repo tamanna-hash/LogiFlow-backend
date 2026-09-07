@@ -4,6 +4,7 @@ import { createAuditLog } from '../audit/audit.service';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
 import { notDeleted } from '../../utils/notDeleted';
 import type { CreateHubInput, CreateZoneInput, HubTransferInput } from './hub.schema';
+import type { PrismaTx } from '../../types/prisma';
 
 const hubSelect = {
   id: true, name: true, code: true, address: true, city: true,
@@ -178,7 +179,7 @@ export async function createHubTransfer(
   const destHub = await prisma.hub.findUnique({ where: { id: input.toHubId, ...notDeleted() }, select: { id: true, name: true } });
   if (!destHub) throw new NotFoundError('Destination hub not found.');
 
-  const transfer = await prisma.$transaction(async (tx) => {
+  const transfer = await prisma.$transaction(async (tx: PrismaTx) => {
     const t = await tx.hubTransfer.create({
       data: {
         shipmentId: input.shipmentId,
@@ -230,7 +231,7 @@ export async function confirmHubTransferArrival(
   if (transfer.toHubId !== hubId) throw new BadRequestError('This transfer is not destined for this hub.');
   if (transfer.status !== 'IN_TRANSIT') throw new BadRequestError('Transfer is not in-transit.');
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: PrismaTx) => {
     await tx.hubTransfer.update({ where: { id: transferId }, data: { status: 'ARRIVED', arrivedAt: new Date() } });
     await tx.shipment.update({
       where: { id: transfer.shipmentId },

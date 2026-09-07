@@ -6,6 +6,7 @@ import { cacheDel, CacheKeys } from '../../lib/redis';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
 import { notDeleted } from '../../utils/notDeleted';
 import { isValidTransition } from '../../types/enums';
+import type { PrismaTx } from '../../types/prisma';
 
 export async function assignCourier(
   input: { shipmentId: string; courierProfileId: string; type: AssignmentType },
@@ -52,7 +53,7 @@ export async function assignCourier(
   if (existingAssignment) throw new ConflictError('Shipment already has an active courier assignment.');
 
   // Transaction: SELECT FOR UPDATE on courier to prevent race condition
-  const assignment = await prisma.$transaction(async (tx) => {
+  const assignment = await prisma.$transaction(async (tx: PrismaTx) => {
     // Lock courier row and check availability
     const courier = await tx.$queryRaw<{ id: string; availability: string }[]>`
       SELECT id, availability FROM courier_profiles WHERE id = ${input.courierProfileId} FOR UPDATE
@@ -137,7 +138,7 @@ export async function cancelAssignment(assignmentId: string, reason: string, act
   if (!assignment) throw new NotFoundError('Assignment not found.');
   if (assignment.status !== 'ACTIVE') throw new BadRequestError('Assignment is not active.');
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: PrismaTx) => {
     await tx.courierAssignment.update({
       where: { id: assignmentId },
       data: { status: 'CANCELLED', cancelledAt: new Date(), cancellationReason: reason },
@@ -178,7 +179,7 @@ export async function updateShipmentStatus(
     }
   }
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: PrismaTx) => {
     await tx.shipment.update({ where: { id: shipmentId }, data: { status: newStatus } });
     await tx.shipmentTrackingEvent.create({
       data: {

@@ -7,6 +7,7 @@ import { safeUserSelect } from '../../types';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
 import { notDeleted } from '../../utils/notDeleted';
 import type { UpdateProfileInput, UpdateRoleInput } from './user.schema';
+import type { PrismaTx } from '../../types/prisma';
 
 const userWithProfileSelect = {
   ...safeUserSelect,
@@ -42,7 +43,7 @@ export async function updateProfile(
 
   const { firstName, lastName, phone, defaultAddress, city, postalCode, vehicleType, vehicleNumber, licenseNumber } = input;
 
-  return prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx: PrismaTx) => {
     const updated = await tx.user.update({
       where: { id: userId },
       data: {

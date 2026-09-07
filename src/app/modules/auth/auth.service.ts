@@ -15,6 +15,7 @@ import { createAuditLog } from '../audit/audit.service';
 import { safeUserSelect } from '../../types';
 import type { RegisterInput, VerifyEmailInput, LoginInput, ChangePasswordInput } from './auth.schema';
 import type { TokenPair } from '../../types';
+import type { PrismaTx } from '../../types/prisma';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const REFRESH_TOKEN_TTL_DAYS = 7;
@@ -192,7 +193,7 @@ export async function verifyUserEmail(
   // A partial user-without-profile row is never possible.
   // If two concurrent verification requests arrive simultaneously,
   // the unique constraint on `email` will cause the second to throw P2002 → 409.
-  const user = await prisma.$transaction(async (tx) => {
+  const user = await prisma.$transaction(async (tx: PrismaTx) => {
     const newUser = await tx.user.create({
       data: {
         email: pendingData.email,

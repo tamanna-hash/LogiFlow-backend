@@ -6,6 +6,7 @@ import { cacheDel, CacheKeys } from '../../lib/redis';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import type { AssignmentStatus, AssignmentType, DeliveryFailureReason } from '../../../generated/prisma';
+import type { PrismaTx } from '../../types/prisma';
 
 async function getCourierProfile(userId: string) {
   const profile = await prisma.courierProfile.findUnique({
@@ -81,7 +82,7 @@ export async function rejectAssignment(assignmentId: string, userId: string, rea
   if (assignment.courierProfileId !== profile.id) throw new AuthorizationError();
   if (assignment.status !== 'ACTIVE') throw new BadRequestError('Assignment is not active.');
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: PrismaTx) => {
     await tx.courierAssignment.update({
       where: { id: assignmentId },
       data: { status: 'REJECTED', rejectedAt: new Date(), rejectionReason: reason },
@@ -108,7 +109,7 @@ export async function confirmPickup(shipmentId: string, userId: string) {
   if (!shipment) throw new NotFoundError('Shipment not found.');
   if (shipment.status !== 'ASSIGNED') throw new BadRequestError(`Shipment must be ASSIGNED to confirm pickup. Current: ${shipment.status}`);
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: PrismaTx) => {
     await tx.shipment.update({ where: { id: shipmentId }, data: { status: 'PICKED_UP' } });
     await tx.courierAssignment.update({ where: { id: assignment.id }, data: { pickedUpAt: new Date() } });
     await tx.shipmentTrackingEvent.create({
@@ -142,7 +143,7 @@ export async function recordDelivery(shipmentId: string, userId: string, notes?:
 
   const attemptNumber = await prisma.deliveryAttempt.count({ where: { shipmentId } });
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: PrismaTx) => {
     await tx.deliveryAttempt.create({
       data: {
         shipmentId,
@@ -194,7 +195,7 @@ export async function recordDeliveryFailed(
   const newAttemptCount = shipment.deliveryAttemptCount + 1;
   const attemptNumber = await prisma.deliveryAttempt.count({ where: { shipmentId } });
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: PrismaTx) => {
     await tx.deliveryAttempt.create({
       data: {
         shipmentId,

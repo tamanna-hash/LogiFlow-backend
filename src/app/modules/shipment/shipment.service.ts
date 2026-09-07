@@ -14,6 +14,7 @@ import {
   isValidTransition,
 } from '../../types/enums';
 import type { CreateShipmentInput } from './shipment.schema';
+import type { PrismaTx } from '../../types/prisma';
 
 const shipmentListSelect = {
   id: true, trackingNumber: true, status: true, paymentStatus: true,
@@ -63,7 +64,7 @@ export async function createShipment(
 
   const trackingNumber = await generateTrackingNumber();
 
-  const shipment = await prisma.$transaction(async (tx) => {
+  const shipment = await prisma.$transaction(async (tx: PrismaTx) => {
     const s = await tx.shipment.create({
       data: {
         trackingNumber,
@@ -240,7 +241,7 @@ export async function cancelShipment(
     throw new BadRequestError(`Cannot cancel shipment in status: ${shipment.status}`);
   }
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: PrismaTx) => {
     await tx.shipment.update({ where: { id }, data: { status: 'CANCELLED', cancelledAt: new Date(), cancellationReason: reason } });
 
     // Cancel active assignment and free courier
@@ -273,7 +274,7 @@ export async function requestPickup(
   if (shipment.status !== 'CREATED') throw new BadRequestError(`Shipment must be in CREATED status to request pickup. Current: ${shipment.status}`);
   if (shipment.paymentStatus !== 'COMPLETED') throw new BadRequestError('Payment must be completed before requesting pickup.');
 
-  const pickup = await prisma.$transaction(async (tx) => {
+  const pickup = await prisma.$transaction(async (tx: PrismaTx) => {
     const p = await tx.pickupRequest.create({
       data: {
         shipmentId,
@@ -315,7 +316,7 @@ export async function initiateReturn(shipmentId: string, reason: string, actorId
   if (!shipment) throw new NotFoundError('Shipment not found.');
   if (shipment.status !== 'DELIVERY_FAILED') throw new BadRequestError('Return can only be initiated for DELIVERY_FAILED shipments.');
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: PrismaTx) => {
     await tx.shipment.update({ where: { id: shipmentId }, data: { status: 'RETURN_INITIATED', returnReason: reason } });
     await tx.shipmentTrackingEvent.create({
       data: { shipmentId, status: 'RETURN_INITIATED', description: `Return initiated: ${reason}`, actorId },
