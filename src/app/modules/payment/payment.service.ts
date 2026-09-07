@@ -48,6 +48,8 @@ export async function initiatePayment(shipmentId: string, userId: string) {
     merchantInvoiceNumber: payment.id,
   });
 
+  console.log('[bKash] createpayment response:', JSON.stringify(bkashResult));
+
   // Store bkashPaymentId
   await prisma.payment.update({
     where: { id: payment.id },
@@ -89,6 +91,9 @@ export async function handleBkashCallback(paymentID: string) {
 
   // Step 3: Call bKash executepayment (server-side verification)
   const executeResult = await executeBkashPayment(paymentID);
+
+  // Log full bKash response in development to diagnose failures
+  console.log('[bKash] executepayment response:', JSON.stringify(executeResult));
 
   // Step 4: Validate response
   if (executeResult.transactionStatus !== 'Completed') {
