@@ -90,9 +90,10 @@ export async function registerUser(
 
   // Store both keys with TTL — re-registering before verification simply overwrites them
   // (this is intentional: no conflict, just a fresh OTP)
+  // Store pendingData as an object — Upstash handles JSON serialization automatically
   await Promise.all([
     redis.set(CacheKeys.registrationOtp(email), otp, { ex: OTP_TTL_SECONDS }),
-    redis.set(CacheKeys.registrationData(email), JSON.stringify(pendingData), { ex: OTP_TTL_SECONDS }),
+    redis.set(CacheKeys.registrationData(email), pendingData, { ex: OTP_TTL_SECONDS }),
   ]);
 
   // Send verification email — awaited so we can catch Resend failures before responding
@@ -182,14 +183,13 @@ export async function verifyUserEmail(
   await redis.del(CacheKeys.registrationOtp(email));
 
   // ── Fetch pending registration data ───────────────────────────────────────
-  const rawData = await redis.get<string>(CacheKeys.registrationData(email));
-  if (!rawData) {
+  // Upstash deserializes the stored object automatically — no JSON.parse needed
+  const pendingData = await redis.get<PendingRegistrationData>(CacheKeys.registrationData(email));
+  if (!pendingData) {
     throw new NotFoundError(
       'Registration data not found. Your session may have expired — please register again.',
     );
   }
-
-  const pendingData: PendingRegistrationData = JSON.parse(rawData);
 
   // ── Create user + profile in a single transaction ─────────────────────────
   // A partial user-without-profile row is never possible.
