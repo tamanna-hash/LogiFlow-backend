@@ -5,7 +5,7 @@ import { notifyDelivered, notifyDeliveryFailed } from '../notification/notificat
 import { cacheDel, CacheKeys } from '../../lib/redis';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
 import { uploadToCloudinary } from '../../lib/cloudinary';
-import type { AssignmentStatus, AssignmentType, DeliveryFailureReason } from '@prisma/client';
+import type { AssignmentStatus, AssignmentType, DeliveryFailureReason } from '../../../generated/prisma';
 
 async function getCourierProfile(userId: string) {
   const profile = await prisma.courierProfile.findUnique({

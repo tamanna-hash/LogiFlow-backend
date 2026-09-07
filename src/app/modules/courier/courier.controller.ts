@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import * as courierService from './courier.service';
 import { sendSuccess } from '../../utils/response';
 import { paginationSchema } from '../../utils/pagination';
-import type { AssignmentStatus, AssignmentType, DeliveryFailureReason } from '@prisma/client';
+import type { AssignmentStatus, AssignmentType, DeliveryFailureReason } from '../../../generated/prisma';
 
 export async function getAssignments(req: Request, res: Response): Promise<void> {
   const { page, limit } = paginationSchema.parse(req.query);

@@ -4,7 +4,7 @@ import { NotFoundError, BadRequestError, AuthorizationError, ConflictError } fro
 import { createAuditLog } from '../audit/audit.service';
 import { notifyPaymentCompleted } from '../notification/notification.service';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
-import type { PaymentStatus } from '@prisma/client';
+import type { PaymentStatus } from '../../../generated/prisma';
 
 export async function initiatePayment(shipmentId: string, userId: string) {
   const shipment = await prisma.shipment.findUnique({

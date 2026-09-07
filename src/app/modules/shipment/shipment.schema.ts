@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DeliveryType, ParcelType, ShipmentStatus } from '@prisma/client';
+import { DeliveryType, ParcelType, ShipmentStatus } from '../../../generated/prisma';
 
 const shipmentItemSchema = z.object({
   description: z.string().min(1).max(200),

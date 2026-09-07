@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import * as pricingService from './pricing.service';
 import { sendSuccess, sendCreated } from '../../utils/response';
 import { paginationSchema } from '../../utils/pagination';
-import type { DeliveryType } from '@prisma/client';
+import type { DeliveryType } from '../../../generated/prisma';
 
 export async function createRule(req: Request, res: Response): Promise<void> {
   const rule = await pricingService.createPricingRule(req.body, req.user!.id);

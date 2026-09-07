@@ -1,4 +1,4 @@
-import type { Role, ShipmentStatus } from '@prisma/client';
+import type { Role, ShipmentStatus } from '../../../generated/prisma';
 import { prisma } from '../../lib/prisma';
 import { calculatePrice } from '../pricing/pricing.service';
 import { generateTrackingNumber } from '../../utils/trackingNumber';

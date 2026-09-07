@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Role } from '@prisma/client';
+import { Role } from '../../../generated/prisma';
 
 export const updateProfileSchema = z.object({
   firstName: z.string().min(2).max(50).optional(),

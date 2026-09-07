@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import * as opsService from './operations.service';
 import { sendSuccess, sendCreated } from '../../utils/response';
 import { paginationSchema } from '../../utils/pagination';
-import type { CourierAvailability, Role } from '@prisma/client';
+import type { CourierAvailability, Role } from '../../../generated/prisma';
 
 export async function assignCourier(req: Request, res: Response): Promise<void> {
   const user = req.user!;

@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthenticationError, AuthorizationError } from '../errors';
 
-import type { Role } from '@prisma/client';
+import type { Role } from '../../generated/prisma';
 import { verifyAccessToken } from '@/lib/jwt';
 
 /**

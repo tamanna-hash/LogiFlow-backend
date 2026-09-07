@@ -1,4 +1,4 @@
-import type { Role } from '@prisma/client';
+import type { Role } from '../../../generated/prisma';
 import { prisma } from '../../lib/prisma';
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { NotFoundError, BadRequestError } from '../../errors';

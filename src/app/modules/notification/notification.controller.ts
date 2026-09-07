@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import * as notificationService from './notification.service';
 import { sendSuccess } from '../../utils/response';
 import { paginationSchema } from '../../utils/pagination';
-import type { NotificationType } from '@prisma/client';
+import type { NotificationType } from '../../../generated/prisma';
 
 export async function getNotifications(req: Request, res: Response): Promise<void> {
   const { page, limit } = paginationSchema.parse(req.query);

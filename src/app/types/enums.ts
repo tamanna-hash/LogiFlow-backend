@@ -17,11 +17,11 @@ export {
   DeliveryFailureReason,
   NotificationType,
   AuditAction,
-} from '@prisma/client';
+} from '../../generated/prisma';
 
 // ── Allowed status transitions (state machine) ──────────────────────────────
 
-import { type ShipmentStatus as SS } from '@prisma/client';
+import { type ShipmentStatus as SS } from '../../generated/prisma';
 
 export const VALID_TRANSITIONS: Record<SS, SS[]> = {
   CREATED: ['PICKUP_REQUESTED', 'CANCELLED'],

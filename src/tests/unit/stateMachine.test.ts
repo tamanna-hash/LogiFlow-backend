@@ -5,7 +5,7 @@ import {
   TERMINAL_STATUSES,
   CUSTOMER_CANCELLABLE_STATUSES,
 } from '../../app/types/enums';
-import type { ShipmentStatus } from '@prisma/client';
+import type { ShipmentStatus } from '../../../generated/prisma';
 
 describe('State Machine — isValidTransition', () => {
 

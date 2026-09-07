@@ -2,7 +2,7 @@ import { prisma } from '../../lib/prisma';
 import { cacheGet, cacheSet, CacheKeys } from '../../lib/redis';
 import { notDeleted } from '../../utils/notDeleted';
 import { getAuditLogs } from '../audit/audit.service';
-import type { AuditAction } from '@prisma/client';
+import type { AuditAction } from '../../../generated/prisma';
 
 export async function getSystemStats() {
   const cacheKey = CacheKeys.adminStats();

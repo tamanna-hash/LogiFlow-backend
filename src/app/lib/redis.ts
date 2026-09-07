@@ -54,4 +54,7 @@ export const CacheKeys = {
   adminStats: () => 'admin:stats',
   bkashIdToken: () => 'bkash:idToken',
   bkashRefreshToken: () => 'bkash:refreshToken',
+  // OTP registration keys — namespaced, always TTL'd
+  registrationOtp: (email: string) => `registration-otp:${email}`,
+  registrationData: (email: string) => `registration-data:${email}`,
 };

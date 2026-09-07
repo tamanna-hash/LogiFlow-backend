@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../generated/prisma';
 import { AppError } from '../errors';
 import { env } from '../config/env';
 

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DeliveryType, ParcelType } from '@prisma/client';
+import { DeliveryType, ParcelType } from '../../../generated/prisma';
 
 export const createPricingRuleSchema = z.object({
   name: z.string().min(2).max(100),

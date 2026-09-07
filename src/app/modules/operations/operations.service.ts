@@ -1,4 +1,4 @@
-import type { AssignmentType, CourierAvailability, Role, ShipmentStatus } from '@prisma/client';import { prisma } from '../../lib/prisma';
+import type { AssignmentType, CourierAvailability, Role, ShipmentStatus } from '../../../generated/prisma';import { prisma } from '../../lib/prisma';
 import { NotFoundError, BadRequestError, ConflictError, AuthorizationError } from '../../errors';
 import { createAuditLog } from '../audit/audit.service';
 import { notifyCourierAssigned, notifyOutForDelivery } from '../notification/notification.service';

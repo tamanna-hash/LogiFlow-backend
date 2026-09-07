@@ -4,7 +4,7 @@ import { sendSuccess } from '../../utils/response';
 import { paginationSchema } from '../../utils/pagination';
 import { buildPaginationMeta } from '../../utils/pagination';
 import { getSystemStats, getAuditLogList } from './admin.service';
-import type { AuditAction } from '@prisma/client';
+import type { AuditAction } from '../../../generated/prisma';
 
 const router = Router();
 router.use(authenticate);

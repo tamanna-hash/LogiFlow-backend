@@ -3,7 +3,10 @@ import { z } from 'zod';
 export const registerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters').max(50),
   lastName: z.string().min(2, 'Last name must be at least 2 characters').max(50),
-  email: z.string().email('Invalid email address').toLowerCase(),
+  email: z
+    .string()
+    .email('Invalid email address')
+    .transform((v) => v.trim().toLowerCase()),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -14,8 +17,22 @@ export const registerSchema = z.object({
     .optional(),
 });
 
+export const verifyEmailSchema = z.object({
+  email: z
+    .string()
+    .email('Invalid email address')
+    .transform((v) => v.trim().toLowerCase()),
+  otp: z
+    .string()
+    .length(6, 'OTP must be exactly 6 digits')
+    .regex(/^\d{6}$/, 'OTP must be a 6-digit number'),
+});
+
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address').toLowerCase(),
+  email: z
+    .string()
+    .email('Invalid email address')
+    .transform((v) => v.trim().toLowerCase()),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -36,5 +53,6 @@ export const changePasswordSchema = z.object({
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

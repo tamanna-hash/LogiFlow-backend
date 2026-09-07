@@ -1,4 +1,4 @@
-import type { DeliveryType } from '@prisma/client';
+import type { DeliveryType } from '../../../generated/prisma';
 import { prisma } from '../../lib/prisma';
 import { cacheGet, cacheSet, CacheKeys } from '../../lib/redis';
 import { NotFoundError, BadRequestError } from '../../errors';

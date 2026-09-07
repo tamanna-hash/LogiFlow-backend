@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import * as shipmentService from './shipment.service';
 import { sendSuccess, sendCreated } from '../../utils/response';
 import { shipmentListQuerySchema } from './shipment.schema';
-import type { Role } from '@prisma/client';
+import type { Role } from '../../../generated/prisma';
 
 export async function createShipment(req: Request, res: Response): Promise<void> {
   const user = req.user!;

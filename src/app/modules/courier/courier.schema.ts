@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DeliveryFailureReason } from '@prisma/client';
+import { DeliveryFailureReason } from '../../../generated/prisma';
 
 export const updateAvailabilitySchema = z.object({
   availability: z.enum(['AVAILABLE', 'UNAVAILABLE'] as const),

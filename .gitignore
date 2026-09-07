@@ -26,3 +26,6 @@ coverage/
 
 # Prisma
 prisma/migrations/dev.db
+
+# Prisma generated client
+src/generated/

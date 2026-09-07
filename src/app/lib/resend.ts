@@ -131,3 +131,40 @@ export function outForDeliveryEmail(data: {
     </div>
   `;
 }
+
+export function otpVerificationEmail(data: {
+  name: string;
+  email: string;
+  otp: string;
+  expirationMinutes: number;
+}): string {
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; border: 1px solid #e5e7eb; border-radius: 8px;">
+      <h2 style="color: #1f2937; margin-bottom: 8px;">Verify your email — LogiFlow</h2>
+      <p style="color: #6b7280;">Hi ${data.name},</p>
+      <p style="color: #374151;">Use the code below to verify your email address <strong>${data.email}</strong>.</p>
+      <div style="margin: 24px 0; text-align: center;">
+        <span style="display: inline-block; font-size: 36px; font-weight: 700; letter-spacing: 12px; color: #111827; background: #f3f4f6; padding: 16px 24px; border-radius: 8px;">
+          ${data.otp}
+        </span>
+      </div>
+      <p style="color: #6b7280; font-size: 14px;">
+        This code expires in <strong>${data.expirationMinutes} minutes</strong>.
+        If you did not create a LogiFlow account, you can safely ignore this email.
+      </p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+      <p style="color: #9ca3af; font-size: 12px;">LogiFlow — Courier &amp; Logistics Management Platform</p>
+    </div>
+  `;
+}
+
+export function welcomeEmail(data: { name: string; email: string }): string {
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px;">
+      <h2 style="color: #1f2937;">Welcome to LogiFlow, ${data.name}!</h2>
+      <p style="color: #374151;">Your account for <strong>${data.email}</strong> is now active.</p>
+      <p style="color: #374151;">You can now book shipments, track parcels, and manage your logistics — all in one place.</p>
+      <p style="color: #6b7280; font-size: 14px;">Thank you for choosing LogiFlow.</p>
+    </div>
+  `;
+}
