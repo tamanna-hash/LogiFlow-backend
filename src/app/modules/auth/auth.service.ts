@@ -13,6 +13,7 @@ import {
   ServiceUnavailableError,
 } from '../../errors';
 import { createAuditLog } from '../audit/audit.service';
+import { env } from '../../config/env';
 import { safeUserSelect } from '../../types';
 import type { RegisterInput, VerifyEmailInput, LoginInput, ChangePasswordInput } from './auth.schema';
 import type { TokenPair } from '../../types';
@@ -117,12 +118,14 @@ export async function registerUser(
         expirationMinutes: OTP_EXPIRATION_MINUTES,
       }),
     });
-  } catch {
+  } catch (err) {
     await Promise.allSettled([
       redis.del(CacheKeys.registrationOtp(email)),
       redis.del(CacheKeys.registrationData(email)),
     ]);
-    throw new ServiceUnavailableError('Failed to send verification email. Please try again.');
+    const detail = err instanceof Error ? err.message : 'Unknown email provider error';
+    console.error('[Auth] Verification email failed:', { to: email, from: env.RESEND_FROM_EMAIL, detail });
+    throw new ServiceUnavailableError(`Failed to send verification email: ${detail}`);
   }
 
   // Audit: log that a registration was initiated (no OTP in the log)

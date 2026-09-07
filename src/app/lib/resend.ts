@@ -4,7 +4,9 @@ import { env } from '../config/env';
 export const resend = new Resend(env.RESEND_API_KEY);
 
 // Use RESEND_FROM_EMAIL — sandbox: onboarding@resend.dev; production: your verified domain
-const FROM_ADDRESS = `LogiFlow <${env.RESEND_FROM_EMAIL}>`;
+export const FROM_ADDRESS = `LogiFlow <${env.RESEND_FROM_EMAIL}>`;
+
+console.log('[Resend] From address:', FROM_ADDRESS);
 
 export interface SendEmailOptions {
   to: string | string[];

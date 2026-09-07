@@ -24,7 +24,15 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().min(1, 'CLOUDINARY_API_SECRET is required'),
 
   RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
-  RESEND_FROM_EMAIL: z.string().email().default('onboarding@resend.dev'),
+  RESEND_FROM_EMAIL: z
+    .string()
+    .default('onboarding@resend.dev')
+    .transform((value) => {
+      const trimmed = value.trim();
+      const wrapped = trimmed.match(/<([^>]+)>/);
+      return (wrapped ? wrapped[1] : trimmed).trim();
+    })
+    .pipe(z.string().email()),
 
   BKASH_BASE_URL: z.string().url('BKASH_BASE_URL must be a valid URL'),
   BKASH_USERNAME: z.string().min(1, 'BKASH_USERNAME is required'),

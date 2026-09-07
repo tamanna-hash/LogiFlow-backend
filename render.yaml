@@ -40,7 +40,7 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: RESEND_FROM_EMAIL
-        sync: false
+        value: onboarding@resend.dev
       - key: BKASH_BASE_URL
         sync: false
       - key: BKASH_USERNAME
