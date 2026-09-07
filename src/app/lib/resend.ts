@@ -41,7 +41,6 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
     console.warn('[Resend] Email send error:', err);
   }
 }
-}
 
 // ── Email templates ───────────────────────────────────────────────────────────
 

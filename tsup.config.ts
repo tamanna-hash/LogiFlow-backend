@@ -10,5 +10,8 @@ export default defineConfig({
   splitting: false,
   bundle: true,
   minify: false,
-  external: ['argon2', '@prisma/client'],
+  // argon2 has native bindings — must stay external so Node loads the .node file at runtime
+  external: ['argon2'],
+  // Do NOT externalize the generated prisma client — bundle it in
+  noExternal: [/generated\/prisma/],
 });
