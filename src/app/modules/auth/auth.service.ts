@@ -164,15 +164,17 @@ export async function verifyUserEmail(
   }
 
   // ── Fetch OTP from Redis ───────────────────────────────────────────────────
-  const storedOtp = await redis.get<string>(CacheKeys.registrationOtp(email));
-  if (!storedOtp) {
+  // redis.get may return number (Upstash auto-parses JSON integers) — coerce to string
+  const storedOtpRaw = await redis.get(CacheKeys.registrationOtp(email));
+  if (!storedOtpRaw) {
     throw new BadRequestError(
       'Verification code has expired or is invalid. Please register again to receive a new code.',
     );
   }
+  const storedOtp = String(storedOtpRaw);
 
-  // ── Compare OTP as strings (timing-safe via constant comparison) ────────────
-  if (storedOtp !== input.otp) {
+  // ── Compare OTP as strings ────────────────────────────────────────────────
+  if (storedOtp !== String(input.otp)) {
     throw new BadRequestError('Verification code does not match. Please check and try again.');
   }
 
