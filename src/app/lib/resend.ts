@@ -3,7 +3,12 @@ import { env } from '../config/env';
 
 export const resend = new Resend(env.RESEND_API_KEY);
 
-const FROM_ADDRESS = 'LogiFlow <noreply@logiflow.app>';
+// In development: use Resend's sandbox domain (no domain verification needed)
+// In production: change to your verified domain e.g. 'LogiFlow <noreply@yourdomain.com>'
+const FROM_ADDRESS =
+  env.NODE_ENV === 'production'
+    ? 'LogiFlow <noreply@logiflow.app>'
+    : 'LogiFlow <onboarding@resend.dev>';
 
 export interface SendEmailOptions {
   to: string | string[];
@@ -13,13 +18,13 @@ export interface SendEmailOptions {
 }
 
 /**
- * sendEmail — fire-and-forget wrapper around Resend.
- * Email failures are non-fatal: errors are logged but never thrown.
- * The parent operation (shipment creation, etc.) always succeeds regardless.
+ * sendEmail — sends email via Resend.
+ * Non-critical emails (notifications, welcome) swallow errors.
+ * Use sendEmailCritical for OTP/auth emails where failure should be visible.
  */
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
   try {
-    const { error } = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to: options.to,
       subject: options.subject,
@@ -28,11 +33,14 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
     });
 
     if (error) {
-      console.warn('[Resend] Email send failed:', error);
+      console.warn('[Resend] Email send failed:', JSON.stringify(error));
+    } else {
+      console.log('[Resend] Email sent, id:', data?.id);
     }
   } catch (err) {
     console.warn('[Resend] Email send error:', err);
   }
+}
 }
 
 // ── Email templates ───────────────────────────────────────────────────────────

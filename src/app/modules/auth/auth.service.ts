@@ -94,18 +94,27 @@ export async function registerUser(
     redis.set(CacheKeys.registrationData(email), JSON.stringify(pendingData), { ex: OTP_TTL_SECONDS }),
   ]);
 
-  // Send verification email — fire and wait (registration is blocked until email is sent)
-  // OTP is NEVER logged
-  await sendEmail({
-    to: email,
-    subject: 'Verify your LogiFlow account',
-    html: otpVerificationEmail({
-      name: input.firstName,
-      email,
-      otp,
-      expirationMinutes: OTP_EXPIRATION_MINUTES,
-    }),
-  });
+  // Send verification email — awaited so we can catch Resend failures before responding
+  // OTP is NEVER logged — only passed directly to the email template
+  try {
+    await sendEmail({
+      to: email,
+      subject: 'Verify your LogiFlow account',
+      html: otpVerificationEmail({
+        name: input.firstName,
+        email,
+        otp,
+        expirationMinutes: OTP_EXPIRATION_MINUTES,
+      }),
+    });
+  } catch (err) {
+    // If email fails, clean up Redis keys so the user can retry cleanly
+    await Promise.allSettled([
+      redis.del(CacheKeys.registrationOtp(email)),
+      redis.del(CacheKeys.registrationData(email)),
+    ]);
+    throw new Error('Failed to send verification email. Please try again.');
+  }
 
   // Audit: log that a registration was initiated (no OTP in the log)
   await createAuditLog({

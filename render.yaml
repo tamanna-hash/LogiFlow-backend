@@ -3,11 +3,14 @@ services:
     name: logiflow-backend
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build && npx prisma migrate deploy --schema=./prisma/schema
-    startCommand: npm start
+    region: singapore
+    buildCommand: npm install && npx prisma generate --schema=./prisma/schema && npx prisma migrate deploy --schema=./prisma/schema && npx tsup
+    startCommand: node dist/server.js
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: "3000"
       - key: DATABASE_URL
         sync: false
       - key: JWT_ACCESS_SECRET
