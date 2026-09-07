@@ -36,6 +36,7 @@ vi.mock('../../app/lib/redis', () => ({
 // Mock Resend — email sending
 vi.mock('../../app/lib/resend', () => ({
   sendEmail: vi.fn().mockResolvedValue(undefined),
+  sendEmailCritical: vi.fn().mockResolvedValue(undefined),
   otpVerificationEmail: vi.fn().mockReturnValue('<html>otp</html>'),
   welcomeEmail: vi.fn().mockReturnValue('<html>welcome</html>'),
 }));
@@ -70,7 +71,7 @@ describe('AuthService — registerUser (OTP flow, step 1)', () => {
 
   it('stores OTP + data in Redis and sends email (returns void)', async () => {
     const { redis } = await import('../../app/lib/redis');
-    const { sendEmail } = await import('../../app/lib/resend');
+    const { sendEmailCritical } = await import('../../app/lib/resend');
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
     vi.mocked(argon2Lib.hashPassword).mockResolvedValue('$argon2id$hashed');
@@ -82,7 +83,7 @@ describe('AuthService — registerUser (OTP flow, step 1)', () => {
     // Redis set called twice: OTP key + data key
     expect(redis.set).toHaveBeenCalledTimes(2);
     // Email sent once
-    expect(sendEmail).toHaveBeenCalledOnce();
+    expect(sendEmailCritical).toHaveBeenCalledOnce();
   });
 
   it('re-registers same email before verification — overwrites Redis keys (no conflict)', async () => {
@@ -133,7 +134,7 @@ describe('AuthService — verifyUserEmail (OTP flow, step 2)', () => {
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null); // no existing user
     vi.mocked(redis.get)
-      .mockResolvedValueOnce('123456')                         // OTP key
+      .mockResolvedValueOnce({ code: '123456' })                 // OTP key
       .mockResolvedValueOnce(pendingRegistrationData);         // data key
     vi.mocked(redis.del).mockResolvedValue(1 as never);
     vi.mocked(argon2Lib.hashToken).mockResolvedValue('$argon2id$token_hash');
@@ -159,7 +160,7 @@ describe('AuthService — verifyUserEmail (OTP flow, step 2)', () => {
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
     vi.mocked(redis.get)
-      .mockResolvedValueOnce('654321')
+      .mockResolvedValueOnce({ code: '654321' })
       .mockResolvedValueOnce(pendingRegistrationData);
     vi.mocked(redis.del).mockResolvedValue(1 as never);
     vi.mocked(argon2Lib.hashToken).mockResolvedValue('hash');
@@ -191,7 +192,7 @@ describe('AuthService — verifyUserEmail (OTP flow, step 2)', () => {
     const { redis } = await import('../../app/lib/redis');
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-    vi.mocked(redis.get).mockResolvedValueOnce('999999'); // stored OTP is different
+    vi.mocked(redis.get).mockResolvedValueOnce({ code: '999999' }); // stored OTP is different
 
     await expect(
       verifyUserEmail({ email: 'customer@test.com', otp: '123456' }),
@@ -203,7 +204,7 @@ describe('AuthService — verifyUserEmail (OTP flow, step 2)', () => {
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
     vi.mocked(redis.get)
-      .mockResolvedValueOnce('123456') // OTP matches
+      .mockResolvedValueOnce({ code: '123456' }) // OTP matches
       .mockResolvedValueOnce(null);    // registration-data already expired
     vi.mocked(redis.del).mockResolvedValue(1 as never);
 

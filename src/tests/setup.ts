@@ -71,6 +71,7 @@ vi.mock('../app/lib/redis', () => ({
 // Mock Resend
 vi.mock('../app/lib/resend', () => ({
   sendEmail: vi.fn().mockResolvedValue(undefined),
+  sendEmailCritical: vi.fn().mockResolvedValue(undefined),
   shipmentCreatedEmail: vi.fn().mockReturnValue('<html>'),
   paymentConfirmedEmail: vi.fn().mockReturnValue('<html>'),
   courierAssignedEmail: vi.fn().mockReturnValue('<html>'),

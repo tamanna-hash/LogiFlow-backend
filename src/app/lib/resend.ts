@@ -3,12 +3,8 @@ import { env } from '../config/env';
 
 export const resend = new Resend(env.RESEND_API_KEY);
 
-// In development: use Resend's sandbox domain (no domain verification needed)
-// In production: change to your verified domain e.g. 'LogiFlow <noreply@yourdomain.com>'
-const FROM_ADDRESS =
-  env.NODE_ENV === 'production'
-    ? 'LogiFlow <noreply@logiflow.app>'
-    : 'LogiFlow <onboarding@resend.dev>';
+// Use RESEND_FROM_EMAIL — sandbox: onboarding@resend.dev; production: your verified domain
+const FROM_ADDRESS = `LogiFlow <${env.RESEND_FROM_EMAIL}>`;
 
 export interface SendEmailOptions {
   to: string | string[];
@@ -17,28 +13,50 @@ export interface SendEmailOptions {
   text?: string;
 }
 
+async function dispatchEmail(options: SendEmailOptions): Promise<string | undefined> {
+  const { data, error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to: options.to,
+    subject: options.subject,
+    html: options.html,
+    ...(options.text && { text: options.text }),
+  });
+
+  if (error) {
+    const message =
+      typeof error === 'object' && error !== null && 'message' in error
+        ? String((error as { message: string }).message)
+        : JSON.stringify(error);
+    throw new Error(message);
+  }
+
+  return data?.id;
+}
+
 /**
  * sendEmail — sends email via Resend.
  * Non-critical emails (notifications, welcome) swallow errors.
- * Use sendEmailCritical for OTP/auth emails where failure should be visible.
  */
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
   try {
-    const { data, error } = await resend.emails.send({
-      from: FROM_ADDRESS,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-      ...(options.text && { text: options.text }),
-    });
-
-    if (error) {
-      console.warn('[Resend] Email send failed:', JSON.stringify(error));
-    } else {
-      console.log('[Resend] Email sent, id:', data?.id);
-    }
+    const id = await dispatchEmail(options);
+    console.log('[Resend] Email sent, id:', id);
   } catch (err) {
-    console.warn('[Resend] Email send error:', err);
+    console.warn('[Resend] Email send failed:', err);
+  }
+}
+
+/**
+ * sendEmailCritical — same as sendEmail but throws on failure.
+ * Use for OTP/auth emails where failure must fail the request.
+ */
+export async function sendEmailCritical(options: SendEmailOptions): Promise<void> {
+  try {
+    const id = await dispatchEmail(options);
+    console.log('[Resend] Critical email sent, id:', id);
+  } catch (err) {
+    console.error('[Resend] Critical email send failed:', err);
+    throw err;
   }
 }
 

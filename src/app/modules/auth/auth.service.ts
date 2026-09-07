@@ -3,13 +3,14 @@ import { prisma } from '../../lib/prisma';
 import { hashPassword, verifyPassword, hashToken, verifyToken } from '../../lib/argon2';
 import { signAccessToken, generateRefreshToken } from '../../lib/jwt';
 import { redis, CacheKeys } from '../../lib/redis';
-import { sendEmail, otpVerificationEmail, welcomeEmail } from '../../lib/resend';
+import { sendEmail, sendEmailCritical, otpVerificationEmail, welcomeEmail } from '../../lib/resend';
 import {
   ConflictError,
   AuthenticationError,
   BadRequestError,
   NotFoundError,
   AuthorizationError,
+  ServiceUnavailableError,
 } from '../../errors';
 import { createAuditLog } from '../audit/audit.service';
 import { safeUserSelect } from '../../types';
@@ -29,6 +30,11 @@ interface PendingRegistrationData {
   email: string;
   hashedPassword: string;
   phone?: string;
+}
+
+// Stored as an object so Upstash does not JSON-deserialize a 6-digit code as a number
+interface StoredRegistrationOtp {
+  code: string;
 }
 
 // ── Shared token issuance ─────────────────────────────────────────────────────
@@ -92,14 +98,16 @@ export async function registerUser(
   // (this is intentional: no conflict, just a fresh OTP)
   // Store pendingData as an object — Upstash handles JSON serialization automatically
   await Promise.all([
-    redis.set(CacheKeys.registrationOtp(email), otp, { ex: OTP_TTL_SECONDS }),
+    redis.set(CacheKeys.registrationOtp(email), { code: otp } satisfies StoredRegistrationOtp, {
+      ex: OTP_TTL_SECONDS,
+    }),
     redis.set(CacheKeys.registrationData(email), pendingData, { ex: OTP_TTL_SECONDS }),
   ]);
 
-  // Send verification email — awaited so we can catch Resend failures before responding
+  // Send verification email — failure rolls back Redis so the user can retry cleanly
   // OTP is NEVER logged — only passed directly to the email template
   try {
-    await sendEmail({
+    await sendEmailCritical({
       to: email,
       subject: 'Verify your LogiFlow account',
       html: otpVerificationEmail({
@@ -109,13 +117,12 @@ export async function registerUser(
         expirationMinutes: OTP_EXPIRATION_MINUTES,
       }),
     });
-  } catch (err) {
-    // If email fails, clean up Redis keys so the user can retry cleanly
+  } catch {
     await Promise.allSettled([
       redis.del(CacheKeys.registrationOtp(email)),
       redis.del(CacheKeys.registrationData(email)),
     ]);
-    throw new Error('Failed to send verification email. Please try again.');
+    throw new ServiceUnavailableError('Failed to send verification email. Please try again.');
   }
 
   // Audit: log that a registration was initiated (no OTP in the log)
@@ -165,14 +172,13 @@ export async function verifyUserEmail(
   }
 
   // ── Fetch OTP from Redis ───────────────────────────────────────────────────
-  // redis.get may return number (Upstash auto-parses JSON integers) — coerce to string
-  const storedOtpRaw = await redis.get(CacheKeys.registrationOtp(email));
-  if (!storedOtpRaw) {
+  const storedOtpEntry = await redis.get<StoredRegistrationOtp>(CacheKeys.registrationOtp(email));
+  if (!storedOtpEntry?.code) {
     throw new BadRequestError(
       'Verification code has expired or is invalid. Please register again to receive a new code.',
     );
   }
-  const storedOtp = String(storedOtpRaw);
+  const storedOtp = String(storedOtpEntry.code);
 
   // ── Compare OTP as strings ────────────────────────────────────────────────
   if (storedOtp !== String(input.otp)) {

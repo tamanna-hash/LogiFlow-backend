@@ -39,6 +39,8 @@ services:
         sync: false
       - key: RESEND_API_KEY
         sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
       - key: BKASH_BASE_URL
         sync: false
       - key: BKASH_USERNAME
