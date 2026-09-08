@@ -465,7 +465,7 @@ This provides accountability and makes sensitive administrative actions traceabl
 
 * **Postman**
 * **Prisma Studio**
-* **ESLint**
+* **Biome**
 * **TypeScript**
 * **Git & GitHub**
 
