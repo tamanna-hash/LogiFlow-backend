@@ -1,10 +1,10 @@
 import type { NotificationType } from '../../../generated/prisma';
 import { prisma } from '../../lib/prisma';
-import { sendEmail } from '../../lib/resend';
+import { sendEmail } from '../../lib/mailer';
 import {
   shipmentCreatedEmail, paymentConfirmedEmail, courierAssignedEmail,
   deliveredEmail, deliveryFailedEmail, outForDeliveryEmail,
-} from '../../lib/resend';
+} from '../../lib/mailer';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
 import { NotFoundError, AuthorizationError } from '../../errors';
 

@@ -34,7 +34,14 @@ app.use(
 );
 
 // ── Body parsers ──────────────────────────────────────────────────────────────
-app.use(express.json({ limit: '10mb' }));
+// Skip JSON parsing for Stripe webhook — it needs the raw Buffer for sig verification
+app.use((req, res, next) => {
+  if (req.path === '/api/v1/payments/stripe/webhook') {
+    next(); // express.raw() is applied in the route itself
+  } else {
+    express.json({ limit: '10mb' })(req, res, next);
+  }
+});
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ── Passport (for Google OAuth) ───────────────────────────────────────────────

@@ -3,9 +3,21 @@ model Payment {
   shipmentId           String
   amount               Decimal       @db.Decimal(10, 2)
   status               PaymentStatus @default(PENDING)
+
+  // ── Provider selection ─────────────────────────────────────────────────────
+  provider             PaymentProvider @default(BKASH)
+
+  // ── bKash fields ──────────────────────────────────────────────────────────
   bkashPaymentId       String?       @unique
   bkashTransactionId   String?
   bkashExecuteResponse Json?
+
+  // ── Stripe fields ─────────────────────────────────────────────────────────
+  stripeSessionId      String?       @unique  // Checkout Session ID (cs_...)
+  stripePaymentIntent  String?                // PaymentIntent ID (pi_...) — set after webhook
+  stripeWebhookEventId String?                // idempotency: store event id to deduplicate
+
+  // ── Timestamps ────────────────────────────────────────────────────────────
   paidAt               DateTime?
   failedAt             DateTime?
   cancelledAt          DateTime?
@@ -18,6 +30,8 @@ model Payment {
 
   @@index([shipmentId])
   @@index([status])
+  @@index([provider])
   @@index([bkashPaymentId])
+  @@index([stripeSessionId])
   @@map("payments")
 }

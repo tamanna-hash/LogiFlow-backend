@@ -1,9 +1,15 @@
 import { prisma } from '../../lib/prisma';
 import { createBkashPayment, executeBkashPayment } from '../../lib/bkash';
-import { NotFoundError, BadRequestError, AuthorizationError, ConflictError } from '../../errors';
+import {
+  createCheckoutSession,
+  constructWebhookEvent,
+  isStripeConfigured,
+} from '../../lib/stripe';
+import { NotFoundError, BadRequestError, AuthorizationError, ConflictError, ServiceUnavailableError } from '../../errors';
 import { createAuditLog } from '../audit/audit.service';
 import { notifyPaymentCompleted } from '../notification/notification.service';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
+import { env } from '../../config/env';
 import type { PaymentStatus } from '../../../generated/prisma';
 import type { PrismaTx } from '../../types/prisma';
 
@@ -81,12 +87,16 @@ export async function handleBkashCallback(paymentID: string) {
   });
 
   if (!payment) {
-    return { success: false, message: 'Payment not found' };
+    return { success: false, message: 'Payment not found', shipmentId: null };
   }
 
   // Step 2: Idempotency check
   if (payment.status !== 'PENDING') {
-    return { success: payment.status === 'COMPLETED', message: `Payment already ${payment.status.toLowerCase()}` };
+    return {
+      success: payment.status === 'COMPLETED',
+      message: `Payment already ${payment.status.toLowerCase()}`,
+      shipmentId: payment.shipmentId,
+    };
   }
 
   // Step 3: Call bKash executepayment (server-side verification)
@@ -102,7 +112,7 @@ export async function handleBkashCallback(paymentID: string) {
       data: { status: 'FAILED', failedAt: new Date() },
     });
     await createAuditLog({ actorId: null, action: 'PAYMENT_FAILED', resourceType: 'Payment', resourceId: payment.id });
-    return { success: false, message: 'Payment not completed' };
+    return { success: false, message: 'Payment not completed', shipmentId: payment.shipmentId };
   }
 
   // Step 5: Validate amount (security: ensure bKash didn't process different amount)
@@ -111,14 +121,14 @@ export async function handleBkashCallback(paymentID: string) {
   if (Math.abs(expectedAmount - receivedAmount) > 0.01) {
     console.error(`[Payment] Amount mismatch: expected ${expectedAmount}, got ${receivedAmount}`);
     await prisma.payment.update({ where: { id: payment.id }, data: { status: 'FAILED', failedAt: new Date() } });
-    return { success: false, message: 'Payment amount mismatch' };
+    return { success: false, message: 'Payment amount mismatch', shipmentId: payment.shipmentId };
   }
 
   // Step 6: Validate merchantInvoiceNumber matches
   if (executeResult.merchantInvoiceNumber !== payment.id) {
     console.error('[Payment] merchantInvoiceNumber mismatch');
     await prisma.payment.update({ where: { id: payment.id }, data: { status: 'FAILED', failedAt: new Date() } });
-    return { success: false, message: 'Invoice number mismatch' };
+    return { success: false, message: 'Invoice number mismatch', shipmentId: payment.shipmentId };
   }
 
   // Step 7: Atomic update of payment + shipment
@@ -150,17 +160,17 @@ export async function handleBkashCallback(paymentID: string) {
     shipmentId: payment.shipmentId,
   });
 
-  return { success: true, message: 'Payment completed' };
+  return { success: true, message: 'Payment completed', shipmentId: payment.shipmentId };
 }
 
 export async function getPaymentByShipment(shipmentId: string, userId: string, isAdmin: boolean) {
   const payment = await prisma.payment.findFirst({
     where: { shipmentId },
     select: {
-      id: true, amount: true, status: true, paidAt: true, failedAt: true,
-      bkashTransactionId: true, createdAt: true, updatedAt: true,
+      id: true, amount: true, status: true, provider: true, paidAt: true, failedAt: true,
+      bkashTransactionId: true, stripePaymentIntent: true, createdAt: true, updatedAt: true,
       // Admin sees full response; customer does not
-      ...(isAdmin && { bkashExecuteResponse: true, bkashPaymentId: true }),
+      ...(isAdmin && { bkashExecuteResponse: true, bkashPaymentId: true, stripeSessionId: true }),
       shipment: { select: { customerId: true, trackingNumber: true } },
     },
   });
@@ -185,7 +195,9 @@ export async function listPayments(params: {
       orderBy: { createdAt: 'desc' },
       ...getPrismaSkipTake(page, limit),
       select: {
-        id: true, amount: true, status: true, bkashTransactionId: true, paidAt: true, createdAt: true,
+        id: true, amount: true, status: true, provider: true,
+        bkashTransactionId: true, stripePaymentIntent: true,
+        paidAt: true, createdAt: true,
         shipment: { select: { trackingNumber: true, customer: { select: { firstName: true, lastName: true, email: true } } } },
       },
     }),
@@ -193,4 +205,243 @@ export async function listPayments(params: {
   ]);
 
   return { payments, meta: buildPaginationMeta(total, page, limit) };
+}
+
+// ── Stripe Checkout ───────────────────────────────────────────────────────────
+
+/**
+ * initiateStripeCheckout — creates a Stripe Checkout Session for a shipment.
+ *
+ * Pre-conditions (same as bKash):
+ *  - Shipment must belong to the requesting user
+ *  - Status must be CREATED
+ *  - paymentStatus must be PENDING
+ *  - No existing COMPLETED payment
+ *
+ * Returns the Stripe Checkout URL for the frontend to redirect to.
+ */
+export async function initiateStripeCheckout(shipmentId: string, userId: string) {
+  if (!isStripeConfigured()) {
+    throw new ServiceUnavailableError(
+      'Stripe payments are not enabled. Set STRIPE_SECRET_KEY to activate.',
+    );
+  }
+
+  const shipment = await prisma.shipment.findUnique({
+    where: { id: shipmentId, deletedAt: null },
+    select: {
+      id: true, customerId: true, price: true, status: true, paymentStatus: true, trackingNumber: true,
+      customer: { select: { email: true, firstName: true } },
+    },
+  });
+  if (!shipment) throw new NotFoundError('Shipment not found.');
+  if (shipment.customerId !== userId) throw new AuthorizationError();
+  if (shipment.paymentStatus === 'COMPLETED') throw new BadRequestError('This shipment has already been paid.');
+  if (shipment.status !== 'CREATED') throw new BadRequestError('Payment can only be initiated for shipments in CREATED status.');
+
+  // Check for existing active Stripe session on this shipment
+  const existingStripePayment = await prisma.payment.findFirst({
+    where: { shipmentId, status: 'PENDING', provider: 'STRIPE', stripeSessionId: { not: null } },
+    select: { id: true, stripeSessionId: true },
+  });
+  if (existingStripePayment) {
+    throw new ConflictError('A Stripe payment for this shipment is already in progress. Complete or cancel it first.');
+  }
+
+  // Find existing pending payment without a Stripe session, or create one
+  let payment = await prisma.payment.findFirst({
+    where: { shipmentId, status: 'PENDING', provider: 'BKASH', bkashPaymentId: null, stripeSessionId: null },
+    select: { id: true, amount: true },
+  });
+
+  if (!payment) {
+    payment = await prisma.payment.create({
+      data: { shipmentId, amount: shipment.price, status: 'PENDING', provider: 'STRIPE' },
+      select: { id: true, amount: true },
+    });
+  } else {
+    // Upgrade existing pending payment to Stripe provider
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { provider: 'STRIPE' },
+    });
+  }
+
+  // Amount in smallest unit — BDT uses paisa (1 BDT = 100 paisa)
+  const amountCents = Math.round(Number(payment.amount) * 100);
+  const frontendUrl = env.FRONTEND_URL;
+
+  const session = await createCheckoutSession({
+    paymentId: payment.id,
+    shipmentId,
+    amountCents,
+    currency: 'bdt',
+    customerEmail: shipment.customer.email,
+    successUrl: `${frontendUrl}/payment/success?shipmentId=${shipmentId}`,
+    cancelUrl: `${frontendUrl}/payment/failure?shipmentId=${shipmentId}`,
+  });
+
+  // Store the session ID so the webhook handler can look up the payment
+  await prisma.payment.update({
+    where: { id: payment.id },
+    data: { stripeSessionId: session.id },
+  });
+
+  await createAuditLog({
+    actorId: userId,
+    action: 'PAYMENT_INITIATED',
+    resourceType: 'Payment',
+    resourceId: payment.id,
+    metadata: { provider: 'STRIPE', sessionId: session.id },
+  });
+
+  return {
+    paymentId: payment.id,
+    checkoutUrl: session.url,
+    amount: Number(payment.amount).toFixed(2),
+  };
+}
+
+// ── Stripe Webhook Handler ────────────────────────────────────────────────────
+
+/**
+ * handleStripeWebhook — processes Stripe webhook events securely.
+ *
+ * Must receive the raw request body Buffer for signature verification.
+ * Idempotent: skips processing if the event ID has already been handled.
+ * Only processes checkout.session.completed and checkout.session.expired.
+ */
+export async function handleStripeWebhook(rawBody: Buffer, signature: string) {
+  // Throws if signature is invalid — let caller handle the 400 response
+  const event = constructWebhookEvent(rawBody, signature);
+
+  // Idempotency check: ignore already-processed events
+  const existingPaymentWithEvent = await prisma.payment.findFirst({
+    where: { stripeWebhookEventId: event.id },
+    select: { id: true },
+  });
+  if (existingPaymentWithEvent) {
+    console.log(`[Stripe Webhook] Event ${event.id} already processed — skipping`);
+    return { received: true };
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const sessionId = session.id;
+
+    const payment = await prisma.payment.findFirst({
+      where: { stripeSessionId: sessionId },
+      select: {
+        id: true, status: true, amount: true, shipmentId: true,
+        shipment: {
+          select: {
+            trackingNumber: true,
+            customer: { select: { id: true, email: true, firstName: true } },
+          },
+        },
+      },
+    });
+
+    if (!payment) {
+      console.error(`[Stripe Webhook] No payment found for session ${sessionId}`);
+      return { received: true };
+    }
+
+    // Idempotency — skip if already completed
+    if (payment.status === 'COMPLETED') {
+      console.log(`[Stripe Webhook] Payment ${payment.id} already COMPLETED`);
+      return { received: true };
+    }
+
+    // Validate payment amount matches what Stripe reports
+    const stripePaidAmount = session.amount_total ?? 0;
+    const expectedCents = Math.round(Number(payment.amount) * 100);
+
+    if (Math.abs(stripePaidAmount - expectedCents) > 1) {
+      console.error(
+        `[Stripe Webhook] Amount mismatch: expected ${expectedCents}, got ${stripePaidAmount}`,
+      );
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: 'FAILED', failedAt: new Date(), stripeWebhookEventId: event.id },
+      });
+      await createAuditLog({
+        actorId: null, action: 'PAYMENT_FAILED', resourceType: 'Payment', resourceId: payment.id,
+        metadata: { reason: 'amount_mismatch', provider: 'STRIPE' },
+      });
+      return { received: true };
+    }
+
+    // Validate metadata
+    const meta = session.metadata ?? {};
+    if (meta.paymentId !== payment.id) {
+      console.error(`[Stripe Webhook] Metadata paymentId mismatch for session ${sessionId}`);
+      return { received: true };
+    }
+
+    // Extract PaymentIntent ID from the session
+    const paymentIntentId =
+      typeof session.payment_intent === 'string'
+        ? session.payment_intent
+        : (session.payment_intent as { id?: string } | null)?.id ?? null;
+
+    // Atomic update: mark payment COMPLETED and shipment paymentStatus COMPLETED
+    await prisma.$transaction(async (tx: PrismaTx) => {
+      await tx.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: 'COMPLETED',
+          stripePaymentIntent: paymentIntentId,
+          stripeWebhookEventId: event.id,
+          paidAt: new Date(),
+        },
+      });
+      await tx.shipment.update({
+        where: { id: payment.shipmentId },
+        data: { paymentStatus: 'COMPLETED' },
+      });
+    });
+
+    await createAuditLog({
+      actorId: null, action: 'PAYMENT_COMPLETED', resourceType: 'Payment', resourceId: payment.id,
+      after: { provider: 'STRIPE', paymentIntentId },
+    });
+
+    void notifyPaymentCompleted({
+      userId: payment.shipment.customer.id,
+      email: payment.shipment.customer.email,
+      firstName: payment.shipment.customer.firstName,
+      trackingNumber: payment.shipment.trackingNumber,
+      transactionId: paymentIntentId ?? session.id,
+      amount: Number(payment.amount).toFixed(2),
+      shipmentId: payment.shipmentId,
+    });
+
+    console.log(`[Stripe Webhook] Payment ${payment.id} completed via Stripe`);
+  }
+
+  if (event.type === 'checkout.session.expired') {
+    const session = event.data.object;
+    const payment = await prisma.payment.findFirst({
+      where: { stripeSessionId: session.id, status: 'PENDING' },
+      select: { id: true },
+    });
+
+    if (payment) {
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: 'CANCELLED',
+          cancelledAt: new Date(),
+          stripeWebhookEventId: event.id,
+        },
+      });
+      await createAuditLog({
+        actorId: null, action: 'PAYMENT_CANCELLED', resourceType: 'Payment', resourceId: payment.id,
+        metadata: { provider: 'STRIPE', reason: 'session_expired' },
+      });
+    }
+  }
+
+  return { received: true };
 }

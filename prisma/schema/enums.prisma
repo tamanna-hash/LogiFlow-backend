@@ -32,6 +32,11 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum PaymentProvider {
+  BKASH
+  STRIPE
+}
+
 enum DeliveryType {
   STANDARD
   EXPRESS

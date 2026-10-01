@@ -38,8 +38,12 @@ export type PaymentMinAggregateOutputType = {
   shipmentId: string | null
   amount: runtime.Decimal | null
   status: $Enums.PaymentStatus | null
+  provider: $Enums.PaymentProvider | null
   bkashPaymentId: string | null
   bkashTransactionId: string | null
+  stripeSessionId: string | null
+  stripePaymentIntent: string | null
+  stripeWebhookEventId: string | null
   paidAt: Date | null
   failedAt: Date | null
   cancelledAt: Date | null
@@ -54,8 +58,12 @@ export type PaymentMaxAggregateOutputType = {
   shipmentId: string | null
   amount: runtime.Decimal | null
   status: $Enums.PaymentStatus | null
+  provider: $Enums.PaymentProvider | null
   bkashPaymentId: string | null
   bkashTransactionId: string | null
+  stripeSessionId: string | null
+  stripePaymentIntent: string | null
+  stripeWebhookEventId: string | null
   paidAt: Date | null
   failedAt: Date | null
   cancelledAt: Date | null
@@ -70,9 +78,13 @@ export type PaymentCountAggregateOutputType = {
   shipmentId: number
   amount: number
   status: number
+  provider: number
   bkashPaymentId: number
   bkashTransactionId: number
   bkashExecuteResponse: number
+  stripeSessionId: number
+  stripePaymentIntent: number
+  stripeWebhookEventId: number
   paidAt: number
   failedAt: number
   cancelledAt: number
@@ -97,8 +109,12 @@ export type PaymentMinAggregateInputType = {
   shipmentId?: true
   amount?: true
   status?: true
+  provider?: true
   bkashPaymentId?: true
   bkashTransactionId?: true
+  stripeSessionId?: true
+  stripePaymentIntent?: true
+  stripeWebhookEventId?: true
   paidAt?: true
   failedAt?: true
   cancelledAt?: true
@@ -113,8 +129,12 @@ export type PaymentMaxAggregateInputType = {
   shipmentId?: true
   amount?: true
   status?: true
+  provider?: true
   bkashPaymentId?: true
   bkashTransactionId?: true
+  stripeSessionId?: true
+  stripePaymentIntent?: true
+  stripeWebhookEventId?: true
   paidAt?: true
   failedAt?: true
   cancelledAt?: true
@@ -129,9 +149,13 @@ export type PaymentCountAggregateInputType = {
   shipmentId?: true
   amount?: true
   status?: true
+  provider?: true
   bkashPaymentId?: true
   bkashTransactionId?: true
   bkashExecuteResponse?: true
+  stripeSessionId?: true
+  stripePaymentIntent?: true
+  stripeWebhookEventId?: true
   paidAt?: true
   failedAt?: true
   cancelledAt?: true
@@ -233,9 +257,13 @@ export type PaymentGroupByOutputType = {
   shipmentId: string
   amount: runtime.Decimal
   status: $Enums.PaymentStatus
+  provider: $Enums.PaymentProvider
   bkashPaymentId: string | null
   bkashTransactionId: string | null
   bkashExecuteResponse: runtime.JsonValue | null
+  stripeSessionId: string | null
+  stripePaymentIntent: string | null
+  stripeWebhookEventId: string | null
   paidAt: Date | null
   failedAt: Date | null
   cancelledAt: Date | null
@@ -273,9 +301,13 @@ export type PaymentWhereInput = {
   shipmentId?: Prisma.StringFilter<"Payment"> | string
   amount?: Prisma.DecimalFilter<"Payment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: Prisma.EnumPaymentStatusFilter<"Payment"> | $Enums.PaymentStatus
+  provider?: Prisma.EnumPaymentProviderFilter<"Payment"> | $Enums.PaymentProvider
   bkashPaymentId?: Prisma.StringNullableFilter<"Payment"> | string | null
   bkashTransactionId?: Prisma.StringNullableFilter<"Payment"> | string | null
   bkashExecuteResponse?: Prisma.JsonNullableFilter<"Payment">
+  stripeSessionId?: Prisma.StringNullableFilter<"Payment"> | string | null
+  stripePaymentIntent?: Prisma.StringNullableFilter<"Payment"> | string | null
+  stripeWebhookEventId?: Prisma.StringNullableFilter<"Payment"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   failedAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
@@ -291,9 +323,13 @@ export type PaymentOrderByWithRelationInput = {
   shipmentId?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  provider?: Prisma.SortOrder
   bkashPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
   bkashTransactionId?: Prisma.SortOrderInput | Prisma.SortOrder
   bkashExecuteResponse?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripePaymentIntent?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeWebhookEventId?: Prisma.SortOrderInput | Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   failedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -307,14 +343,18 @@ export type PaymentOrderByWithRelationInput = {
 export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   bkashPaymentId?: string
+  stripeSessionId?: string
   AND?: Prisma.PaymentWhereInput | Prisma.PaymentWhereInput[]
   OR?: Prisma.PaymentWhereInput[]
   NOT?: Prisma.PaymentWhereInput | Prisma.PaymentWhereInput[]
   shipmentId?: Prisma.StringFilter<"Payment"> | string
   amount?: Prisma.DecimalFilter<"Payment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: Prisma.EnumPaymentStatusFilter<"Payment"> | $Enums.PaymentStatus
+  provider?: Prisma.EnumPaymentProviderFilter<"Payment"> | $Enums.PaymentProvider
   bkashTransactionId?: Prisma.StringNullableFilter<"Payment"> | string | null
   bkashExecuteResponse?: Prisma.JsonNullableFilter<"Payment">
+  stripePaymentIntent?: Prisma.StringNullableFilter<"Payment"> | string | null
+  stripeWebhookEventId?: Prisma.StringNullableFilter<"Payment"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   failedAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
@@ -323,16 +363,20 @@ export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   shipment?: Prisma.XOR<Prisma.ShipmentScalarRelationFilter, Prisma.ShipmentWhereInput>
-}, "id" | "bkashPaymentId">
+}, "id" | "bkashPaymentId" | "stripeSessionId">
 
 export type PaymentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   shipmentId?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  provider?: Prisma.SortOrder
   bkashPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
   bkashTransactionId?: Prisma.SortOrderInput | Prisma.SortOrder
   bkashExecuteResponse?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripePaymentIntent?: Prisma.SortOrderInput | Prisma.SortOrder
+  stripeWebhookEventId?: Prisma.SortOrderInput | Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   failedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -355,9 +399,13 @@ export type PaymentScalarWhereWithAggregatesInput = {
   shipmentId?: Prisma.StringWithAggregatesFilter<"Payment"> | string
   amount?: Prisma.DecimalWithAggregatesFilter<"Payment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: Prisma.EnumPaymentStatusWithAggregatesFilter<"Payment"> | $Enums.PaymentStatus
+  provider?: Prisma.EnumPaymentProviderWithAggregatesFilter<"Payment"> | $Enums.PaymentProvider
   bkashPaymentId?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
   bkashTransactionId?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
   bkashExecuteResponse?: Prisma.JsonNullableWithAggregatesFilter<"Payment">
+  stripeSessionId?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
+  stripePaymentIntent?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
+  stripeWebhookEventId?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
   paidAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
   failedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
@@ -371,9 +419,13 @@ export type PaymentCreateInput = {
   id?: string
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: $Enums.PaymentStatus
+  provider?: $Enums.PaymentProvider
   bkashPaymentId?: string | null
   bkashTransactionId?: string | null
   bkashExecuteResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeSessionId?: string | null
+  stripePaymentIntent?: string | null
+  stripeWebhookEventId?: string | null
   paidAt?: Date | string | null
   failedAt?: Date | string | null
   cancelledAt?: Date | string | null
@@ -389,9 +441,13 @@ export type PaymentUncheckedCreateInput = {
   shipmentId: string
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: $Enums.PaymentStatus
+  provider?: $Enums.PaymentProvider
   bkashPaymentId?: string | null
   bkashTransactionId?: string | null
   bkashExecuteResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeSessionId?: string | null
+  stripePaymentIntent?: string | null
+  stripeWebhookEventId?: string | null
   paidAt?: Date | string | null
   failedAt?: Date | string | null
   cancelledAt?: Date | string | null
@@ -405,9 +461,13 @@ export type PaymentUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  provider?: Prisma.EnumPaymentProviderFieldUpdateOperationsInput | $Enums.PaymentProvider
   bkashPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashExecuteResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripePaymentIntent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeWebhookEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -423,9 +483,13 @@ export type PaymentUncheckedUpdateInput = {
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  provider?: Prisma.EnumPaymentProviderFieldUpdateOperationsInput | $Enums.PaymentProvider
   bkashPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashExecuteResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripePaymentIntent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeWebhookEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -440,9 +504,13 @@ export type PaymentCreateManyInput = {
   shipmentId: string
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: $Enums.PaymentStatus
+  provider?: $Enums.PaymentProvider
   bkashPaymentId?: string | null
   bkashTransactionId?: string | null
   bkashExecuteResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeSessionId?: string | null
+  stripePaymentIntent?: string | null
+  stripeWebhookEventId?: string | null
   paidAt?: Date | string | null
   failedAt?: Date | string | null
   cancelledAt?: Date | string | null
@@ -456,9 +524,13 @@ export type PaymentUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  provider?: Prisma.EnumPaymentProviderFieldUpdateOperationsInput | $Enums.PaymentProvider
   bkashPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashExecuteResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripePaymentIntent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeWebhookEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -473,9 +545,13 @@ export type PaymentUncheckedUpdateManyInput = {
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  provider?: Prisma.EnumPaymentProviderFieldUpdateOperationsInput | $Enums.PaymentProvider
   bkashPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashExecuteResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripePaymentIntent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeWebhookEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -490,9 +566,13 @@ export type PaymentCountOrderByAggregateInput = {
   shipmentId?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  provider?: Prisma.SortOrder
   bkashPaymentId?: Prisma.SortOrder
   bkashTransactionId?: Prisma.SortOrder
   bkashExecuteResponse?: Prisma.SortOrder
+  stripeSessionId?: Prisma.SortOrder
+  stripePaymentIntent?: Prisma.SortOrder
+  stripeWebhookEventId?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
   failedAt?: Prisma.SortOrder
   cancelledAt?: Prisma.SortOrder
@@ -511,8 +591,12 @@ export type PaymentMaxOrderByAggregateInput = {
   shipmentId?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  provider?: Prisma.SortOrder
   bkashPaymentId?: Prisma.SortOrder
   bkashTransactionId?: Prisma.SortOrder
+  stripeSessionId?: Prisma.SortOrder
+  stripePaymentIntent?: Prisma.SortOrder
+  stripeWebhookEventId?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
   failedAt?: Prisma.SortOrder
   cancelledAt?: Prisma.SortOrder
@@ -527,8 +611,12 @@ export type PaymentMinOrderByAggregateInput = {
   shipmentId?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  provider?: Prisma.SortOrder
   bkashPaymentId?: Prisma.SortOrder
   bkashTransactionId?: Prisma.SortOrder
+  stripeSessionId?: Prisma.SortOrder
+  stripePaymentIntent?: Prisma.SortOrder
+  stripeWebhookEventId?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
   failedAt?: Prisma.SortOrder
   cancelledAt?: Prisma.SortOrder
@@ -562,6 +650,10 @@ export type DecimalFieldUpdateOperationsInput = {
 
 export type EnumPaymentStatusFieldUpdateOperationsInput = {
   set?: $Enums.PaymentStatus
+}
+
+export type EnumPaymentProviderFieldUpdateOperationsInput = {
+  set?: $Enums.PaymentProvider
 }
 
 export type PaymentCreateNestedManyWithoutShipmentInput = {
@@ -610,9 +702,13 @@ export type PaymentCreateWithoutShipmentInput = {
   id?: string
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: $Enums.PaymentStatus
+  provider?: $Enums.PaymentProvider
   bkashPaymentId?: string | null
   bkashTransactionId?: string | null
   bkashExecuteResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeSessionId?: string | null
+  stripePaymentIntent?: string | null
+  stripeWebhookEventId?: string | null
   paidAt?: Date | string | null
   failedAt?: Date | string | null
   cancelledAt?: Date | string | null
@@ -626,9 +722,13 @@ export type PaymentUncheckedCreateWithoutShipmentInput = {
   id?: string
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: $Enums.PaymentStatus
+  provider?: $Enums.PaymentProvider
   bkashPaymentId?: string | null
   bkashTransactionId?: string | null
   bkashExecuteResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeSessionId?: string | null
+  stripePaymentIntent?: string | null
+  stripeWebhookEventId?: string | null
   paidAt?: Date | string | null
   failedAt?: Date | string | null
   cancelledAt?: Date | string | null
@@ -672,9 +772,13 @@ export type PaymentScalarWhereInput = {
   shipmentId?: Prisma.StringFilter<"Payment"> | string
   amount?: Prisma.DecimalFilter<"Payment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: Prisma.EnumPaymentStatusFilter<"Payment"> | $Enums.PaymentStatus
+  provider?: Prisma.EnumPaymentProviderFilter<"Payment"> | $Enums.PaymentProvider
   bkashPaymentId?: Prisma.StringNullableFilter<"Payment"> | string | null
   bkashTransactionId?: Prisma.StringNullableFilter<"Payment"> | string | null
   bkashExecuteResponse?: Prisma.JsonNullableFilter<"Payment">
+  stripeSessionId?: Prisma.StringNullableFilter<"Payment"> | string | null
+  stripePaymentIntent?: Prisma.StringNullableFilter<"Payment"> | string | null
+  stripeWebhookEventId?: Prisma.StringNullableFilter<"Payment"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   failedAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
@@ -688,9 +792,13 @@ export type PaymentCreateManyShipmentInput = {
   id?: string
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: $Enums.PaymentStatus
+  provider?: $Enums.PaymentProvider
   bkashPaymentId?: string | null
   bkashTransactionId?: string | null
   bkashExecuteResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeSessionId?: string | null
+  stripePaymentIntent?: string | null
+  stripeWebhookEventId?: string | null
   paidAt?: Date | string | null
   failedAt?: Date | string | null
   cancelledAt?: Date | string | null
@@ -704,9 +812,13 @@ export type PaymentUpdateWithoutShipmentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  provider?: Prisma.EnumPaymentProviderFieldUpdateOperationsInput | $Enums.PaymentProvider
   bkashPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashExecuteResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripePaymentIntent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeWebhookEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -720,9 +832,13 @@ export type PaymentUncheckedUpdateWithoutShipmentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  provider?: Prisma.EnumPaymentProviderFieldUpdateOperationsInput | $Enums.PaymentProvider
   bkashPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashExecuteResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripePaymentIntent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeWebhookEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -736,9 +852,13 @@ export type PaymentUncheckedUpdateManyWithoutShipmentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  provider?: Prisma.EnumPaymentProviderFieldUpdateOperationsInput | $Enums.PaymentProvider
   bkashPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bkashExecuteResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  stripeSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripePaymentIntent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stripeWebhookEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   failedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -755,9 +875,13 @@ export type PaymentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   shipmentId?: boolean
   amount?: boolean
   status?: boolean
+  provider?: boolean
   bkashPaymentId?: boolean
   bkashTransactionId?: boolean
   bkashExecuteResponse?: boolean
+  stripeSessionId?: boolean
+  stripePaymentIntent?: boolean
+  stripeWebhookEventId?: boolean
   paidAt?: boolean
   failedAt?: boolean
   cancelledAt?: boolean
@@ -773,9 +897,13 @@ export type PaymentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   shipmentId?: boolean
   amount?: boolean
   status?: boolean
+  provider?: boolean
   bkashPaymentId?: boolean
   bkashTransactionId?: boolean
   bkashExecuteResponse?: boolean
+  stripeSessionId?: boolean
+  stripePaymentIntent?: boolean
+  stripeWebhookEventId?: boolean
   paidAt?: boolean
   failedAt?: boolean
   cancelledAt?: boolean
@@ -791,9 +919,13 @@ export type PaymentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   shipmentId?: boolean
   amount?: boolean
   status?: boolean
+  provider?: boolean
   bkashPaymentId?: boolean
   bkashTransactionId?: boolean
   bkashExecuteResponse?: boolean
+  stripeSessionId?: boolean
+  stripePaymentIntent?: boolean
+  stripeWebhookEventId?: boolean
   paidAt?: boolean
   failedAt?: boolean
   cancelledAt?: boolean
@@ -809,9 +941,13 @@ export type PaymentSelectScalar = {
   shipmentId?: boolean
   amount?: boolean
   status?: boolean
+  provider?: boolean
   bkashPaymentId?: boolean
   bkashTransactionId?: boolean
   bkashExecuteResponse?: boolean
+  stripeSessionId?: boolean
+  stripePaymentIntent?: boolean
+  stripeWebhookEventId?: boolean
   paidAt?: boolean
   failedAt?: boolean
   cancelledAt?: boolean
@@ -821,7 +957,7 @@ export type PaymentSelectScalar = {
   updatedAt?: boolean
 }
 
-export type PaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "shipmentId" | "amount" | "status" | "bkashPaymentId" | "bkashTransactionId" | "bkashExecuteResponse" | "paidAt" | "failedAt" | "cancelledAt" | "refundInitiatedAt" | "refundedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["payment"]>
+export type PaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "shipmentId" | "amount" | "status" | "provider" | "bkashPaymentId" | "bkashTransactionId" | "bkashExecuteResponse" | "stripeSessionId" | "stripePaymentIntent" | "stripeWebhookEventId" | "paidAt" | "failedAt" | "cancelledAt" | "refundInitiatedAt" | "refundedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["payment"]>
 export type PaymentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   shipment?: boolean | Prisma.ShipmentDefaultArgs<ExtArgs>
 }
@@ -842,9 +978,13 @@ export type $PaymentPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     shipmentId: string
     amount: runtime.Decimal
     status: $Enums.PaymentStatus
+    provider: $Enums.PaymentProvider
     bkashPaymentId: string | null
     bkashTransactionId: string | null
     bkashExecuteResponse: runtime.JsonValue | null
+    stripeSessionId: string | null
+    stripePaymentIntent: string | null
+    stripeWebhookEventId: string | null
     paidAt: Date | null
     failedAt: Date | null
     cancelledAt: Date | null
@@ -1280,9 +1420,13 @@ export interface PaymentFieldRefs {
   readonly shipmentId: Prisma.FieldRef<"Payment", 'String'>
   readonly amount: Prisma.FieldRef<"Payment", 'Decimal'>
   readonly status: Prisma.FieldRef<"Payment", 'PaymentStatus'>
+  readonly provider: Prisma.FieldRef<"Payment", 'PaymentProvider'>
   readonly bkashPaymentId: Prisma.FieldRef<"Payment", 'String'>
   readonly bkashTransactionId: Prisma.FieldRef<"Payment", 'String'>
   readonly bkashExecuteResponse: Prisma.FieldRef<"Payment", 'Json'>
+  readonly stripeSessionId: Prisma.FieldRef<"Payment", 'String'>
+  readonly stripePaymentIntent: Prisma.FieldRef<"Payment", 'String'>
+  readonly stripeWebhookEventId: Prisma.FieldRef<"Payment", 'String'>
   readonly paidAt: Prisma.FieldRef<"Payment", 'DateTime'>
   readonly failedAt: Prisma.FieldRef<"Payment", 'DateTime'>
   readonly cancelledAt: Prisma.FieldRef<"Payment", 'DateTime'>

@@ -3,7 +3,7 @@ import { prisma } from '../../lib/prisma';
 import { hashPassword, verifyPassword, hashToken, verifyToken } from '../../lib/argon2';
 import { signAccessToken, generateRefreshToken } from '../../lib/jwt';
 import { redis, CacheKeys } from '../../lib/redis';
-import { sendEmail, sendEmailCritical, otpVerificationEmail, welcomeEmail } from '../../lib/resend';
+import { sendEmail, sendEmailCritical, otpVerificationEmail, welcomeEmail } from '../../lib/mailer';
 import {
   ConflictError,
   AuthenticationError,

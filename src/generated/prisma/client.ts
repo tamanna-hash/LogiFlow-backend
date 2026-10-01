@@ -139,6 +139,9 @@ export const ShipmentStatus = $Enums.ShipmentStatus
 export type PaymentStatus = $Enums.PaymentStatus
 export const PaymentStatus = $Enums.PaymentStatus
 
+export type PaymentProvider = $Enums.PaymentProvider
+export const PaymentProvider = $Enums.PaymentProvider
+
 export type DeliveryType = $Enums.DeliveryType
 export const DeliveryType = $Enums.DeliveryType
 

@@ -18,6 +18,7 @@
     "db:migrate:prod": "prisma migrate deploy --schema=./prisma/schema",
     "db:studio": "prisma studio --schema=./prisma/schema",
     "db:seed": "tsx src/prisma/seed.ts",
+    "db:seed:demo": "tsx src/prisma/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
@@ -39,10 +40,12 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.3.0",
+    "nodemailer": "^6.10.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "prisma": "^6.12.0",
     "resend": "^6.26.0",
+    "stripe": "^23.0.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "zod": "^4.5.4"
@@ -53,6 +56,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.2.0",
     "@types/node": "^26.4.1",
+    "@types/nodemailer": "^6.4.24",
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/supertest": "^7.2.1",

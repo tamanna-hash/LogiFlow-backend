@@ -34,6 +34,25 @@ const envSchema = z.object({
     })
     .pipe(z.string().email()),
 
+  // ── Email provider selection ─────────────────────────────────────────────────
+  // EMAIL_PROVIDER=resend (default) | EMAIL_PROVIDER=gmail
+  EMAIL_PROVIDER: z.enum(['resend', 'gmail']).default('resend'),
+
+  // ── Gmail SMTP (required only when EMAIL_PROVIDER=gmail) ─────────────────────
+  SMTP_HOST: z.string().default('smtp.gmail.com'),
+  SMTP_PORT: z.coerce.number().int().default(465),
+  SMTP_SECURE: z.string().default('true'),   // 'true' → TLS (port 465), 'false' → STARTTLS (port 587)
+  SMTP_USER: z.string().optional(),          // Gmail address, e.g. yourapp@gmail.com
+  SMTP_PASS: z.string().optional(),          // Gmail App Password (not your regular password)
+
+  // ── Stripe (optional — server still starts without it) ───────────────────────
+  // STRIPE_SECRET_KEY=sk_test_...   (never expose to browser)
+  // STRIPE_PUBLISHABLE_KEY=pk_test_... (safe for browser, not required server-side)
+  // STRIPE_WEBHOOK_SECRET=whsec_...  (from Stripe dashboard webhook settings)
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+
   BKASH_BASE_URL: z.string().url('BKASH_BASE_URL must be a valid URL'),
   BKASH_USERNAME: z.string().min(1, 'BKASH_USERNAME is required'),
   BKASH_PASSWORD: z.string().min(1, 'BKASH_PASSWORD is required'),

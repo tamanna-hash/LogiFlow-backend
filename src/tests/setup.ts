@@ -24,6 +24,11 @@ process.env.BKASH_APP_SECRET = 'mock_app_secret';
 process.env.BKASH_CALLBACK_URL = 'http://localhost:3000/api/v1/payments/bkash/callback';
 process.env.FRONTEND_URL = 'http://localhost:5173';
 process.env.MAX_DELIVERY_ATTEMPTS = '3';
+process.env.EMAIL_PROVIDER = 'resend';
+// Stripe — disabled in test environment (no real keys)
+process.env.STRIPE_SECRET_KEY = '';
+process.env.STRIPE_PUBLISHABLE_KEY = '';
+process.env.STRIPE_WEBHOOK_SECRET = '';
 
 // Mock Prisma globally — all tests use mocked DB unless explicitly testing DB layer
 vi.mock('../app/lib/prisma', () => ({
@@ -78,6 +83,30 @@ vi.mock('../app/lib/resend', () => ({
   deliveredEmail: vi.fn().mockReturnValue('<html>'),
   deliveryFailedEmail: vi.fn().mockReturnValue('<html>'),
   outForDeliveryEmail: vi.fn().mockReturnValue('<html>'),
+}));
+
+// Mock Mailer (wraps Resend + Nodemailer)
+vi.mock('../app/lib/mailer', () => ({
+  sendEmail: vi.fn().mockResolvedValue(undefined),
+  sendEmailCritical: vi.fn().mockResolvedValue(undefined),
+  shipmentCreatedEmail: vi.fn().mockReturnValue('<html>'),
+  paymentConfirmedEmail: vi.fn().mockReturnValue('<html>'),
+  courierAssignedEmail: vi.fn().mockReturnValue('<html>'),
+  deliveredEmail: vi.fn().mockReturnValue('<html>'),
+  deliveryFailedEmail: vi.fn().mockReturnValue('<html>'),
+  outForDeliveryEmail: vi.fn().mockReturnValue('<html>'),
+  otpVerificationEmail: vi.fn().mockReturnValue('<html>'),
+  welcomeEmail: vi.fn().mockReturnValue('<html>'),
+  _resetMailerSingletons: vi.fn(),
+}));
+
+// Mock Stripe
+vi.mock('../app/lib/stripe', () => ({
+  isStripeConfigured: vi.fn().mockReturnValue(false),
+  createCheckoutSession: vi.fn(),
+  constructWebhookEvent: vi.fn(),
+  retrieveCheckoutSession: vi.fn(),
+  _resetStripeClient: vi.fn(),
 }));
 
 // Mock Cloudinary

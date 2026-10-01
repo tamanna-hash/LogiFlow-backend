@@ -41,6 +41,14 @@ vi.mock('../../app/lib/resend', () => ({
   welcomeEmail: vi.fn().mockReturnValue('<html>welcome</html>'),
 }));
 
+// Mock Mailer — auth.service.ts now imports from mailer
+vi.mock('../../app/lib/mailer', () => ({
+  sendEmail: vi.fn().mockResolvedValue(undefined),
+  sendEmailCritical: vi.fn().mockResolvedValue(undefined),
+  otpVerificationEmail: vi.fn().mockReturnValue('<html>otp</html>'),
+  welcomeEmail: vi.fn().mockReturnValue('<html>welcome</html>'),
+}));
+
 // ── Shared test fixtures ─────────────────────────────────────────────────────
 
 const mockUser = {
@@ -71,7 +79,8 @@ describe('AuthService — registerUser (OTP flow, step 1)', () => {
 
   it('stores OTP + data in Redis and sends email (returns void)', async () => {
     const { redis } = await import('../../app/lib/redis');
-    const { sendEmailCritical } = await import('../../app/lib/resend');
+    // auth.service.ts imports from mailer (not resend directly)
+    const { sendEmailCritical } = await import('../../app/lib/mailer');
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
     vi.mocked(argon2Lib.hashPassword).mockResolvedValue('$argon2id$hashed');
