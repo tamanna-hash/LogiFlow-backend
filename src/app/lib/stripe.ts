@@ -14,25 +14,25 @@
  */
 
 import Stripe from 'stripe';
+import { env } from '../config/env';
 import { ServiceUnavailableError } from '../errors';
 
 let _stripe: Stripe | null = null;
 
 export function isStripeConfigured(): boolean {
-  return !!process.env.STRIPE_SECRET_KEY;
+  return !!env.STRIPE_SECRET_KEY;
 }
 
 function getStripe(): Stripe {
   if (_stripe) return _stripe;
 
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) {
+  if (!env.STRIPE_SECRET_KEY) {
     throw new ServiceUnavailableError(
       'Stripe is not configured. Set STRIPE_SECRET_KEY to enable Stripe payments.',
     );
   }
 
-  _stripe = new Stripe(key, {
+  _stripe = new Stripe(env.STRIPE_SECRET_KEY, {
     apiVersion: '2026-09-30.endive',
     typescript: true,
   });
@@ -43,13 +43,13 @@ function getStripe(): Stripe {
 // ── Checkout Session ──────────────────────────────────────────────────────────
 
 export interface CreateCheckoutSessionParams {
-  paymentId: string;          // our internal payment record id
+  paymentId: string;       // our internal payment record id
   shipmentId: string;
-  amountCents: number;        // amount in smallest currency unit (paisa for BDT)
-  currency: string;           // 'bdt'
+  amountCents: number;     // amount in smallest currency unit (paisa for BDT)
+  currency: string;        // 'bdt'
   customerEmail: string;
-  successUrl: string;         // frontend URL after success
-  cancelUrl: string;          // frontend URL after cancel
+  successUrl: string;      // frontend URL after success
+  cancelUrl: string;       // frontend URL after cancel
   metadata?: Record<string, string>;
 }
 
@@ -67,7 +67,7 @@ export async function createCheckoutSession(
           currency: params.currency,
           unit_amount: params.amountCents,
           product_data: {
-            name: `LogiFlow Shipment Payment`,
+            name: 'LogiFlow Shipment Payment',
             description: `Payment for shipment ${params.shipmentId}`,
           },
         },
@@ -98,8 +98,7 @@ export function constructWebhookEvent(
   rawBody: Buffer,
   signature: string,
 ): Stripe.Event {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!secret) {
+  if (!env.STRIPE_WEBHOOK_SECRET) {
     throw new ServiceUnavailableError(
       'STRIPE_WEBHOOK_SECRET is not configured. Cannot verify webhook signature.',
     );
@@ -108,7 +107,7 @@ export function constructWebhookEvent(
   const stripe = getStripe();
 
   try {
-    return stripe.webhooks.constructEvent(rawBody, signature, secret);
+    return stripe.webhooks.constructEvent(rawBody, signature, env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     throw new Error(
       `Webhook signature verification failed: ${err instanceof Error ? err.message : String(err)}`,

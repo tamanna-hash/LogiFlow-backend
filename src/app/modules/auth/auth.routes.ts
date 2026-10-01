@@ -43,7 +43,10 @@ router.post('/refresh', validateRequest({ body: refreshTokenSchema }), controlle
 router.post('/logout', authenticate, validateRequest({ body: logoutSchema }), controller.logout);
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────
-router.get('/google', controller.googleAuth);
+// Rate-limit the initiation endpoint to prevent redirect-loop abuse.
+// The callback does NOT get a limiter — it is only reached after Google
+// redirects back, so the limiter on /google already covers the flow.
+router.get('/google', rateLimiter('login'), controller.googleAuth);
 router.get('/google/callback', controller.googleCallback);
 
 // ── Password management ───────────────────────────────────────────────────────

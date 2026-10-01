@@ -443,5 +443,61 @@ export async function handleStripeWebhook(rawBody: Buffer, signature: string) {
     }
   }
 
+  // ── payment_intent.payment_failed ──────────────────────────────────────────
+  // Fires when a card is declined, insufficient funds, authentication fails, etc.
+  // We look up the payment by PaymentIntent ID and mark it FAILED.
+  if (event.type === 'payment_intent.payment_failed') {
+    const paymentIntent = event.data.object;
+    const failureMessage =
+      paymentIntent.last_payment_error?.message ?? 'Payment failed';
+    const failureCode =
+      paymentIntent.last_payment_error?.code ?? 'unknown';
+
+    const payment = await prisma.payment.findFirst({
+      where: {
+        stripePaymentIntent: paymentIntent.id,
+        status: 'PENDING',
+      },
+      select: {
+        id: true,
+        shipmentId: true,
+        shipment: {
+          select: {
+            trackingNumber: true,
+            customer: { select: { id: true, email: true, firstName: true } },
+          },
+        },
+      },
+    });
+
+    if (payment) {
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: 'FAILED',
+          failedAt: new Date(),
+          stripeWebhookEventId: event.id,
+        },
+      });
+
+      await createAuditLog({
+        actorId: null,
+        action: 'PAYMENT_FAILED',
+        resourceType: 'Payment',
+        resourceId: payment.id,
+        metadata: {
+          provider: 'STRIPE',
+          reason: failureCode,
+          message: failureMessage,
+          paymentIntentId: paymentIntent.id,
+        },
+      });
+
+      console.error(
+        `[Stripe Webhook] Payment ${payment.id} failed — ${failureCode}: ${failureMessage}`,
+      );
+    }
+  }
+
   return { received: true };
 }

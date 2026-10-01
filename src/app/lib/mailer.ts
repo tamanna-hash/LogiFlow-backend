@@ -13,25 +13,15 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import { Resend } from 'resend';
+import { env } from '../config/env';
 
-// ── Environment reads (lazy, so tests can override process.env) ────────────────
-
-function getEmailProvider(): 'resend' | 'gmail' {
-  const p = (process.env.EMAIL_PROVIDER ?? 'resend').toLowerCase();
-  return p === 'gmail' ? 'gmail' : 'resend';
-}
+// ── From address ──────────────────────────────────────────────────────────────
 
 function getFromAddress(): string {
-  const provider = getEmailProvider();
-  if (provider === 'gmail') {
-    const user = process.env.SMTP_USER ?? '';
-    return `LogiFlow <${user}>`;
+  if (env.EMAIL_PROVIDER === 'gmail') {
+    return `LogiFlow <${env.SMTP_USER ?? ''}>`;
   }
-  // Resend path — mirror existing behaviour
-  const raw = (process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev').trim();
-  const match = raw.match(/<([^>]+)>/);
-  const email = match ? match[1].trim() : raw;
-  return `LogiFlow <${email}>`;
+  return `LogiFlow <${env.RESEND_FROM_EMAIL}>`;
 }
 
 // ── Nodemailer transporter (lazy singleton) ────────────────────────────────────
@@ -41,11 +31,8 @@ let _nodemailerTransporter: Transporter | null = null;
 function getNodemailerTransporter(): Transporter {
   if (_nodemailerTransporter) return _nodemailerTransporter;
 
-  const host = process.env.SMTP_HOST ?? 'smtp.gmail.com';
-  const port = parseInt(process.env.SMTP_PORT ?? '465', 10);
-  const secure = (process.env.SMTP_SECURE ?? 'true') !== 'false'; // default TLS on 465
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const user = env.SMTP_USER;
+  const pass = env.SMTP_PASS;
 
   if (!user || !pass) {
     throw new Error(
@@ -54,11 +41,10 @@ function getNodemailerTransporter(): Transporter {
   }
 
   _nodemailerTransporter = nodemailer.createTransport({
-    host,
-    port,
-    secure,
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT,
+    secure: env.SMTP_SECURE !== 'false', // default TLS on 465
     auth: { user, pass },
-    // Reasonable timeouts
     connectionTimeout: 10_000,
     greetingTimeout: 5_000,
     socketTimeout: 15_000,
@@ -73,9 +59,7 @@ let _resendClient: Resend | null = null;
 
 function getResendClient(): Resend {
   if (_resendClient) return _resendClient;
-  const key = process.env.RESEND_API_KEY;
-  if (!key) throw new Error('RESEND_API_KEY is not configured.');
-  _resendClient = new Resend(key);
+  _resendClient = new Resend(env.RESEND_API_KEY);
   return _resendClient;
 }
 
@@ -93,10 +77,9 @@ export interface SendEmailOptions {
  * Throws on failure (use sendEmail or sendEmailCritical for the right behaviour).
  */
 async function dispatchEmail(options: SendEmailOptions): Promise<void> {
-  const provider = getEmailProvider();
   const from = getFromAddress();
 
-  if (provider === 'gmail') {
+  if (env.EMAIL_PROVIDER === 'gmail') {
     const transporter = getNodemailerTransporter();
     const info = await transporter.sendMail({
       from,

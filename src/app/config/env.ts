@@ -23,7 +23,12 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string().min(1, 'CLOUDINARY_API_KEY is required'),
   CLOUDINARY_API_SECRET: z.string().min(1, 'CLOUDINARY_API_SECRET is required'),
 
-  RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
+  // ── Email provider selection ─────────────────────────────────────────────────
+  // EMAIL_PROVIDER=gmail  (default) | EMAIL_PROVIDER=resend
+  EMAIL_PROVIDER: z.enum(['resend', 'gmail']).default('gmail'),
+
+  // ── Resend (required only when EMAIL_PROVIDER=resend) ────────────────────────
+  RESEND_API_KEY: z.string().optional(),
   RESEND_FROM_EMAIL: z
     .string()
     .default('onboarding@resend.dev')
@@ -34,16 +39,12 @@ const envSchema = z.object({
     })
     .pipe(z.string().email()),
 
-  // ── Email provider selection ─────────────────────────────────────────────────
-  // EMAIL_PROVIDER=resend (default) | EMAIL_PROVIDER=gmail
-  EMAIL_PROVIDER: z.enum(['resend', 'gmail']).default('resend'),
-
   // ── Gmail SMTP (required only when EMAIL_PROVIDER=gmail) ─────────────────────
   SMTP_HOST: z.string().default('smtp.gmail.com'),
   SMTP_PORT: z.coerce.number().int().default(465),
   SMTP_SECURE: z.string().default('true'),   // 'true' → TLS (port 465), 'false' → STARTTLS (port 587)
   SMTP_USER: z.string().optional(),          // Gmail address, e.g. yourapp@gmail.com
-  SMTP_PASS: z.string().optional(),          // Gmail App Password (not your regular password)
+  SMTP_PASS: z.string().optional(),          // Gmail App Password (16 chars, not your regular password)
 
   // ── Stripe (optional — server still starts without it) ───────────────────────
   // STRIPE_SECRET_KEY=sk_test_...   (never expose to browser)

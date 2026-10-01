@@ -209,6 +209,29 @@ describe('PaymentService — handleStripeWebhook', () => {
     );
   });
 
+  it('marks payment FAILED on payment_intent.payment_failed', async () => {
+    const failedIntent = {
+      id: 'pi_failed_01',
+      last_payment_error: { code: 'card_declined', message: 'Your card was declined.' },
+    };
+    const event = makeWebhookEvent('payment_intent.payment_failed', failedIntent);
+    vi.mocked(stripeLib.constructWebhookEvent).mockReturnValue(event as never);
+    vi.mocked(prisma.payment.findFirst)
+      .mockResolvedValueOnce(null) // idempotency check
+      .mockResolvedValueOnce({    // find by stripePaymentIntent
+        id: 'payment_01',
+        shipmentId: 'shipment_01',
+        shipment: { trackingNumber: 'LF-TEST', customer: { id: 'u1', email: 'a@b.com', firstName: 'A' } },
+      } as never);
+    vi.mocked(prisma.payment.update).mockResolvedValue({} as never);
+
+    const result = await handleStripeWebhook(Buffer.from('{}'), 'sig');
+    expect(result).toEqual({ received: true });
+    expect(prisma.payment.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: 'FAILED' }) }),
+    );
+  });
+
   it('skips checkout.session.completed when payment is already COMPLETED', async () => {
     const event = makeWebhookEvent('checkout.session.completed', mockSession);
     vi.mocked(stripeLib.constructWebhookEvent).mockReturnValue(event as never);
