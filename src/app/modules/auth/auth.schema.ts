@@ -52,7 +52,15 @@ export const changePasswordSchema = z.object({
     .max(64, 'New password must be at most 64 characters'),
 });
 
-export type RegisterInput = z.infer<typeof registerSchema>;
-export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
-export type LoginInput = z.infer<typeof loginSchema>;
+export const setPasswordSchema = z.object({
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(64, 'Password must be at most 64 characters'),
+});
+
+export type RegisterInput      = z.infer<typeof registerSchema>;
+export type VerifyEmailInput   = z.infer<typeof verifyEmailSchema>;
+export type LoginInput         = z.infer<typeof loginSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type SetPasswordInput   = z.infer<typeof setPasswordSchema>;

@@ -1,12 +1,24 @@
 import { Resend } from 'resend';
 import { env } from '../config/env';
 
-export const resend = new Resend(env.RESEND_API_KEY);
+// Lazy singleton — only instantiated when actually used (i.e. EMAIL_PROVIDER=resend)
+// This prevents a crash at startup when RESEND_API_KEY is not set.
+let _resend: Resend | null = null;
+
+function getResend(): Resend {
+  if (!_resend) {
+    if (!env.RESEND_API_KEY) {
+      throw new Error(
+        'RESEND_API_KEY is not configured. Set EMAIL_PROVIDER=gmail or provide RESEND_API_KEY.',
+      );
+    }
+    _resend = new Resend(env.RESEND_API_KEY);
+  }
+  return _resend;
+}
 
 // Use RESEND_FROM_EMAIL — sandbox: onboarding@resend.dev; production: your verified domain
 export const FROM_ADDRESS = `LogiFlow <${env.RESEND_FROM_EMAIL}>`;
-
-console.log('[Resend] From address:', FROM_ADDRESS);
 
 export interface SendEmailOptions {
   to: string | string[];
@@ -16,7 +28,7 @@ export interface SendEmailOptions {
 }
 
 async function dispatchEmail(options: SendEmailOptions): Promise<string | undefined> {
-  const { data, error } = await resend.emails.send({
+  const { data, error } = await getResend().emails.send({
     from: FROM_ADDRESS,
     to: options.to,
     subject: options.subject,

@@ -1,21 +1,13 @@
 import type { NextFunction, Request, Response } from 'express';
 import passport from 'passport';
 import * as authService from './auth.service';
-import { signAccessToken, generateRefreshToken } from '../../lib/jwt';
-import { hashToken } from '../../lib/argon2';
-import { prisma } from '../../lib/prisma';
 import { sendSuccess, sendCreated } from '../../utils/response';
 import { env } from '../../config/env';
 
 // ── Registration — step 1: send OTP ──────────────────────────────────────────
 export async function register(req: Request, res: Response): Promise<void> {
   await authService.registerUser(req.body, { ip: req.ip, userAgent: req.headers['user-agent'] });
-  // Never return OTP or Redis payload — only a generic acknowledgement
-  sendCreated(
-    res,
-    null,
-    'Verification code sent. Please check your email and enter the 6-digit code.',
-  );
+  sendCreated(res, null, 'Verification code sent. Please check your email and enter the 6-digit code.');
 }
 
 // ── Registration — step 2: verify OTP, create account ────────────────────────
@@ -59,12 +51,22 @@ export async function changePassword(req: Request, res: Response): Promise<void>
   sendSuccess(res, null, 'Password changed successfully');
 }
 
-// ── Google OAuth ──────────────────────────────────────────────────────────────
+// ── Set password (Google-only users creating their first password) ────────────
+export async function setPassword(req: Request, res: Response): Promise<void> {
+  await authService.setPassword(req.user!.id, req.body, {
+    ip: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+  sendSuccess(res, null, 'Password set successfully. You can now sign in with email and password.');
+}
 
+// ── Google OAuth — initiation ─────────────────────────────────────────────────
 export function googleAuth(req: Request, res: Response, next: NextFunction): void {
   passport.authenticate('google', { scope: ['email', 'profile'], state: 'logiflow' })(req, res, next);
 }
 
+// ── Google OAuth — callback ───────────────────────────────────────────────────
+// Uses the shared issueTokenPair from auth.service so token logic lives in one place.
 export function googleCallback(req: Request, res: Response, next: NextFunction): void {
   passport.authenticate(
     'google',
@@ -73,31 +75,18 @@ export function googleCallback(req: Request, res: Response, next: NextFunction):
       try {
         if (err || !user) {
           const msg = encodeURIComponent(err?.message ?? 'Google authentication failed');
-          res.redirect(`${env.FRONTEND_URL}/auth/error?message=${msg}`);
+          res.redirect(`${env.FRONTEND_URL}/error?message=${msg}`);
           return;
         }
 
-        const accessToken = signAccessToken({ sub: user.id, role: user.role });
-        const rawRefreshToken = generateRefreshToken();
-        const hashedRefreshToken = await hashToken(rawRefreshToken);
-        const tokenPrefix = rawRefreshToken.substring(0, 16);
-
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7);
-
-        await prisma.refreshToken.create({
-          data: {
-            token: hashedRefreshToken,
-            tokenPrefix,
-            userId: user.id,
-            expiresAt,
-            ipAddress: req.ip,
-            userAgent: req.headers['user-agent'],
-          },
+        // Reuse the shared token issuer — no inline token duplication
+        const tokens = await authService.issueTokenPair(user.id, user.role, {
+          ip:        req.ip,
+          userAgent: req.headers['user-agent'],
         });
 
         res.redirect(
-          `${env.FRONTEND_URL}/auth/callback?accessToken=${accessToken}&refreshToken=${rawRefreshToken}`,
+          `${env.FRONTEND_URL}/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
         );
       } catch (callbackErr) {
         next(callbackErr);

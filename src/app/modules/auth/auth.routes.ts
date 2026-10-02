@@ -10,6 +10,7 @@ import {
   refreshTokenSchema,
   logoutSchema,
   changePasswordSchema,
+  setPasswordSchema,
 } from './auth.schema';
 
 const router = Router();
@@ -56,6 +57,15 @@ router.patch(
   rateLimiter('changePassword'),
   validateRequest({ body: changePasswordSchema }),
   controller.changePassword,
+);
+
+// ── Set password (Google-only users adding a password for the first time) ─────
+router.post(
+  '/set-password',
+  authenticate,
+  rateLimiter('changePassword'), // same bucket — same abuse vector
+  validateRequest({ body: setPasswordSchema }),
+  controller.setPassword,
 );
 
 export default router;

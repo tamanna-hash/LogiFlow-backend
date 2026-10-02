@@ -15,51 +15,51 @@ import {
 import { createAuditLog } from '../audit/audit.service';
 import { env } from '../../config/env';
 import { safeUserSelect } from '../../types';
-import type { RegisterInput, VerifyEmailInput, LoginInput, ChangePasswordInput } from './auth.schema';
+import type { RegisterInput, VerifyEmailInput, LoginInput, ChangePasswordInput, SetPasswordInput } from './auth.schema';
 import type { TokenPair } from '../../types';
 import type { PrismaTx } from '../../types/prisma';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const REFRESH_TOKEN_TTL_DAYS = 7;
-const OTP_TTL_SECONDS = 5 * 60; // 5 minutes
+const OTP_TTL_SECONDS        = 5 * 60; // 5 minutes
 const OTP_EXPIRATION_MINUTES = 5;
 
 // ── Stored registration data shape ───────────────────────────────────────────
 interface PendingRegistrationData {
   firstName: string;
-  lastName: string;
-  email: string;
+  lastName:  string;
+  email:     string;
   hashedPassword: string;
   phone?: string;
 }
 
-// Stored as an object so Upstash does not JSON-deserialize a 6-digit code as a number
 interface StoredRegistrationOtp {
   code: string;
 }
 
 // ── Shared token issuance ─────────────────────────────────────────────────────
-async function issueTokenPair(
+// Exported so googleCallback can reuse it — avoids duplicated inline token logic.
+export async function issueTokenPair(
   userId: string,
   role: string,
   meta?: { ip?: string; userAgent?: string },
 ): Promise<TokenPair> {
-  const accessToken = signAccessToken({ sub: userId, role });
-  const rawRefreshToken = generateRefreshToken();
+  const accessToken      = signAccessToken({ sub: userId, role });
+  const rawRefreshToken  = generateRefreshToken();
   const hashedRefreshToken = await hashToken(rawRefreshToken);
-  const tokenPrefix = rawRefreshToken.substring(0, 16);
+  const tokenPrefix      = rawRefreshToken.substring(0, 16);
 
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_TTL_DAYS);
 
   await prisma.refreshToken.create({
     data: {
-      token: hashedRefreshToken,
+      token:      hashedRefreshToken,
       tokenPrefix,
       userId,
       expiresAt,
-      ipAddress: meta?.ip,
-      userAgent: meta?.userAgent,
+      ipAddress:  meta?.ip,
+      userAgent:  meta?.userAgent,
     },
   });
 
@@ -72,50 +72,52 @@ export async function registerUser(
   input: RegisterInput,
   meta?: { ip?: string; userAgent?: string },
 ): Promise<void> {
-  // email is already normalized by Zod transform (trim + toLowerCase)
-  const email = input.email;
+  const email = input.email; // already normalized by Zod (trim + toLowerCase)
 
-  // Reject if a fully-created user exists (not just a pending Redis entry)
+  // Reject if a fully-created account already exists
   const existing = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true },
+    where:  { email },
+    select: { id: true, googleId: true },
   });
-  if (existing) throw new ConflictError('An account with this email already exists.');
+
+  if (existing) {
+    // Give a helpful hint when the account was created via Google
+    if (existing.googleId) {
+      throw new ConflictError(
+        'An account with this email already exists via Google sign-in. ' +
+        'Please sign in with Google. You can add a password from your account settings afterwards.',
+      );
+    }
+    throw new ConflictError('An account with this email already exists. Please sign in instead.');
+  }
 
   const hashedPassword = await hashPassword(input.password);
-
-  // 6-digit numeric OTP — crypto.randomInt is cryptographically secure
   const otp = String(randomInt(100000, 1000000));
 
   const pendingData: PendingRegistrationData = {
     firstName: input.firstName,
-    lastName: input.lastName,
+    lastName:  input.lastName,
     email,
     hashedPassword,
     phone: input.phone,
   };
 
-  // Store both keys with TTL — re-registering before verification simply overwrites them
-  // (this is intentional: no conflict, just a fresh OTP)
-  // Store pendingData as an object — Upstash handles JSON serialization automatically
+  // Re-registering before verification simply overwrites the pending keys (fresh OTP)
   await Promise.all([
-    redis.set(CacheKeys.registrationOtp(email), { code: otp } satisfies StoredRegistrationOtp, {
-      ex: OTP_TTL_SECONDS,
-    }),
+    redis.set(CacheKeys.registrationOtp(email),  { code: otp } satisfies StoredRegistrationOtp, { ex: OTP_TTL_SECONDS }),
     redis.set(CacheKeys.registrationData(email), pendingData, { ex: OTP_TTL_SECONDS }),
   ]);
 
-  // Send verification email — failure rolls back Redis so the user can retry cleanly
-  // OTP is NEVER logged — only passed directly to the email template
+  // Sending fails → roll back Redis so the user can retry cleanly
   try {
     await sendEmailCritical({
-      to: email,
+      to:      email,
       subject: 'Verify your LogiFlow account',
-      html: otpVerificationEmail({
-        name: input.firstName,
+      html:    otpVerificationEmail({
+        name:               input.firstName,
         email,
         otp,
-        expirationMinutes: OTP_EXPIRATION_MINUTES,
+        expirationMinutes:  OTP_EXPIRATION_MINUTES,
       }),
     });
   } catch (err) {
@@ -124,22 +126,21 @@ export async function registerUser(
       redis.del(CacheKeys.registrationData(email)),
     ]);
     const detail = err instanceof Error ? err.message : 'Unknown email provider error';
-    console.error('[Auth] Verification email failed:', { to: email, from: env.RESEND_FROM_EMAIL, detail });
+    console.error('[Auth] Verification email failed:', { to: email, detail });
     throw new ServiceUnavailableError(`Failed to send verification email: ${detail}`);
   }
 
-  // Audit: log that a registration was initiated (no OTP in the log)
   await createAuditLog({
-    actorId: null,
-    action: 'USER_REGISTERED',
+    actorId:      null,
+    action:       'USER_REGISTERED',
     resourceType: 'PendingRegistration',
-    resourceId: email,
-    metadata: { stage: 'otp_sent' },
-    ipAddress: meta?.ip,
+    resourceId:   email,
+    metadata:     { stage: 'otp_sent' },
+    ipAddress:    meta?.ip,
   });
 }
 
-// ── 2. VERIFY EMAIL — validate OTP, create user in Postgres ──────────────────
+// ── 2. VERIFY EMAIL — validate OTP, create user ───────────────────────────────
 
 export async function verifyUserEmail(
   input: VerifyEmailInput,
@@ -147,52 +148,39 @@ export async function verifyUserEmail(
 ): Promise<{ user: Record<string, unknown>; tokens: TokenPair }> {
   const email = input.email;
 
-  // ── Guard: check for existing user states ──────────────────────────────────
+  // Guard: check for existing user states before touching Redis
   const existingUser = await prisma.user.findUnique({
-    where: { email },
-    select: {
-      id: true,
-      isEmailVerified: true,
-      isActive: true,
-      deletedAt: true,
-      role: true,
-    },
+    where:  { email },
+    select: { id: true, isEmailVerified: true, isActive: true, deletedAt: true, role: true },
   });
 
   if (existingUser) {
-    // Soft-deleted account
     if (existingUser.deletedAt !== null) {
       throw new AuthorizationError('This account has been deactivated. Please contact support.');
     }
-    // Blocked account
     if (!existingUser.isActive) {
       throw new AuthorizationError('This account has been blocked. Please contact support.');
     }
-    // Already verified — duplicate verification request
     if (existingUser.isEmailVerified) {
       throw new ConflictError('This email has already been verified. Please log in.');
     }
   }
 
-  // ── Fetch OTP from Redis ───────────────────────────────────────────────────
+  // Validate OTP
   const storedOtpEntry = await redis.get<StoredRegistrationOtp>(CacheKeys.registrationOtp(email));
   if (!storedOtpEntry?.code) {
     throw new BadRequestError(
       'Verification code has expired or is invalid. Please register again to receive a new code.',
     );
   }
-  const storedOtp = String(storedOtpEntry.code);
 
-  // ── Compare OTP as strings ────────────────────────────────────────────────
-  if (storedOtp !== String(input.otp)) {
+  if (String(storedOtpEntry.code) !== String(input.otp)) {
     throw new BadRequestError('Verification code does not match. Please check and try again.');
   }
 
-  // Delete OTP immediately — single-use, prevents replay
+  // Single-use — delete immediately before creating the user
   await redis.del(CacheKeys.registrationOtp(email));
 
-  // ── Fetch pending registration data ───────────────────────────────────────
-  // Upstash deserializes the stored object automatically — no JSON.parse needed
   const pendingData = await redis.get<PendingRegistrationData>(CacheKeys.registrationData(email));
   if (!pendingData) {
     throw new NotFoundError(
@@ -200,21 +188,20 @@ export async function verifyUserEmail(
     );
   }
 
-  // ── Create user + profile in a single transaction ─────────────────────────
-  // A partial user-without-profile row is never possible.
-  // If two concurrent verification requests arrive simultaneously,
-  // the unique constraint on `email` will cause the second to throw P2002 → 409.
+  // Atomic: user + profile in one transaction.
+  // The email @unique constraint handles concurrent duplicate requests (P2002 → 409).
   const user = await prisma.$transaction(async (tx: PrismaTx) => {
     const newUser = await tx.user.create({
       data: {
-        email: pendingData.email,
-        passwordHash: pendingData.hashedPassword,
-        firstName: pendingData.firstName,
-        lastName: pendingData.lastName,
-        phone: pendingData.phone,
-        role: 'CUSTOMER',         // never from client payload
-        isEmailVerified: true,    // verified at this step
-        isActive: true,
+        email:           pendingData.email,
+        passwordHash:    pendingData.hashedPassword,
+        firstName:       pendingData.firstName,
+        lastName:        pendingData.lastName,
+        phone:           pendingData.phone,
+        role:            'CUSTOMER',
+        isEmailVerified: true,
+        isActive:        true,
+        // googleId intentionally omitted — email/password registration
       },
       select: safeUserSelect,
     });
@@ -224,43 +211,45 @@ export async function verifyUserEmail(
     return newUser;
   });
 
-  // ── Clean up registration data from Redis ─────────────────────────────────
   await redis.del(CacheKeys.registrationData(email));
 
-  // ── Send welcome email (fire-and-forget — failure must not fail the request) ─
   void sendEmail({
-    to: email,
+    to:      email,
     subject: 'Welcome to LogiFlow!',
-    html: welcomeEmail({ name: user.firstName, email }),
+    html:    welcomeEmail({ name: user.firstName, email }),
   }).catch((err: unknown) => {
-    console.warn('[Auth] Welcome email failed to send for:', email, err);
+    console.warn('[Auth] Welcome email failed:', email, err);
   });
 
-  // ── Audit log ─────────────────────────────────────────────────────────────
   await createAuditLog({
-    actorId: user.id,
-    action: 'USER_REGISTERED',
+    actorId:      user.id,
+    action:       'USER_REGISTERED',
     resourceType: 'User',
-    resourceId: user.id,
-    after: { email: user.email, role: user.role, isEmailVerified: true },
-    ipAddress: meta?.ip,
+    resourceId:   user.id,
+    after:        { email: user.email, role: user.role, isEmailVerified: true },
+    ipAddress:    meta?.ip,
   });
 
-  // ── Issue tokens ──────────────────────────────────────────────────────────
   const tokens = await issueTokenPair(user.id, user.role, meta);
-
   return { user, tokens };
 }
 
-// ── LOGIN ─────────────────────────────────────────────────────────────────────
+// ── 3. LOGIN ─────────────────────────────────────────────────────────────────
 
 export async function login(
   input: LoginInput,
   meta?: { ip?: string; userAgent?: string },
 ): Promise<{ user: Record<string, unknown>; tokens: TokenPair }> {
   const user = await prisma.user.findUnique({
-    where: { email: input.email },
-    select: { ...safeUserSelect, passwordHash: true, googleId: true, deletedAt: true, isActive: true, isEmailVerified: true },
+    where:  { email: input.email },
+    select: {
+      ...safeUserSelect,
+      passwordHash:    true,
+      googleId:        true,
+      deletedAt:       true,
+      isActive:        true,
+      isEmailVerified: true,
+    },
   });
 
   if (!user || user.deletedAt !== null) {
@@ -272,10 +261,18 @@ export async function login(
   }
 
   if (!user.passwordHash) {
-    throw new BadRequestError('This account uses Google sign-in. Please log in with Google.');
+    // Google-only account — give actionable guidance without revealing more than necessary
+    if (user.googleId) {
+      throw new BadRequestError(
+        'This account was created with Google sign-in and has no password. ' +
+        'Please use "Continue with Google" to sign in. ' +
+        'You can add a password from your account settings once signed in.',
+      );
+    }
+    // Shouldn't happen (no password, no googleId) but handle defensively
+    throw new AuthenticationError('Invalid email or password.');
   }
 
-  // Require email verification before allowing login
   if (!user.isEmailVerified) {
     throw new AuthenticationError(
       'Please verify your email address before logging in. Check your inbox for a verification code.',
@@ -286,12 +283,12 @@ export async function login(
   if (!valid) throw new AuthenticationError('Invalid email or password.');
 
   await createAuditLog({
-    actorId: user.id,
-    action: 'USER_LOGIN',
+    actorId:      user.id,
+    action:       'USER_LOGIN',
     resourceType: 'User',
-    resourceId: user.id,
-    ipAddress: meta?.ip,
-    userAgent: meta?.userAgent,
+    resourceId:   user.id,
+    ipAddress:    meta?.ip,
+    userAgent:    meta?.userAgent,
   });
 
   const tokens = await issueTokenPair(user.id, user.role, meta);
@@ -299,7 +296,7 @@ export async function login(
   return { user: safeUser, tokens };
 }
 
-// ── REFRESH TOKENS ────────────────────────────────────────────────────────────
+// ── 4. REFRESH TOKENS ────────────────────────────────────────────────────────
 
 export async function refreshTokens(
   rawToken: string,
@@ -328,11 +325,11 @@ export async function refreshTokens(
 
   await prisma.refreshToken.update({
     where: { id: matched.id },
-    data: { revokedAt: new Date() },
+    data:  { revokedAt: new Date() },
   });
 
   const user = await prisma.user.findUnique({
-    where: { id: matched.userId },
+    where:  { id: matched.userId },
     select: { id: true, role: true, deletedAt: true, isActive: true },
   });
 
@@ -343,11 +340,11 @@ export async function refreshTokens(
   return issueTokenPair(user.id, user.role, meta);
 }
 
-// ── LOGOUT ────────────────────────────────────────────────────────────────────
+// ── 5. LOGOUT ────────────────────────────────────────────────────────────────
 
 export async function logout(userId: string, rawToken: string): Promise<void> {
   const tokens = await prisma.refreshToken.findMany({
-    where: { userId, revokedAt: null },
+    where:  { userId, revokedAt: null },
     select: { id: true, token: true },
   });
 
@@ -358,20 +355,29 @@ export async function logout(userId: string, rawToken: string): Promise<void> {
     }
   }
 
-  await createAuditLog({ actorId: userId, action: 'USER_LOGOUT', resourceType: 'User', resourceId: userId });
+  await createAuditLog({
+    actorId:      userId,
+    action:       'USER_LOGOUT',
+    resourceType: 'User',
+    resourceId:   userId,
+  });
 }
 
-// ── CHANGE PASSWORD ───────────────────────────────────────────────────────────
+// ── 6. CHANGE PASSWORD ───────────────────────────────────────────────────────
 
 export async function changePassword(userId: string, input: ChangePasswordInput): Promise<void> {
   const user = await prisma.user.findUnique({
-    where: { id: userId },
+    where:  { id: userId },
     select: { passwordHash: true, googleId: true },
   });
 
   if (!user) throw new NotFoundError('User not found.');
+
   if (!user.passwordHash) {
-    throw new BadRequestError('This account uses Google sign-in and has no password.');
+    // Google-only account — direct them to set-password endpoint
+    throw new BadRequestError(
+      'This account has no password yet. Use the "Set password" option in your account settings to create one.',
+    );
   }
 
   const valid = await verifyPassword(user.passwordHash, input.currentPassword);
@@ -381,12 +387,65 @@ export async function changePassword(userId: string, input: ChangePasswordInput)
 
   await prisma.$transaction([
     prisma.user.update({ where: { id: userId }, data: { passwordHash: newHash } }),
+    // Revoke all refresh tokens — forces re-login on all devices after password change
     prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
-      data: { revokedAt: new Date() },
+      data:  { revokedAt: new Date() },
     }),
   ]);
+
+  await createAuditLog({
+    actorId:      userId,
+    action:       'PASSWORD_CHANGED',
+    resourceType: 'User',
+    resourceId:   userId,
+  });
 }
 
-// ── Keep old register export as alias for backward compat with tests ──────────
+// ── 7. SET PASSWORD (Google-only users creating their first password) ─────────
+
+export async function setPassword(
+  userId: string,
+  input: SetPasswordInput,
+  meta?: { ip?: string; userAgent?: string },
+): Promise<void> {
+  const user = await prisma.user.findUnique({
+    where:  { id: userId },
+    select: { passwordHash: true, googleId: true, email: true },
+  });
+
+  if (!user) throw new NotFoundError('User not found.');
+
+  // Only allowed if no password exists yet
+  if (user.passwordHash) {
+    throw new ConflictError(
+      'This account already has a password. Use "Change password" instead.',
+    );
+  }
+
+  // Must have a Google identity — setPassword is only for Google-linked accounts
+  if (!user.googleId) {
+    throw new BadRequestError('No authentication method found for this account. Please contact support.');
+  }
+
+  const newHash = await hashPassword(input.newPassword);
+
+  // Atomic: set password — concurrent duplicate requests: only the first wins
+  // (the second will find passwordHash non-null and throw ConflictError above)
+  await prisma.user.update({
+    where: { id: userId },
+    data:  { passwordHash: newHash },
+  });
+
+  await createAuditLog({
+    actorId:      userId,
+    action:       'PASSWORD_SET',
+    resourceType: 'User',
+    resourceId:   userId,
+    metadata:     { method: 'google_account_password_creation' },
+    ipAddress:    meta?.ip,
+  });
+}
+
+// ── Backward-compat alias ────────────────────────────────────────────────────
 export const register = registerUser;
