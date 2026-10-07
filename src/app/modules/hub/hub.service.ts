@@ -5,6 +5,8 @@ import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
 import { notDeleted } from '../../utils/notDeleted';
 import type { CreateHubInput, CreateZoneInput, HubTransferInput } from './hub.schema';
 import type { PrismaTx } from '../../types/prisma';
+import { claimShipment } from '../../utils/lifecycle';
+import { cacheDel, CacheKeys } from '../../lib/redis';
 
 const hubSelect = {
   id: true, name: true, code: true, address: true, city: true,
@@ -59,7 +61,7 @@ export async function getHubById(id: string) {
     select: {
       ...hubSelect,
       zones: { select: { id: true, name: true, code: true, isActive: true } },
-      _count: { select: { shipmentsCurrently: true } },
+      _count: { select: { shipmentsCurrently: { where: { deletedAt: null, status: { notIn: ['DELIVERED', 'CANCELLED', 'RETURNED'] } } } } },
     },
   });
   if (!hub) throw new NotFoundError('Hub not found.');
@@ -113,6 +115,7 @@ export async function createZone(input: CreateZoneInput, _actorId: string) {
 export async function listZones(params: { hubId?: string; isActive?: boolean; page: number; limit: number }) {
   const { hubId, isActive, page, limit } = params;
   const where = {
+    hub: { isActive: true, deletedAt: null },
     ...(hubId && { hubId }),
     ...(isActive !== undefined && { isActive }),
   };
@@ -176,10 +179,13 @@ export async function createHubTransfer(
     throw new BadRequestError('Shipment is not currently at this hub.');
   }
 
-  const destHub = await prisma.hub.findUnique({ where: { id: input.toHubId, ...notDeleted() }, select: { id: true, name: true } });
+  if (hubId === input.toHubId) throw new BadRequestError('Destination must be a different hub.');
+  const destHub = await prisma.hub.findUnique({ where: { id: input.toHubId, isActive: true, ...notDeleted() }, select: { id: true, name: true } });
   if (!destHub) throw new NotFoundError('Destination hub not found.');
 
   const transfer = await prisma.$transaction(async (tx: PrismaTx) => {
+    await claimShipment(tx, shipment.id, shipment.status);
+    if (await tx.hubTransfer.count({ where: { shipmentId: shipment.id, status: 'IN_TRANSIT' } })) throw new ConflictError('Shipment already has an active transfer.');
     const t = await tx.hubTransfer.create({
       data: {
         shipmentId: input.shipmentId,
@@ -205,10 +211,12 @@ export async function createHubTransfer(
       },
     });
 
+    await createAuditLog({ actorId, action: 'HUB_TRANSFER_CREATED', resourceType: 'HubTransfer', resourceId: t.id }, tx);
+    await tx.notification.create({ data: { userId: shipment.customerId, type: 'IN_TRANSIT', title: 'Shipment in transit', message: shipment.trackingNumber + ' is in transit', metadata: { shipmentId: shipment.id } } });
     return t;
   });
 
-  await createAuditLog({ actorId, action: 'HUB_TRANSFER_CREATED', resourceType: 'HubTransfer', resourceId: transfer.id });
+  await cacheDel(CacheKeys.tracking(shipment.trackingNumber));
   return transfer;
 }
 
@@ -225,13 +233,17 @@ export async function confirmHubTransferArrival(
 
   const transfer = await prisma.hubTransfer.findUnique({
     where: { id: transferId },
-    select: { id: true, shipmentId: true, toHubId: true, status: true, shipment: { select: { trackingNumber: true } } },
+    select: { id: true, shipmentId: true, toHubId: true, status: true, shipment: { select: { trackingNumber: true, status: true, customerId: true } } },
   });
   if (!transfer) throw new NotFoundError('Transfer not found.');
   if (transfer.toHubId !== hubId) throw new BadRequestError('This transfer is not destined for this hub.');
   if (transfer.status !== 'IN_TRANSIT') throw new BadRequestError('Transfer is not in-transit.');
 
   await prisma.$transaction(async (tx: PrismaTx) => {
+    if (transfer.shipment.status !== 'IN_TRANSIT') throw new BadRequestError('Shipment is not in transit.');
+    await claimShipment(tx, transfer.shipmentId, 'IN_TRANSIT');
+    const hub = await tx.hub.findFirst({ where: { id: hubId, isActive: true, deletedAt: null } });
+    if (!hub) throw new BadRequestError('Destination hub is unavailable.');
     await tx.hubTransfer.update({ where: { id: transferId }, data: { status: 'ARRIVED', arrivedAt: new Date() } });
     await tx.shipment.update({
       where: { id: transfer.shipmentId },
@@ -246,7 +258,18 @@ export async function confirmHubTransferArrival(
         actorId,
       },
     });
+    await createAuditLog({ actorId, action: 'HUB_TRANSFER_ARRIVED', resourceType: 'HubTransfer', resourceId: transferId }, tx);
+    await tx.notification.create({ data: { userId: transfer.shipment.customerId, type: 'ARRIVED_AT_HUB', title: 'Arrived at hub', message: transfer.shipment.trackingNumber + ' arrived at its destination hub', metadata: { shipmentId: transfer.shipmentId } } });
   });
 
-  await createAuditLog({ actorId, action: 'HUB_TRANSFER_ARRIVED', resourceType: 'HubTransfer', resourceId: transferId });
+  await cacheDel(CacheKeys.tracking(transfer.shipment.trackingNumber));
+}
+
+export async function listTransfers(hubId: string, params: { page: number; limit: number; status?: import('../../../generated/prisma').HubTransferStatus }) {
+ const where = { OR: [{ fromHubId: hubId }, { toHubId: hubId }], status: params.status };
+ const [transfers, total] = await Promise.all([
+ prisma.hubTransfer.findMany({ where, orderBy: { dispatchedAt: 'desc' }, ...getPrismaSkipTake(params.page, params.limit), select: { id: true, shipmentId: true, fromHubId: true, toHubId: true, status: true, dispatchedAt: true, arrivedAt: true, shipment: { select: { trackingNumber: true } }, fromHub: { select: { name: true } }, toHub: { select: { name: true } } } }),
+ prisma.hubTransfer.count({ where }),
+ ]);
+ return { transfers, meta: buildPaginationMeta(total, params.page, params.limit) };
 }

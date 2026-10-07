@@ -51,6 +51,9 @@ export function initGoogleStrategy(): void {
           if (!email) {
             return done(new Error('No email returned from Google. Please ensure your Google account has a verified email address.'), undefined);
           }
+          if (profile._json.email_verified !== true) {
+            return done(new Error('Google email must be verified.'), undefined);
+          }
 
           const googleId = profile.id;
           const firstName = profile.name?.givenName ?? profile.displayName?.split(' ')[0] ?? 'User';
@@ -82,7 +85,7 @@ export function initGoogleStrategy(): void {
             where: { email },
             select: {
               id: true, email: true, firstName: true, lastName: true,
-              role: true, googleId: true, deletedAt: true, isActive: true,
+              role: true, googleId: true, deletedAt: true, isActive: true, avatarUrl: true,
             },
           });
 

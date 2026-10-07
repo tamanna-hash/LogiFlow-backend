@@ -1,5 +1,6 @@
 import type { AuditAction } from '../../../generated/prisma';
 import { prisma } from '../../lib/prisma';
+import type { PrismaTx } from '../../types/prisma';
 
 export interface AuditLogInput {
   actorId?: string | null;
@@ -18,9 +19,9 @@ export interface AuditLogInput {
  * Written inside transactions where possible so rollback also rolls back the audit entry.
  * Never throws — audit failure should not break the parent operation.
  */
-export async function createAuditLog(input: AuditLogInput): Promise<void> {
+export async function createAuditLog(input: AuditLogInput, tx?: PrismaTx): Promise<void> {
   try {
-    await prisma.auditLog.create({
+    await (tx ?? prisma).auditLog.create({
       data: {
         actorId: input.actorId ?? null,
         action: input.action,
@@ -34,6 +35,7 @@ export async function createAuditLog(input: AuditLogInput): Promise<void> {
       },
     });
   } catch (err) {
+    if (tx) throw err;
     console.error('[Audit] Failed to write audit log:', err);
   }
 }
@@ -69,7 +71,7 @@ export async function getAuditLogs(params: {
     ...(actorId && { actorId }),
     ...(resourceType && { resourceType }),
     ...(resourceId && { resourceId }),
-    ...(operationalOnly && { action: { in: OPERATIONAL_ACTIONS } }),
+    ...(operationalOnly && { action: { in: action ? OPERATIONAL_ACTIONS.filter(value => value === action) : OPERATIONAL_ACTIONS } }),
     ...((fromDate || toDate) && {
       createdAt: {
         ...(fromDate && { gte: new Date(fromDate) }),

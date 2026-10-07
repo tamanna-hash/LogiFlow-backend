@@ -47,6 +47,9 @@ export const authenticate = async (
     if (!user) throw new AuthenticationError('User not found. Please log in again.');
     if (user.deletedAt !== null) throw new AuthenticationError('This account has been deactivated.');
     if (!user.isActive) throw new AuthenticationError('This account has been suspended.');
+    if (user.role === 'HUB_MANAGER' && !user.hubManagerProfile?.hubId) {
+      throw new AuthorizationError('No hub is assigned to this account. Contact an administrator.');
+    }
 
     req.user = {
       id: user.id,

@@ -13,6 +13,7 @@ const assignmentIdParam = z.object({ id: z.string().cuid() });
 const shipmentIdParam = z.object({ shipmentId: z.string().cuid() });
 
 router.get('/assignments', controller.getAssignments);
+router.get('/assignments/:id', validateRequest({ params: assignmentIdParam }), controller.getAssignment);
 router.patch('/assignments/:id/accept', validateRequest({ params: assignmentIdParam }), controller.acceptAssignment);
 router.patch('/assignments/:id/reject', validateRequest({ params: assignmentIdParam, body: rejectAssignmentSchema }), controller.rejectAssignment);
 router.patch('/availability', validateRequest({ body: updateAvailabilitySchema }), controller.updateAvailability);

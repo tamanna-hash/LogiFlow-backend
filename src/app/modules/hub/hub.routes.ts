@@ -12,6 +12,9 @@ const idParam = z.object({ id: z.string().cuid() });
 const hubIdParam = z.object({ hubId: z.string().cuid() });
 const transferParam = z.object({ hubId: z.string().cuid(), transferId: z.string().cuid() });
 
+router.get('/destinations', authorize('HUB_MANAGER', 'OPERATIONS_MANAGER', 'ADMIN'), controller.destinations);
+router.get('/:hubId/transfers', authorize('HUB_MANAGER', 'OPERATIONS_MANAGER', 'ADMIN'), validateRequest({ params: hubIdParam }), controller.listTransfers);
+
 // Hubs
 router.post('/', authorize('ADMIN'), validateRequest({ body: createHubSchema }), controller.createHub);
 router.get('/', authorize('HUB_MANAGER', 'OPERATIONS_MANAGER', 'ADMIN'), controller.listHubs);

@@ -61,3 +61,7 @@ export async function getEarnings(req: Request, res: Response): Promise<void> {
   });
   sendSuccess(res, { deliveries, totalDeliveries }, 'Earnings fetched', 200, meta);
 }
+
+export async function getAssignment(req: Request, res: Response): Promise<void> {
+ sendSuccess(res, await courierService.getAssignment(String(req.params.id), req.user!.id), 'Assignment fetched');
+}

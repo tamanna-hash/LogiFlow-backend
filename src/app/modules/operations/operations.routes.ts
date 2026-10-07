@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 const router = Router();
 router.use(authenticate);
+router.get('/assignments', authorize('OPERATIONS_MANAGER', 'ADMIN'), controller.listAssignments);
 
 const idParam = z.object({ id: z.string().cuid() });
 const courierParam = z.object({ courierProfileId: z.string().cuid() });

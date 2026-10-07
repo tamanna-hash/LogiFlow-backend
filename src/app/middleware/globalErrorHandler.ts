@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '../errors';
 import { env } from '../config/env';
+import { ZodError } from 'zod';
 
 // Lazy-load Prisma error classes to avoid import path issues when generated
 // client is not yet present (e.g. first build before prisma generate)
@@ -25,6 +26,10 @@ export const globalErrorHandler = (
   _next: NextFunction,
 ): void => {
   const isDev = env.NODE_ENV === 'development';
+  if (err instanceof ZodError) {
+    res.status(400).json({ success: false, message: 'Invalid request', errors: err.issues.map(issue => ({ field: issue.path.join('.'), message: issue.message })) });
+    return;
+  }
 
   if (isDev) {
     console.error('[Error]', err);

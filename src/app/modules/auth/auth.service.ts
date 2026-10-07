@@ -13,7 +13,6 @@ import {
   ServiceUnavailableError,
 } from '../../errors';
 import { createAuditLog } from '../audit/audit.service';
-import { env } from '../../config/env';
 import { safeUserSelect } from '../../types';
 import type { RegisterInput, VerifyEmailInput, LoginInput, ChangePasswordInput, SetPasswordInput } from './auth.schema';
 import type { TokenPair } from '../../types';

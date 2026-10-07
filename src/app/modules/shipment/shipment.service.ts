@@ -126,6 +126,7 @@ export async function createShipment(
 }
 
 function buildShipmentWhere(role: Role, userId: string, hubId?: string | null, extra?: Record<string, unknown>) {
+  if (role === 'HUB_MANAGER' && !hubId) throw new AuthorizationError('No hub is assigned to this account.');
   const base: Record<string, unknown> = { deletedAt: null, ...extra };
 
   if (role === 'CUSTOMER') base.customerId = userId;
@@ -174,6 +175,7 @@ export async function listShipments(
 }
 
 export async function getShipmentById(id: string, role: Role, userId: string, hubId?: string | null) {
+  if (role === 'HUB_MANAGER' && !hubId) throw new AuthorizationError('No hub is assigned to this account.');
   const shipment = await prisma.shipment.findUnique({
     where: { id, deletedAt: null },
     select: { ...shipmentDetailSelect },

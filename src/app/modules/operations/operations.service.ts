@@ -1,207 +1,102 @@
 import type { AssignmentType, CourierAvailability, Role, ShipmentStatus } from '../../../generated/prisma';import { prisma } from '../../lib/prisma';
 import { NotFoundError, BadRequestError, ConflictError, AuthorizationError } from '../../errors';
 import { createAuditLog } from '../audit/audit.service';
-import { notifyCourierAssigned, notifyOutForDelivery } from '../notification/notification.service';
 import { cacheDel, CacheKeys } from '../../lib/redis';
 import { buildPaginationMeta, getPrismaSkipTake } from '../../utils/pagination';
 import { notDeleted } from '../../utils/notDeleted';
 import { isValidTransition } from '../../types/enums';
 import type { PrismaTx } from '../../types/prisma';
+import { claimShipment, assignmentReversal, releaseCourier } from '../../utils/lifecycle';
+import { env } from '../../config/env';
 
 export async function assignCourier(
   input: { shipmentId: string; courierProfileId: string; type: AssignmentType },
-  actorId: string,
-  actorRole: Role,
-  actorHubId?: string | null,
+  actorId: string, actorRole: Role, actorHubId?: string | null,
 ) {
-  // HUB_MANAGER scope — courier must belong to their hub
-  if (actorRole === 'HUB_MANAGER' && actorHubId) {
-    const courier = await prisma.courierProfile.findUnique({
-      where: { id: input.courierProfileId },
-      select: { hubId: true },
+  if (actorRole === 'HUB_MANAGER' && !actorHubId) throw new AuthorizationError('No hub assigned.');
+  const { assignment, shipment } = await prisma.$transaction(async (tx: PrismaTx) => {
+    const shipment = await tx.shipment.findUnique({
+      where: { id: input.shipmentId, deletedAt: null },
+      include: { originZone: true, customer: { select: { id: true, email: true, firstName: true } } },
     });
-    if (!courier || courier.hubId !== actorHubId) {
-      throw new AuthorizationError('You can only assign couriers from your own hub.');
-    }
-  }
-
-  // Fetch shipment
-  const shipment = await prisma.shipment.findUnique({
-    where: { id: input.shipmentId, deletedAt: null },
-    select: {
-      id: true, status: true, currentHubId: true, trackingNumber: true,
-      customer: { select: { id: true, email: true, firstName: true } },
-    },
-  });
-  if (!shipment) throw new NotFoundError('Shipment not found.');
-
-  // Validate shipment state for assignment type
-  const validStates: Record<AssignmentType, ShipmentStatus[]> = {
-    PICKUP: ['PICKUP_REQUESTED'],
-    DELIVERY: ['AT_DESTINATION_HUB'],
-    RETURN: ['RETURN_INITIATED'],
-  };
-  if (!validStates[input.type].includes(shipment.status)) {
-    throw new BadRequestError(`Shipment must be in ${validStates[input.type].join(' or ')} for ${input.type} assignment. Current: ${shipment.status}`);
-  }
-
-  // Check existing active assignment
-  const existingAssignment = await prisma.courierAssignment.findFirst({
-    where: { shipmentId: input.shipmentId, status: 'ACTIVE' },
-    select: { id: true },
-  });
-  if (existingAssignment) throw new ConflictError('Shipment already has an active courier assignment.');
-
-  // Transaction: SELECT FOR UPDATE on courier to prevent race condition
-  const assignment = await prisma.$transaction(async (tx: PrismaTx) => {
-    // Lock courier row and check availability
-    const courier = await tx.$queryRaw<{ id: string; availability: string }[]>`
-      SELECT id, availability FROM courier_profiles WHERE id = ${input.courierProfileId} FOR UPDATE
-    `;
-    if (!courier[0]) throw new NotFoundError('Courier profile not found.');
-    if (courier[0].availability !== 'AVAILABLE') {
-      throw new ConflictError('Courier is not available for assignment.');
-    }
-
-    // Determine new shipment status
-    const newStatus: Record<AssignmentType, ShipmentStatus> = {
-      PICKUP: 'ASSIGNED',
-      DELIVERY: 'OUT_FOR_DELIVERY',
-      RETURN: 'RETURNING',
+    if (!shipment) throw new NotFoundError('Shipment not found.');
+    await claimShipment(tx, shipment.id, shipment.status);
+    const states: Record<AssignmentType, ShipmentStatus[]> = {
+      PICKUP: ['PICKUP_REQUESTED'], DELIVERY: ['AT_DESTINATION_HUB', 'DELIVERY_FAILED'], RETURN: ['RETURN_INITIATED'],
     };
-
-    const a = await tx.courierAssignment.create({
-      data: {
-        shipmentId: input.shipmentId,
-        courierProfileId: input.courierProfileId,
-        type: input.type,
-        assignedBy: actorId,
-      },
-      select: { id: true, shipmentId: true, courierProfileId: true, type: true, status: true, assignedAt: true },
-    });
-
-    await tx.shipment.update({ where: { id: input.shipmentId }, data: { status: newStatus[input.type] } });
-    await tx.courierProfile.update({ where: { id: input.courierProfileId }, data: { availability: 'ON_DELIVERY' } });
-    await tx.shipmentTrackingEvent.create({
-      data: {
-        shipmentId: input.shipmentId,
-        status: newStatus[input.type],
-        description: `Courier assigned for ${input.type.toLowerCase()}`,
-        actorId,
-      },
-    });
-
-    return a;
+    if (!states[input.type].includes(shipment.status)) throw new BadRequestError('Shipment is not ready for this assignment type.');
+    if (shipment.paymentStatus !== 'COMPLETED') throw new BadRequestError('Payment must be completed before assignment.');
+    if (input.type === 'DELIVERY' && shipment.deliveryAttemptCount >= env.MAX_DELIVERY_ATTEMPTS) throw new BadRequestError('Maximum delivery attempts reached. Initiate a return.');
+    await tx.$queryRaw`SELECT id FROM courier_profiles WHERE id = ${input.courierProfileId} FOR UPDATE`;
+    const courier = await tx.courierProfile.findUnique({ where: { id: input.courierProfileId }, include: { user: true } });
+    if (!courier || courier.user.role !== 'COURIER' || !courier.user.isActive || courier.user.deletedAt) throw new BadRequestError('Courier account is unavailable.');
+    if (actorRole === 'HUB_MANAGER' && (courier.hubId !== actorHubId || (input.type === 'PICKUP' ? shipment.originZone?.hubId : shipment.currentHubId) !== actorHubId)) throw new AuthorizationError('Shipment and courier must belong to your hub.');
+    if (courier.availability !== 'AVAILABLE' || await tx.courierAssignment.count({ where: { courierProfileId: courier.id, status: 'ACTIVE' } })) throw new ConflictError('Courier has an active assignment or is unavailable.');
+    if (await tx.courierAssignment.count({ where: { shipmentId: shipment.id, status: 'ACTIVE' } })) throw new ConflictError('Shipment already has an active assignment.');
+    const next: Record<AssignmentType, ShipmentStatus> = { PICKUP: 'ASSIGNED', DELIVERY: 'OUT_FOR_DELIVERY', RETURN: 'RETURNING' };
+    const assignment = await tx.courierAssignment.create({ data: { ...input, assignedBy: actorId }, select: { id: true, shipmentId: true, courierProfileId: true, type: true, status: true, assignedAt: true } });
+    await tx.shipment.update({ where: { id: shipment.id }, data: { status: next[input.type] } });
+    await tx.courierProfile.update({ where: { id: courier.id }, data: { availability: 'ON_DELIVERY' } });
+    if (input.type === 'PICKUP') await tx.pickupRequest.update({ where: { shipmentId: shipment.id }, data: { status: 'ASSIGNED' } });
+    await tx.shipmentTrackingEvent.create({ data: { shipmentId: shipment.id, status: next[input.type], description: 'Courier assigned for ' + input.type.toLowerCase(), actorId } });
+    await createAuditLog({ actorId, action: 'COURIER_ASSIGNED', resourceType: 'CourierAssignment', resourceId: assignment.id }, tx);
+    await tx.notification.createMany({ data: [
+      { userId: shipment.customer.id, type: 'COURIER_ASSIGNED', title: 'Courier assigned', message: 'Courier assigned to ' + shipment.trackingNumber, metadata: { shipmentId: shipment.id } },
+      { userId: courier.userId, type: 'COURIER_ASSIGNED', title: 'New assignment', message: 'Assigned to ' + shipment.trackingNumber, metadata: { shipmentId: shipment.id } },
+    ] });
+    return { assignment, shipment };
   });
-
   await cacheDel(CacheKeys.tracking(shipment.trackingNumber));
-  await createAuditLog({ actorId, action: 'COURIER_ASSIGNED', resourceType: 'CourierAssignment', resourceId: assignment.id });
-
-  // Notify customer and courier (find courier userId)
-  const courierUser = await prisma.courierProfile.findUnique({
-    where: { id: input.courierProfileId },
-    select: { userId: true },
-  });
-
-  if (courierUser) {
-    if (input.type === 'DELIVERY') {
-      void notifyOutForDelivery({
-        userId: shipment.customer.id,
-        email: shipment.customer.email,
-        firstName: shipment.customer.firstName,
-        trackingNumber: shipment.trackingNumber,
-        shipmentId: shipment.id,
-      });
-    } else {
-      void notifyCourierAssigned({
-        customerId: shipment.customer.id,
-        customerEmail: shipment.customer.email,
-        customerName: shipment.customer.firstName,
-        courierId: courierUser.userId,
-        trackingNumber: shipment.trackingNumber,
-        shipmentId: shipment.id,
-      });
-    }
-  }
-
   return assignment;
 }
 
 export async function cancelAssignment(assignmentId: string, reason: string, actorId: string) {
-  const assignment = await prisma.courierAssignment.findUnique({
-    where: { id: assignmentId },
-    select: {
-      id: true, status: true, shipmentId: true, courierProfileId: true,
-      shipment: { select: { trackingNumber: true } },
-    },
+  const trackingNumber = await prisma.$transaction(async (tx: PrismaTx) => {
+    const assignment = await tx.courierAssignment.findUnique({ where: { id: assignmentId }, include: { shipment: true } });
+    if (!assignment) throw new NotFoundError('Assignment not found.');
+    if (assignment.status !== 'ACTIVE') throw new BadRequestError('Assignment is not active.');
+    const previous = assignmentReversal(assignment.type, assignment.shipment.status);
+    await claimShipment(tx, assignment.shipmentId, assignment.shipment.status);
+    const changed = await tx.courierAssignment.updateMany({ where: { id: assignmentId, status: 'ACTIVE' }, data: { status: 'CANCELLED', cancelledAt: new Date(), cancellationReason: reason } });
+    if (changed.count !== 1) throw new ConflictError('Assignment changed. Refresh and try again.');
+    await tx.shipment.update({ where: { id: assignment.shipmentId }, data: { status: previous } });
+    if (assignment.type === 'PICKUP') await tx.pickupRequest.updateMany({ where: { shipmentId: assignment.shipmentId }, data: { status: 'PENDING' } });
+    await releaseCourier(tx, assignment.courierProfileId);
+    await tx.shipmentTrackingEvent.create({ data: { shipmentId: assignment.shipmentId, status: previous, description: 'Assignment cancelled: ' + reason, actorId } });
+    await createAuditLog({ actorId, action: 'COURIER_ASSIGNMENT_CANCELLED', resourceType: 'CourierAssignment', resourceId: assignmentId }, tx);
+    return assignment.shipment.trackingNumber;
   });
-  if (!assignment) throw new NotFoundError('Assignment not found.');
-  if (assignment.status !== 'ACTIVE') throw new BadRequestError('Assignment is not active.');
-
-  await prisma.$transaction(async (tx: PrismaTx) => {
-    await tx.courierAssignment.update({
-      where: { id: assignmentId },
-      data: { status: 'CANCELLED', cancelledAt: new Date(), cancellationReason: reason },
-    });
-    await tx.shipment.update({ where: { id: assignment.shipmentId }, data: { status: 'PICKUP_REQUESTED' } });
-    await tx.courierProfile.update({ where: { id: assignment.courierProfileId }, data: { availability: 'AVAILABLE' } });
-  });
-
-  await cacheDel(CacheKeys.tracking(assignment.shipment.trackingNumber));
-  await createAuditLog({ actorId, action: 'COURIER_ASSIGNMENT_CANCELLED', resourceType: 'CourierAssignment', resourceId: assignmentId });
+  await cacheDel(CacheKeys.tracking(trackingNumber));
 }
 
-export async function updateShipmentStatus(
-  shipmentId: string,
-  newStatus: ShipmentStatus,
-  reason: string | undefined,
-  actorId: string,
-  actorRole: Role = 'OPERATIONS_MANAGER',
-) {
-  const shipment = await prisma.shipment.findUnique({
-    where: { id: shipmentId, deletedAt: null },
-    select: { id: true, status: true, trackingNumber: true },
-  });
-  if (!shipment) throw new NotFoundError('Shipment not found.');
-
-  const isValidNext = isValidTransition(shipment.status, newStatus);
-
-  // Only ADMIN can perform overrides (jumps to non-adjacent states)
-  // OPS_MANAGER can only advance to valid next states
-  if (!isValidNext) {
-    if (actorRole !== 'ADMIN') {
-      throw new BadRequestError(
-        `Invalid transition: ${shipment.status} → ${newStatus}. Only ADMIN can override state transitions.`,
-      );
+export async function updateShipmentStatus(shipmentId: string, newStatus: ShipmentStatus, reason: string | undefined, actorId: string, actorRole: Role = 'OPERATIONS_MANAGER') {
+  const trackingNumber = await prisma.$transaction(async (tx: PrismaTx) => {
+    const shipment = await tx.shipment.findUnique({ where: { id: shipmentId, deletedAt: null }, include: { originZone: { include: { hub: true } }, destinationZone: true, assignments: { where: { status: 'ACTIVE' } } } });
+    if (!shipment) throw new NotFoundError('Shipment not found.');
+    const valid = isValidTransition(shipment.status, newStatus);
+    if (!valid && (actorRole !== 'ADMIN' || !reason?.trim())) throw new BadRequestError('Invalid transition. An admin override requires a reason.');
+    // Status-only writes must not bypass payment, assignment, transfer or delivery operations.
+    if (!['AT_ORIGIN_HUB', 'RETURNED'].includes(newStatus)) throw new BadRequestError('Use the pickup, assignment, transfer, delivery or cancellation action for this status.');
+    await claimShipment(tx, shipmentId, shipment.status);
+    if (newStatus === 'AT_ORIGIN_HUB') {
+      if (shipment.status !== 'PICKED_UP') throw new BadRequestError('A picked-up shipment is required for hub receipt.');
+      if (!shipment.originZone?.hub.isActive || shipment.originZone.hub.deletedAt) throw new BadRequestError('Origin hub is unavailable.');
+      await tx.shipment.update({ where: { id: shipmentId }, data: { status: shipment.originZone.hubId === shipment.destinationZone?.hubId ? 'AT_DESTINATION_HUB' : 'AT_ORIGIN_HUB', currentHubId: shipment.originZone.hubId, originHubId: shipment.originZone.hubId } });
+    } else {
+      if (shipment.status !== 'RETURNING' || !shipment.assignments.some(a => a.type === 'RETURN' && a.acceptedAt)) throw new BadRequestError('An accepted return assignment is required.');
+      await tx.shipment.update({ where: { id: shipmentId }, data: { status: 'RETURNED', returnedAt: new Date(), currentHubId: null } });
     }
-    if (!reason) {
-      throw new BadRequestError('Admin override requires a reason.');
+    for (const assignment of shipment.assignments) {
+      await tx.courierAssignment.update({ where: { id: assignment.id }, data: { status: 'COMPLETED' } });
+      await releaseCourier(tx, assignment.courierProfileId);
     }
-  }
-
-  await prisma.$transaction(async (tx: PrismaTx) => {
-    await tx.shipment.update({ where: { id: shipmentId }, data: { status: newStatus } });
-    await tx.shipmentTrackingEvent.create({
-      data: {
-        shipmentId,
-        status: newStatus,
-        description: reason ?? `Status updated to ${newStatus}`,
-        actorId,
-        metadata: !isValidNext ? { override: true, reason, actorRole } : undefined,
-      },
-    });
+    const updated = await tx.shipment.findUniqueOrThrow({ where: { id: shipmentId }, select: { status: true } });
+    await tx.shipmentTrackingEvent.create({ data: { shipmentId, status: updated.status, description: reason || (newStatus === 'RETURNED' ? 'Returned to sender' : 'Received at origin hub'), actorId } });
+    await createAuditLog({ actorId, action: newStatus === 'RETURNED' ? 'RETURN_COMPLETED' : 'SHIPMENT_STATUS_CHANGED', resourceType: 'Shipment', resourceId: shipmentId, before: { status: shipment.status }, after: { status: updated.status } }, tx);
+    await tx.notification.create({ data: { userId: shipment.customerId, type: newStatus === 'RETURNED' ? 'RETURNED' : 'ARRIVED_AT_HUB', title: 'Shipment updated', message: shipment.trackingNumber + ': ' + updated.status, metadata: { shipmentId } } });
+    return shipment.trackingNumber;
   });
-
-  await cacheDel(CacheKeys.tracking(shipment.trackingNumber));
-  await createAuditLog({
-    actorId,
-    action: !isValidNext ? 'SHIPMENT_ADMIN_OVERRIDE' : 'SHIPMENT_STATUS_CHANGED',
-    resourceType: 'Shipment',
-    resourceId: shipmentId,
-    before: { status: shipment.status },
-    after: { status: newStatus },
-    metadata: { reason, override: !isValidNext, actorRole },
-  });
+  await cacheDel(CacheKeys.tracking(trackingNumber));
 }
 
 export async function listCouriers(params: {
@@ -211,6 +106,7 @@ export async function listCouriers(params: {
 }) {
   const { page, limit, availability, hubId, search, actorRole, actorHubId } = params;
 
+  if (actorRole === 'HUB_MANAGER' && !actorHubId) throw new AuthorizationError('No hub assigned.');
   const scopedHubId = actorRole === 'HUB_MANAGER' ? actorHubId ?? undefined : hubId;
 
   const where = {
@@ -218,7 +114,7 @@ export async function listCouriers(params: {
     ...(availability && { availability: availability as CourierAvailability }),
     user: {
       ...notDeleted(),
-      isActive: true,
+      isActive: true, role: 'COURIER' as const,
       ...(search && {
         OR: [
           { firstName: { contains: search, mode: 'insensitive' as const } },
@@ -253,6 +149,7 @@ export async function updateCourierAvailability(
   actorRole: Role,
   actorHubId?: string | null,
 ) {
+  if (actorRole === 'HUB_MANAGER' && !actorHubId) throw new AuthorizationError('No hub assigned.');
   const courier = await prisma.courierProfile.findUnique({
     where: { id: courierProfileId },
     select: { id: true, hubId: true, availability: true },
@@ -263,5 +160,19 @@ export async function updateCourierAvailability(
     throw new AuthorizationError('You can only update availability for couriers at your hub.');
   }
 
-  await prisma.courierProfile.update({ where: { id: courierProfileId }, data: { availability } });
+  await prisma.$transaction(async tx => {
+    await tx.$queryRaw`SELECT id FROM courier_profiles WHERE id = ${courierProfileId} FOR UPDATE`;
+    if (await tx.courierAssignment.count({ where: { courierProfileId, status: 'ACTIVE' } })) throw new BadRequestError('Resolve active assignments before changing availability.');
+    await tx.courierProfile.update({ where: { id: courierProfileId }, data: { availability } });
+  });
 }
+
+export async function listAssignments(params: { page: number; limit: number; status?: import('../../../generated/prisma').AssignmentStatus; type?: AssignmentType }) {
+ const where = { status: params.status, type: params.type };
+ const [assignments, total] = await Promise.all([
+  prisma.courierAssignment.findMany({ where, select: assignmentSelect, orderBy: { assignedAt: 'desc' }, ...getPrismaSkipTake(params.page, params.limit) }),
+  prisma.courierAssignment.count({ where }),
+ ]);
+ return { assignments, meta: buildPaginationMeta(total, params.page, params.limit) };
+}
+import { assignmentSelect } from '../courier/courier.service';

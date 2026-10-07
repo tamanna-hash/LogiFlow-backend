@@ -3,6 +3,7 @@ import * as opsService from './operations.service';
 import { sendSuccess, sendCreated } from '../../utils/response';
 import { paginationSchema } from '../../utils/pagination';
 import type { CourierAvailability, Role } from '../../../generated/prisma';
+import { assignmentQuerySchema } from '../../utils/querySchemas';
 
 export async function assignCourier(req: Request, res: Response): Promise<void> {
   const user = req.user!;
@@ -46,4 +47,10 @@ export async function updateCourierAvailability(req: Request, res: Response): Pr
     user.hubId,
   );
   sendSuccess(res, null, 'Courier availability updated');
+}
+
+export async function listAssignments(req: Request, res: Response): Promise<void> {
+  const params = assignmentQuerySchema.parse(req.query);
+  const { assignments, meta } = await opsService.listAssignments(params);
+  sendSuccess(res, assignments, 'Assignments fetched', 200, meta);
 }
