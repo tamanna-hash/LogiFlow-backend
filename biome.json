@@ -28,6 +28,6 @@
     }
   },
   "files": {
-    "ignore": ["node_modules", "dist", "prisma/migrations"]
+    "ignore": ["node_modules", "dist", "prisma/migrations", "src/generated", "src/tests"]
   }
 }

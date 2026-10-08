@@ -106,7 +106,7 @@ function hoursAgo(n: number): Date {
 async function main() {
   console.log('🌱  LogiFlow demo seed starting…');
   console.log(`   Target: ${process.env.DATABASE_URL?.split('@')[1] ?? 'database'}`);
-  console.log(`   Password hash: computing…`);
+  console.log('   Password hash: computing…');
 
   const passwordHash = await hashDemoPassword();
   console.log('   Password hash: done ✓');

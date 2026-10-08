@@ -212,7 +212,7 @@ export async function createHubTransfer(
     });
 
     await createAuditLog({ actorId, action: 'HUB_TRANSFER_CREATED', resourceType: 'HubTransfer', resourceId: t.id }, tx);
-    await tx.notification.create({ data: { userId: shipment.customerId, type: 'IN_TRANSIT', title: 'Shipment in transit', message: shipment.trackingNumber + ' is in transit', metadata: { shipmentId: shipment.id } } });
+    await tx.notification.create({ data: { userId: shipment.customerId, type: 'IN_TRANSIT', title: 'Shipment in transit', message: `${shipment.trackingNumber} is in transit`, metadata: { shipmentId: shipment.id } } });
     return t;
   });
 
@@ -259,7 +259,7 @@ export async function confirmHubTransferArrival(
       },
     });
     await createAuditLog({ actorId, action: 'HUB_TRANSFER_ARRIVED', resourceType: 'HubTransfer', resourceId: transferId }, tx);
-    await tx.notification.create({ data: { userId: transfer.shipment.customerId, type: 'ARRIVED_AT_HUB', title: 'Arrived at hub', message: transfer.shipment.trackingNumber + ' arrived at its destination hub', metadata: { shipmentId: transfer.shipmentId } } });
+    await tx.notification.create({ data: { userId: transfer.shipment.customerId, type: 'ARRIVED_AT_HUB', title: 'Arrived at hub', message: `${transfer.shipment.trackingNumber} arrived at its destination hub`, metadata: { shipmentId: transfer.shipmentId } } });
   });
 
   await cacheDel(CacheKeys.tracking(transfer.shipment.trackingNumber));

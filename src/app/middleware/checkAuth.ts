@@ -71,11 +71,13 @@ export const authenticate = async (
  */
 export const authorize = (...allowedRoles: Role[]) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
-    if (!req.user) return next(new AuthenticationError('Authentication required.'));
+    if (!req.user) {
+      next(new AuthenticationError('Authentication required.'));
+      return;
+    }
     if (!allowedRoles.includes(req.user.role as Role)) {
-      return next(
-        new AuthorizationError(`Access denied. Required role: ${allowedRoles.join(' or ')}.`),
-      );
+      next(new AuthorizationError(`Access denied. Required role: ${allowedRoles.join(' or ')}.`));
+      return;
     }
     next();
   };

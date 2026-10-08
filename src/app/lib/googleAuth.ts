@@ -117,7 +117,7 @@ export function initGoogleStrategy(): void {
               data: {
                 googleId,
                 // Only backfill avatarUrl if the user has none — never overwrite
-                ...(avatarUrl && !existingByEmail['avatarUrl'] ? { avatarUrl } : {}),
+                ...(avatarUrl && !existingByEmail.avatarUrl ? { avatarUrl } : {}),
               },
               select: {
                 id: true, email: true, firstName: true, lastName: true, role: true,

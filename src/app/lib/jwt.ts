@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { AuthenticationError } from '../errors';

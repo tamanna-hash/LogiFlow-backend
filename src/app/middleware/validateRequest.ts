@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import { z } from 'zod';
+import type { z } from 'zod';
 import { ValidationError } from '../errors';
 
 type RequestPart = 'body' | 'params' | 'query';
@@ -29,7 +29,8 @@ export const validateRequest = (schemas: ValidationSchemas) => {
           field: e.path.join('.') || part,
           message: e.message,
         }));
-        return next(new ValidationError(`Validation failed on ${part}`, fieldErrors));
+        next(new ValidationError(`Validation failed on ${part}`, fieldErrors));
+        return;
       }
 
       req[part] = result.data as typeof req[typeof part];

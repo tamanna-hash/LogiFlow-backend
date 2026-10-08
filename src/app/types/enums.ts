@@ -21,7 +21,7 @@ export {
 
 // ── Allowed status transitions (state machine) ──────────────────────────────
 
-import { type ShipmentStatus as SS } from '../../generated/prisma';
+import type { ShipmentStatus as SS } from '../../generated/prisma';
 
 export const VALID_TRANSITIONS: Record<SS, SS[]> = {
   CREATED: ['PICKUP_REQUESTED', 'CANCELLED'],

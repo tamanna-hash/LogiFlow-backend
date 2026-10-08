@@ -117,7 +117,7 @@ export async function handleBkashCallback(paymentID: string) {
 
   // Step 5: Validate amount (security: ensure bKash didn't process different amount)
   const expectedAmount = Number(payment.amount);
-  const receivedAmount = parseFloat(executeResult.amount);
+  const receivedAmount = Number.parseFloat(executeResult.amount);
   if (Math.abs(expectedAmount - receivedAmount) > 0.01) {
     console.error(`[Payment] Amount mismatch: expected ${expectedAmount}, got ${receivedAmount}`);
     await prisma.payment.update({ where: { id: payment.id }, data: { status: 'FAILED', failedAt: new Date() } });

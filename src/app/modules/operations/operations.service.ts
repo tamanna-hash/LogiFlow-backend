@@ -38,11 +38,11 @@ export async function assignCourier(
     await tx.shipment.update({ where: { id: shipment.id }, data: { status: next[input.type] } });
     await tx.courierProfile.update({ where: { id: courier.id }, data: { availability: 'ON_DELIVERY' } });
     if (input.type === 'PICKUP') await tx.pickupRequest.update({ where: { shipmentId: shipment.id }, data: { status: 'ASSIGNED' } });
-    await tx.shipmentTrackingEvent.create({ data: { shipmentId: shipment.id, status: next[input.type], description: 'Courier assigned for ' + input.type.toLowerCase(), actorId } });
+    await tx.shipmentTrackingEvent.create({ data: { shipmentId: shipment.id, status: next[input.type], description: `Courier assigned for ${input.type.toLowerCase()}`, actorId } });
     await createAuditLog({ actorId, action: 'COURIER_ASSIGNED', resourceType: 'CourierAssignment', resourceId: assignment.id }, tx);
     await tx.notification.createMany({ data: [
-      { userId: shipment.customer.id, type: 'COURIER_ASSIGNED', title: 'Courier assigned', message: 'Courier assigned to ' + shipment.trackingNumber, metadata: { shipmentId: shipment.id } },
-      { userId: courier.userId, type: 'COURIER_ASSIGNED', title: 'New assignment', message: 'Assigned to ' + shipment.trackingNumber, metadata: { shipmentId: shipment.id } },
+      { userId: shipment.customer.id, type: 'COURIER_ASSIGNED', title: 'Courier assigned', message: `Courier assigned to ${shipment.trackingNumber}`, metadata: { shipmentId: shipment.id } },
+      { userId: courier.userId, type: 'COURIER_ASSIGNED', title: 'New assignment', message: `Assigned to ${shipment.trackingNumber}`, metadata: { shipmentId: shipment.id } },
     ] });
     return { assignment, shipment };
   });
@@ -62,7 +62,7 @@ export async function cancelAssignment(assignmentId: string, reason: string, act
     await tx.shipment.update({ where: { id: assignment.shipmentId }, data: { status: previous } });
     if (assignment.type === 'PICKUP') await tx.pickupRequest.updateMany({ where: { shipmentId: assignment.shipmentId }, data: { status: 'PENDING' } });
     await releaseCourier(tx, assignment.courierProfileId);
-    await tx.shipmentTrackingEvent.create({ data: { shipmentId: assignment.shipmentId, status: previous, description: 'Assignment cancelled: ' + reason, actorId } });
+    await tx.shipmentTrackingEvent.create({ data: { shipmentId: assignment.shipmentId, status: previous, description: `Assignment cancelled: ${reason}`, actorId } });
     await createAuditLog({ actorId, action: 'COURIER_ASSIGNMENT_CANCELLED', resourceType: 'CourierAssignment', resourceId: assignmentId }, tx);
     return assignment.shipment.trackingNumber;
   });
@@ -93,7 +93,7 @@ export async function updateShipmentStatus(shipmentId: string, newStatus: Shipme
     const updated = await tx.shipment.findUniqueOrThrow({ where: { id: shipmentId }, select: { status: true } });
     await tx.shipmentTrackingEvent.create({ data: { shipmentId, status: updated.status, description: reason || (newStatus === 'RETURNED' ? 'Returned to sender' : 'Received at origin hub'), actorId } });
     await createAuditLog({ actorId, action: newStatus === 'RETURNED' ? 'RETURN_COMPLETED' : 'SHIPMENT_STATUS_CHANGED', resourceType: 'Shipment', resourceId: shipmentId, before: { status: shipment.status }, after: { status: updated.status } }, tx);
-    await tx.notification.create({ data: { userId: shipment.customerId, type: newStatus === 'RETURNED' ? 'RETURNED' : 'ARRIVED_AT_HUB', title: 'Shipment updated', message: shipment.trackingNumber + ': ' + updated.status, metadata: { shipmentId } } });
+    await tx.notification.create({ data: { userId: shipment.customerId, type: newStatus === 'RETURNED' ? 'RETURNED' : 'ARRIVED_AT_HUB', title: 'Shipment updated', message: `${shipment.trackingNumber}: ${updated.status}`, metadata: { shipmentId } } });
     return shipment.trackingNumber;
   });
   await cacheDel(CacheKeys.tracking(trackingNumber));

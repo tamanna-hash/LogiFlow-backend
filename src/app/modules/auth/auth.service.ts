@@ -1,4 +1,4 @@
-import { randomInt } from 'crypto';
+import { randomInt } from 'node:crypto';
 import { prisma } from '../../lib/prisma';
 import { hashPassword, verifyPassword, hashToken, verifyToken } from '../../lib/argon2';
 import { signAccessToken, generateRefreshToken } from '../../lib/jwt';
