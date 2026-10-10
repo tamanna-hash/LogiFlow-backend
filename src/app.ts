@@ -21,7 +21,12 @@ app.disable('x-powered-by');
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowed = [env.FRONTEND_URL];
+      // Allow both localhost and production frontend URLs
+      const allowed = [
+        'http://localhost:3000',           // Local development
+        'https://logiflow-hash.vercel.app', // Production frontend
+        env.FRONTEND_URL,                   // From .env (fallback)
+      ];
       if (!origin || allowed.includes(origin)) {
         callback(null, true);
       } else {
