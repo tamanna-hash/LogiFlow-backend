@@ -100,7 +100,7 @@ export async function assignHubManager(req: Request, res: Response): Promise<voi
 }
 
 export async function removeHubManager(req: Request, res: Response): Promise<void> {
-  await hubService.removeHubManager(String(req.params.id), req.user!.id);
+  await hubService.removeHubManager(String(req.params.id), req.body.userId, req.user!.id);
   sendSuccess(res, null, 'Hub Manager removed successfully');
 }
 

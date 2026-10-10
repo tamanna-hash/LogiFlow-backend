@@ -8,45 +8,45 @@ const limiters = {
   // Auth endpoints — strict
   login: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(100, '1 h'),
+    limiter: Ratelimit.slidingWindow(300, '1 h'),
     prefix: 'rl:login',
   }),
   register: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(100, '1 h'),
+    limiter: Ratelimit.slidingWindow(300, '1 h'),
     prefix: 'rl:register',
   }),
   changePassword: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(200, '1 h'),
+    limiter: Ratelimit.slidingWindow(300, '1 h'),
     prefix: 'rl:change-password',
   }),
 
   // Payment — prevent abuse
   paymentInitiate: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(200, '1 h'),
+    limiter: Ratelimit.slidingWindow(300, '1 h'),
     prefix: 'rl:payment',
   }),
 
   // Public tracking endpoint
   publicTracking: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(200, '1 h'),
+    limiter: Ratelimit.slidingWindow(300, '1 h'),
     prefix: 'rl:tracking',
   }),
 
   // General authenticated API
   authenticated: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(200, '1 h'),
+    limiter: Ratelimit.slidingWindow(300, '1 h'),
     prefix: 'rl:auth-api',
   }),
 
   // General unauthenticated API
   unauthenticated: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(200, '1 h'),
+    limiter: Ratelimit.slidingWindow(300, '1 h'),
     prefix: 'rl:unauth-api',
   }),
 } as const;
@@ -73,7 +73,7 @@ export function rateLimiter(type: LimiterKey) {
       res.setHeader('X-RateLimit-Reset', reset);
 
       if (!success) {
-        const retryAfter = Math.ceil((reset - Date.now()) / 1000);
+        const retryAfter = Math.ceil((reset - Date.now()) / 3000);
         res.setHeader('Retry-After', retryAfter);
         res.status(429).json({
           success: false,

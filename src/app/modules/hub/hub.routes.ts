@@ -4,7 +4,7 @@ import { validateRequest } from '../../middleware/validateRequest';
 import * as controller from './hub.controller';
 import {
   createHubSchema, updateHubSchema, hubTransferSchema,
-  assignHubManagerSchema,
+  assignHubManagerSchema, removeHubManagerSchema,
 } from './hub.schema';
 import { z } from 'zod';
 
@@ -22,7 +22,7 @@ router.get('/:hubId/transfers', authorize('HUB_MANAGER', 'OPERATIONS_MANAGER', '
 router.get('/unassigned-managers', authorize('ADMIN'), controller.listUnassignedManagers);
 router.get('/:id/manager', authorize('ADMIN'), validateRequest({ params: idParam }), controller.getHubManager);
 router.put('/:id/manager', authorize('ADMIN'), validateRequest({ params: idParam, body: assignHubManagerSchema }), controller.assignHubManager);
-router.delete('/:id/manager', authorize('ADMIN'), validateRequest({ params: idParam }), controller.removeHubManager);
+router.delete('/:id/manager', authorize('ADMIN'), validateRequest({ params: idParam, body: removeHubManagerSchema }), controller.removeHubManager);
 
 // ── Hub Couriers (ADMIN: assign/list; HUB_MANAGER: list own) ─────────────────
 router.get('/:id/couriers', authorize('HUB_MANAGER', 'ADMIN'), validateRequest({ params: idParam }), controller.listHubCouriers);

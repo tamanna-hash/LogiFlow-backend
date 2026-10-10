@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { prisma } from '../../app/lib/prisma';
 import * as argon2Lib from '../../app/lib/argon2';
 import * as jwtLib from '../../app/lib/jwt';
-import { registerUser, verifyUserEmail, login, changePassword } from '../../app/modules/auth/auth.service';
+import { registerUser, verifyUserEmail, login, changePassword, setPassword } from '../../app/modules/auth/auth.service';
 import { ConflictError, AuthenticationError, BadRequestError, NotFoundError } from '../../app/errors';
 
 // ── Mock all external dependencies ─────────────────────────────────────────
@@ -370,5 +370,249 @@ describe('AuthService — changePassword', () => {
     await expect(
       changePassword('user_01', { currentPassword: 'any', newPassword: 'newpass123' }),
     ).rejects.toThrow(BadRequestError);
+  });
+});
+
+// ── setPassword ──────────────────────────────────────────────────────────────
+
+describe('AuthService — setPassword (Google-only users creating their first password)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  // ── Happy path ──────────────────────────────────────────────────────────────
+
+  it('sets passwordHash for a Google-only account that has no password', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user_google_01',
+      passwordHash: null,      // ← no local password yet
+      googleId: 'google_sub_123',
+      email: 'oauth@test.com',
+    } as never);
+    vi.mocked(argon2Lib.hashPassword).mockResolvedValue('$argon2id$new_hash');
+    vi.mocked(prisma.user.update).mockResolvedValue({} as never);
+
+    await expect(
+      setPassword('user_google_01', { newPassword: 'securePass1!' }),
+    ).resolves.not.toThrow();
+
+    expect(argon2Lib.hashPassword).toHaveBeenCalledWith('securePass1!');
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user_google_01' },
+      data:  { passwordHash: '$argon2id$new_hash' },
+    });
+  });
+
+  it('writes an audit log on success', async () => {
+    const { createAuditLog } = await import('../../app/modules/audit/audit.service');
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user_google_01',
+      passwordHash: null,
+      googleId: 'google_sub_123',
+      email: 'oauth@test.com',
+    } as never);
+    vi.mocked(argon2Lib.hashPassword).mockResolvedValue('$argon2id$new_hash');
+    vi.mocked(prisma.user.update).mockResolvedValue({} as never);
+
+    await setPassword('user_google_01', { newPassword: 'securePass1!' });
+
+    expect(createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId:      'user_google_01',
+        action:       'PASSWORD_SET',
+        resourceType: 'User',
+        resourceId:   'user_google_01',
+      }),
+    );
+  });
+
+  it('does not revoke existing refresh tokens — user stays logged in', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user_google_01',
+      passwordHash: null,
+      googleId: 'google_sub_123',
+      email: 'oauth@test.com',
+    } as never);
+    vi.mocked(argon2Lib.hashPassword).mockResolvedValue('$argon2id$new_hash');
+    vi.mocked(prisma.user.update).mockResolvedValue({} as never);
+
+    await setPassword('user_google_01', { newPassword: 'securePass1!' });
+
+    // refreshToken.updateMany must NOT be called — sessions remain valid
+    expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
+  });
+
+  // ── Conflict: account already has a password ────────────────────────────────
+
+  it('throws ConflictError if account already has a password', async () => {
+    const { ConflictError } = await import('../../app/errors');
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user_01',
+      passwordHash: '$argon2id$existing_hash',
+      googleId: 'google_sub_123',
+      email: 'both@test.com',
+    } as never);
+
+    await expect(
+      setPassword('user_01', { newPassword: 'newPass123!' }),
+    ).rejects.toThrow(ConflictError);
+
+    // Must not attempt to hash or write anything
+    expect(argon2Lib.hashPassword).not.toHaveBeenCalled();
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('ConflictError message directs user to change-password flow', async () => {
+    const { ConflictError } = await import('../../app/errors');
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user_01',
+      passwordHash: '$argon2id$existing_hash',
+      googleId: 'google_sub_123',
+      email: 'both@test.com',
+    } as never);
+
+    await expect(
+      setPassword('user_01', { newPassword: 'newPass123!' }),
+    ).rejects.toThrow(expect.objectContaining({
+      message: expect.stringMatching(/change password/i),
+    }));
+  });
+
+  // ── No googleId: account has no auth method ─────────────────────────────────
+
+  it('throws BadRequestError if account has no googleId and no password', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user_broken_01',
+      passwordHash: null,
+      googleId: null,       // ← no Google AND no password — broken state
+      email: 'broken@test.com',
+    } as never);
+
+    await expect(
+      setPassword('user_broken_01', { newPassword: 'securePass1!' }),
+    ).rejects.toThrow(BadRequestError);
+
+    expect(argon2Lib.hashPassword).not.toHaveBeenCalled();
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  // ── User not found ──────────────────────────────────────────────────────────
+
+  it('throws NotFoundError when userId does not exist', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+    await expect(
+      setPassword('nonexistent_id', { newPassword: 'securePass1!' }),
+    ).rejects.toThrow(NotFoundError);
+
+    expect(argon2Lib.hashPassword).not.toHaveBeenCalled();
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  // ── Security: cannot overwrite another user's password via this endpoint ────
+
+  it('only writes to the userId from the verified JWT — cannot target another user by passing a different id', async () => {
+    // The endpoint gets userId exclusively from req.user!.id (set by authenticate middleware).
+    // This test confirms the service only ever queries and updates by that id — never
+    // by any value from the request body.
+    const targetUserId = 'victim_user_id';
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: targetUserId,
+      passwordHash: null,
+      googleId: 'google_sub_456',
+      email: 'victim@test.com',
+    } as never);
+    vi.mocked(argon2Lib.hashPassword).mockResolvedValue('$argon2id$new_hash');
+    vi.mocked(prisma.user.update).mockResolvedValue({} as never);
+
+    await setPassword(targetUserId, { newPassword: 'attackerPass1!' });
+
+    // The update always uses the userId supplied by the server — never an attacker-controlled value
+    expect(prisma.user.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: targetUserId } }),
+    );
+    expect(prisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: targetUserId } }),
+    );
+  });
+
+  // ── Hash quality ────────────────────────────────────────────────────────────
+
+  it('stores the hashed password, never the plaintext', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user_google_01',
+      passwordHash: null,
+      googleId: 'google_sub_123',
+      email: 'oauth@test.com',
+    } as never);
+    vi.mocked(argon2Lib.hashPassword).mockResolvedValue('$argon2id$hashed_value');
+    vi.mocked(prisma.user.update).mockResolvedValue({} as never);
+
+    const plaintext = 'plainTextPassword1!';
+    await setPassword('user_google_01', { newPassword: plaintext });
+
+    const updateCall = vi.mocked(prisma.user.update).mock.calls[0][0];
+    expect((updateCall.data as { passwordHash: string }).passwordHash).toBe('$argon2id$hashed_value');
+    expect((updateCall.data as { passwordHash: string }).passwordHash).not.toBe(plaintext);
+  });
+
+  // ── After setPassword: local login becomes available ────────────────────────
+
+  it('after setPassword the user can log in with email and the new password', async () => {
+    // Step 1 — set the password
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({
+      id: 'user_google_01',
+      passwordHash: null,
+      googleId: 'google_sub_123',
+      email: 'oauth@test.com',
+    } as never);
+    vi.mocked(argon2Lib.hashPassword).mockResolvedValue('$argon2id$new_hash');
+    vi.mocked(prisma.user.update).mockResolvedValue({} as never);
+
+    await setPassword('user_google_01', { newPassword: 'securePass1!' });
+
+    // Step 2 — simulate local login now that passwordHash is set
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({
+      ...mockUser,
+      id: 'user_google_01',
+      email: 'oauth@test.com',
+      isEmailVerified: true,
+      passwordHash: '$argon2id$new_hash',   // ← the hash just written
+      googleId: 'google_sub_123',
+      deletedAt: null,
+    } as never);
+    vi.mocked(argon2Lib.verifyPassword).mockResolvedValue(true);
+    vi.mocked(argon2Lib.hashToken).mockResolvedValue('$argon2id$token_hash');
+    vi.mocked(jwtLib.signAccessToken).mockReturnValue('access_token_post_set');
+    vi.mocked(jwtLib.generateRefreshToken).mockReturnValue('refresh_token_post_set');
+    vi.mocked(prisma.refreshToken.create).mockResolvedValue({} as never);
+
+    const result = await login({ email: 'oauth@test.com', password: 'securePass1!' });
+
+    expect(result.tokens.accessToken).toBe('access_token_post_set');
+    expect(argon2Lib.verifyPassword).toHaveBeenCalledWith('$argon2id$new_hash', 'securePass1!');
+  });
+
+  // ── After setPassword: Google login still works ──────────────────────────────
+
+  it('adding a local password does not break Google OAuth login (googleId is preserved)', async () => {
+    // The setPassword service only updates passwordHash — it never touches googleId.
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user_google_01',
+      passwordHash: null,
+      googleId: 'google_sub_123',
+      email: 'oauth@test.com',
+    } as never);
+    vi.mocked(argon2Lib.hashPassword).mockResolvedValue('$argon2id$new_hash');
+    vi.mocked(prisma.user.update).mockResolvedValue({} as never);
+
+    await setPassword('user_google_01', { newPassword: 'securePass1!' });
+
+    // Confirm the update only touches passwordHash — googleId is not cleared
+    const updateCall = vi.mocked(prisma.user.update).mock.calls[0][0];
+    expect(updateCall.data).toEqual({ passwordHash: '$argon2id$new_hash' });
+    expect(updateCall.data).not.toHaveProperty('googleId');
   });
 });

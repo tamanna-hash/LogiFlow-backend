@@ -223,7 +223,7 @@ export type HubWhereInput = {
   deletedAt?: Prisma.DateTimeNullableFilter<"Hub"> | Date | string | null
   zones?: Prisma.ZoneListRelationFilter
   couriers?: Prisma.CourierProfileListRelationFilter
-  hubManagerProfile?: Prisma.XOR<Prisma.HubManagerProfileNullableScalarRelationFilter, Prisma.HubManagerProfileWhereInput> | null
+  hubManagerProfiles?: Prisma.HubManagerProfileListRelationFilter
   shipmentsCurrently?: Prisma.ShipmentListRelationFilter
   transfersFrom?: Prisma.HubTransferListRelationFilter
   transfersTo?: Prisma.HubTransferListRelationFilter
@@ -242,7 +242,7 @@ export type HubOrderByWithRelationInput = {
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   zones?: Prisma.ZoneOrderByRelationAggregateInput
   couriers?: Prisma.CourierProfileOrderByRelationAggregateInput
-  hubManagerProfile?: Prisma.HubManagerProfileOrderByWithRelationInput
+  hubManagerProfiles?: Prisma.HubManagerProfileOrderByRelationAggregateInput
   shipmentsCurrently?: Prisma.ShipmentOrderByRelationAggregateInput
   transfersFrom?: Prisma.HubTransferOrderByRelationAggregateInput
   transfersTo?: Prisma.HubTransferOrderByRelationAggregateInput
@@ -264,7 +264,7 @@ export type HubWhereUniqueInput = Prisma.AtLeast<{
   deletedAt?: Prisma.DateTimeNullableFilter<"Hub"> | Date | string | null
   zones?: Prisma.ZoneListRelationFilter
   couriers?: Prisma.CourierProfileListRelationFilter
-  hubManagerProfile?: Prisma.XOR<Prisma.HubManagerProfileNullableScalarRelationFilter, Prisma.HubManagerProfileWhereInput> | null
+  hubManagerProfiles?: Prisma.HubManagerProfileListRelationFilter
   shipmentsCurrently?: Prisma.ShipmentListRelationFilter
   transfersFrom?: Prisma.HubTransferListRelationFilter
   transfersTo?: Prisma.HubTransferListRelationFilter
@@ -315,7 +315,7 @@ export type HubCreateInput = {
   deletedAt?: Date | string | null
   zones?: Prisma.ZoneCreateNestedManyWithoutHubInput
   couriers?: Prisma.CourierProfileCreateNestedManyWithoutHubInput
-  hubManagerProfile?: Prisma.HubManagerProfileCreateNestedOneWithoutHubInput
+  hubManagerProfiles?: Prisma.HubManagerProfileCreateNestedManyWithoutHubInput
   shipmentsCurrently?: Prisma.ShipmentCreateNestedManyWithoutCurrentHubInput
   transfersFrom?: Prisma.HubTransferCreateNestedManyWithoutFromHubInput
   transfersTo?: Prisma.HubTransferCreateNestedManyWithoutToHubInput
@@ -334,7 +334,7 @@ export type HubUncheckedCreateInput = {
   deletedAt?: Date | string | null
   zones?: Prisma.ZoneUncheckedCreateNestedManyWithoutHubInput
   couriers?: Prisma.CourierProfileUncheckedCreateNestedManyWithoutHubInput
-  hubManagerProfile?: Prisma.HubManagerProfileUncheckedCreateNestedOneWithoutHubInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUncheckedCreateNestedManyWithoutHubInput
   shipmentsCurrently?: Prisma.ShipmentUncheckedCreateNestedManyWithoutCurrentHubInput
   transfersFrom?: Prisma.HubTransferUncheckedCreateNestedManyWithoutFromHubInput
   transfersTo?: Prisma.HubTransferUncheckedCreateNestedManyWithoutToHubInput
@@ -353,7 +353,7 @@ export type HubUpdateInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   zones?: Prisma.ZoneUpdateManyWithoutHubNestedInput
   couriers?: Prisma.CourierProfileUpdateManyWithoutHubNestedInput
-  hubManagerProfile?: Prisma.HubManagerProfileUpdateOneWithoutHubNestedInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUpdateManyWithoutHubNestedInput
   shipmentsCurrently?: Prisma.ShipmentUpdateManyWithoutCurrentHubNestedInput
   transfersFrom?: Prisma.HubTransferUpdateManyWithoutFromHubNestedInput
   transfersTo?: Prisma.HubTransferUpdateManyWithoutToHubNestedInput
@@ -372,7 +372,7 @@ export type HubUncheckedUpdateInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   zones?: Prisma.ZoneUncheckedUpdateManyWithoutHubNestedInput
   couriers?: Prisma.CourierProfileUncheckedUpdateManyWithoutHubNestedInput
-  hubManagerProfile?: Prisma.HubManagerProfileUncheckedUpdateOneWithoutHubNestedInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUncheckedUpdateManyWithoutHubNestedInput
   shipmentsCurrently?: Prisma.ShipmentUncheckedUpdateManyWithoutCurrentHubNestedInput
   transfersFrom?: Prisma.HubTransferUncheckedUpdateManyWithoutFromHubNestedInput
   transfersTo?: Prisma.HubTransferUncheckedUpdateManyWithoutToHubNestedInput
@@ -500,20 +500,20 @@ export type HubUpdateOneWithoutCouriersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.HubUpdateToOneWithWhereWithoutCouriersInput, Prisma.HubUpdateWithoutCouriersInput>, Prisma.HubUncheckedUpdateWithoutCouriersInput>
 }
 
-export type HubCreateNestedOneWithoutHubManagerProfileInput = {
-  create?: Prisma.XOR<Prisma.HubCreateWithoutHubManagerProfileInput, Prisma.HubUncheckedCreateWithoutHubManagerProfileInput>
-  connectOrCreate?: Prisma.HubCreateOrConnectWithoutHubManagerProfileInput
+export type HubCreateNestedOneWithoutHubManagerProfilesInput = {
+  create?: Prisma.XOR<Prisma.HubCreateWithoutHubManagerProfilesInput, Prisma.HubUncheckedCreateWithoutHubManagerProfilesInput>
+  connectOrCreate?: Prisma.HubCreateOrConnectWithoutHubManagerProfilesInput
   connect?: Prisma.HubWhereUniqueInput
 }
 
-export type HubUpdateOneWithoutHubManagerProfileNestedInput = {
-  create?: Prisma.XOR<Prisma.HubCreateWithoutHubManagerProfileInput, Prisma.HubUncheckedCreateWithoutHubManagerProfileInput>
-  connectOrCreate?: Prisma.HubCreateOrConnectWithoutHubManagerProfileInput
-  upsert?: Prisma.HubUpsertWithoutHubManagerProfileInput
+export type HubUpdateOneWithoutHubManagerProfilesNestedInput = {
+  create?: Prisma.XOR<Prisma.HubCreateWithoutHubManagerProfilesInput, Prisma.HubUncheckedCreateWithoutHubManagerProfilesInput>
+  connectOrCreate?: Prisma.HubCreateOrConnectWithoutHubManagerProfilesInput
+  upsert?: Prisma.HubUpsertWithoutHubManagerProfilesInput
   disconnect?: Prisma.HubWhereInput | boolean
   delete?: Prisma.HubWhereInput | boolean
   connect?: Prisma.HubWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.HubUpdateToOneWithWhereWithoutHubManagerProfileInput, Prisma.HubUpdateWithoutHubManagerProfileInput>, Prisma.HubUncheckedUpdateWithoutHubManagerProfileInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.HubUpdateToOneWithWhereWithoutHubManagerProfilesInput, Prisma.HubUpdateWithoutHubManagerProfilesInput>, Prisma.HubUncheckedUpdateWithoutHubManagerProfilesInput>
 }
 
 export type HubCreateNestedOneWithoutShipmentsCurrentlyInput = {
@@ -572,7 +572,7 @@ export type HubCreateWithoutZonesInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   couriers?: Prisma.CourierProfileCreateNestedManyWithoutHubInput
-  hubManagerProfile?: Prisma.HubManagerProfileCreateNestedOneWithoutHubInput
+  hubManagerProfiles?: Prisma.HubManagerProfileCreateNestedManyWithoutHubInput
   shipmentsCurrently?: Prisma.ShipmentCreateNestedManyWithoutCurrentHubInput
   transfersFrom?: Prisma.HubTransferCreateNestedManyWithoutFromHubInput
   transfersTo?: Prisma.HubTransferCreateNestedManyWithoutToHubInput
@@ -590,7 +590,7 @@ export type HubUncheckedCreateWithoutZonesInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   couriers?: Prisma.CourierProfileUncheckedCreateNestedManyWithoutHubInput
-  hubManagerProfile?: Prisma.HubManagerProfileUncheckedCreateNestedOneWithoutHubInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUncheckedCreateNestedManyWithoutHubInput
   shipmentsCurrently?: Prisma.ShipmentUncheckedCreateNestedManyWithoutCurrentHubInput
   transfersFrom?: Prisma.HubTransferUncheckedCreateNestedManyWithoutFromHubInput
   transfersTo?: Prisma.HubTransferUncheckedCreateNestedManyWithoutToHubInput
@@ -624,7 +624,7 @@ export type HubUpdateWithoutZonesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   couriers?: Prisma.CourierProfileUpdateManyWithoutHubNestedInput
-  hubManagerProfile?: Prisma.HubManagerProfileUpdateOneWithoutHubNestedInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUpdateManyWithoutHubNestedInput
   shipmentsCurrently?: Prisma.ShipmentUpdateManyWithoutCurrentHubNestedInput
   transfersFrom?: Prisma.HubTransferUpdateManyWithoutFromHubNestedInput
   transfersTo?: Prisma.HubTransferUpdateManyWithoutToHubNestedInput
@@ -642,7 +642,7 @@ export type HubUncheckedUpdateWithoutZonesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   couriers?: Prisma.CourierProfileUncheckedUpdateManyWithoutHubNestedInput
-  hubManagerProfile?: Prisma.HubManagerProfileUncheckedUpdateOneWithoutHubNestedInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUncheckedUpdateManyWithoutHubNestedInput
   shipmentsCurrently?: Prisma.ShipmentUncheckedUpdateManyWithoutCurrentHubNestedInput
   transfersFrom?: Prisma.HubTransferUncheckedUpdateManyWithoutFromHubNestedInput
   transfersTo?: Prisma.HubTransferUncheckedUpdateManyWithoutToHubNestedInput
@@ -660,7 +660,7 @@ export type HubCreateWithoutCouriersInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   zones?: Prisma.ZoneCreateNestedManyWithoutHubInput
-  hubManagerProfile?: Prisma.HubManagerProfileCreateNestedOneWithoutHubInput
+  hubManagerProfiles?: Prisma.HubManagerProfileCreateNestedManyWithoutHubInput
   shipmentsCurrently?: Prisma.ShipmentCreateNestedManyWithoutCurrentHubInput
   transfersFrom?: Prisma.HubTransferCreateNestedManyWithoutFromHubInput
   transfersTo?: Prisma.HubTransferCreateNestedManyWithoutToHubInput
@@ -678,7 +678,7 @@ export type HubUncheckedCreateWithoutCouriersInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   zones?: Prisma.ZoneUncheckedCreateNestedManyWithoutHubInput
-  hubManagerProfile?: Prisma.HubManagerProfileUncheckedCreateNestedOneWithoutHubInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUncheckedCreateNestedManyWithoutHubInput
   shipmentsCurrently?: Prisma.ShipmentUncheckedCreateNestedManyWithoutCurrentHubInput
   transfersFrom?: Prisma.HubTransferUncheckedCreateNestedManyWithoutFromHubInput
   transfersTo?: Prisma.HubTransferUncheckedCreateNestedManyWithoutToHubInput
@@ -712,7 +712,7 @@ export type HubUpdateWithoutCouriersInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   zones?: Prisma.ZoneUpdateManyWithoutHubNestedInput
-  hubManagerProfile?: Prisma.HubManagerProfileUpdateOneWithoutHubNestedInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUpdateManyWithoutHubNestedInput
   shipmentsCurrently?: Prisma.ShipmentUpdateManyWithoutCurrentHubNestedInput
   transfersFrom?: Prisma.HubTransferUpdateManyWithoutFromHubNestedInput
   transfersTo?: Prisma.HubTransferUpdateManyWithoutToHubNestedInput
@@ -730,13 +730,13 @@ export type HubUncheckedUpdateWithoutCouriersInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   zones?: Prisma.ZoneUncheckedUpdateManyWithoutHubNestedInput
-  hubManagerProfile?: Prisma.HubManagerProfileUncheckedUpdateOneWithoutHubNestedInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUncheckedUpdateManyWithoutHubNestedInput
   shipmentsCurrently?: Prisma.ShipmentUncheckedUpdateManyWithoutCurrentHubNestedInput
   transfersFrom?: Prisma.HubTransferUncheckedUpdateManyWithoutFromHubNestedInput
   transfersTo?: Prisma.HubTransferUncheckedUpdateManyWithoutToHubNestedInput
 }
 
-export type HubCreateWithoutHubManagerProfileInput = {
+export type HubCreateWithoutHubManagerProfilesInput = {
   id?: string
   name: string
   code: string
@@ -754,7 +754,7 @@ export type HubCreateWithoutHubManagerProfileInput = {
   transfersTo?: Prisma.HubTransferCreateNestedManyWithoutToHubInput
 }
 
-export type HubUncheckedCreateWithoutHubManagerProfileInput = {
+export type HubUncheckedCreateWithoutHubManagerProfilesInput = {
   id?: string
   name: string
   code: string
@@ -772,23 +772,23 @@ export type HubUncheckedCreateWithoutHubManagerProfileInput = {
   transfersTo?: Prisma.HubTransferUncheckedCreateNestedManyWithoutToHubInput
 }
 
-export type HubCreateOrConnectWithoutHubManagerProfileInput = {
+export type HubCreateOrConnectWithoutHubManagerProfilesInput = {
   where: Prisma.HubWhereUniqueInput
-  create: Prisma.XOR<Prisma.HubCreateWithoutHubManagerProfileInput, Prisma.HubUncheckedCreateWithoutHubManagerProfileInput>
+  create: Prisma.XOR<Prisma.HubCreateWithoutHubManagerProfilesInput, Prisma.HubUncheckedCreateWithoutHubManagerProfilesInput>
 }
 
-export type HubUpsertWithoutHubManagerProfileInput = {
-  update: Prisma.XOR<Prisma.HubUpdateWithoutHubManagerProfileInput, Prisma.HubUncheckedUpdateWithoutHubManagerProfileInput>
-  create: Prisma.XOR<Prisma.HubCreateWithoutHubManagerProfileInput, Prisma.HubUncheckedCreateWithoutHubManagerProfileInput>
+export type HubUpsertWithoutHubManagerProfilesInput = {
+  update: Prisma.XOR<Prisma.HubUpdateWithoutHubManagerProfilesInput, Prisma.HubUncheckedUpdateWithoutHubManagerProfilesInput>
+  create: Prisma.XOR<Prisma.HubCreateWithoutHubManagerProfilesInput, Prisma.HubUncheckedCreateWithoutHubManagerProfilesInput>
   where?: Prisma.HubWhereInput
 }
 
-export type HubUpdateToOneWithWhereWithoutHubManagerProfileInput = {
+export type HubUpdateToOneWithWhereWithoutHubManagerProfilesInput = {
   where?: Prisma.HubWhereInput
-  data: Prisma.XOR<Prisma.HubUpdateWithoutHubManagerProfileInput, Prisma.HubUncheckedUpdateWithoutHubManagerProfileInput>
+  data: Prisma.XOR<Prisma.HubUpdateWithoutHubManagerProfilesInput, Prisma.HubUncheckedUpdateWithoutHubManagerProfilesInput>
 }
 
-export type HubUpdateWithoutHubManagerProfileInput = {
+export type HubUpdateWithoutHubManagerProfilesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
@@ -806,7 +806,7 @@ export type HubUpdateWithoutHubManagerProfileInput = {
   transfersTo?: Prisma.HubTransferUpdateManyWithoutToHubNestedInput
 }
 
-export type HubUncheckedUpdateWithoutHubManagerProfileInput = {
+export type HubUncheckedUpdateWithoutHubManagerProfilesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
@@ -837,7 +837,7 @@ export type HubCreateWithoutShipmentsCurrentlyInput = {
   deletedAt?: Date | string | null
   zones?: Prisma.ZoneCreateNestedManyWithoutHubInput
   couriers?: Prisma.CourierProfileCreateNestedManyWithoutHubInput
-  hubManagerProfile?: Prisma.HubManagerProfileCreateNestedOneWithoutHubInput
+  hubManagerProfiles?: Prisma.HubManagerProfileCreateNestedManyWithoutHubInput
   transfersFrom?: Prisma.HubTransferCreateNestedManyWithoutFromHubInput
   transfersTo?: Prisma.HubTransferCreateNestedManyWithoutToHubInput
 }
@@ -855,7 +855,7 @@ export type HubUncheckedCreateWithoutShipmentsCurrentlyInput = {
   deletedAt?: Date | string | null
   zones?: Prisma.ZoneUncheckedCreateNestedManyWithoutHubInput
   couriers?: Prisma.CourierProfileUncheckedCreateNestedManyWithoutHubInput
-  hubManagerProfile?: Prisma.HubManagerProfileUncheckedCreateNestedOneWithoutHubInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUncheckedCreateNestedManyWithoutHubInput
   transfersFrom?: Prisma.HubTransferUncheckedCreateNestedManyWithoutFromHubInput
   transfersTo?: Prisma.HubTransferUncheckedCreateNestedManyWithoutToHubInput
 }
@@ -889,7 +889,7 @@ export type HubUpdateWithoutShipmentsCurrentlyInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   zones?: Prisma.ZoneUpdateManyWithoutHubNestedInput
   couriers?: Prisma.CourierProfileUpdateManyWithoutHubNestedInput
-  hubManagerProfile?: Prisma.HubManagerProfileUpdateOneWithoutHubNestedInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUpdateManyWithoutHubNestedInput
   transfersFrom?: Prisma.HubTransferUpdateManyWithoutFromHubNestedInput
   transfersTo?: Prisma.HubTransferUpdateManyWithoutToHubNestedInput
 }
@@ -907,7 +907,7 @@ export type HubUncheckedUpdateWithoutShipmentsCurrentlyInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   zones?: Prisma.ZoneUncheckedUpdateManyWithoutHubNestedInput
   couriers?: Prisma.CourierProfileUncheckedUpdateManyWithoutHubNestedInput
-  hubManagerProfile?: Prisma.HubManagerProfileUncheckedUpdateOneWithoutHubNestedInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUncheckedUpdateManyWithoutHubNestedInput
   transfersFrom?: Prisma.HubTransferUncheckedUpdateManyWithoutFromHubNestedInput
   transfersTo?: Prisma.HubTransferUncheckedUpdateManyWithoutToHubNestedInput
 }
@@ -925,7 +925,7 @@ export type HubCreateWithoutTransfersFromInput = {
   deletedAt?: Date | string | null
   zones?: Prisma.ZoneCreateNestedManyWithoutHubInput
   couriers?: Prisma.CourierProfileCreateNestedManyWithoutHubInput
-  hubManagerProfile?: Prisma.HubManagerProfileCreateNestedOneWithoutHubInput
+  hubManagerProfiles?: Prisma.HubManagerProfileCreateNestedManyWithoutHubInput
   shipmentsCurrently?: Prisma.ShipmentCreateNestedManyWithoutCurrentHubInput
   transfersTo?: Prisma.HubTransferCreateNestedManyWithoutToHubInput
 }
@@ -943,7 +943,7 @@ export type HubUncheckedCreateWithoutTransfersFromInput = {
   deletedAt?: Date | string | null
   zones?: Prisma.ZoneUncheckedCreateNestedManyWithoutHubInput
   couriers?: Prisma.CourierProfileUncheckedCreateNestedManyWithoutHubInput
-  hubManagerProfile?: Prisma.HubManagerProfileUncheckedCreateNestedOneWithoutHubInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUncheckedCreateNestedManyWithoutHubInput
   shipmentsCurrently?: Prisma.ShipmentUncheckedCreateNestedManyWithoutCurrentHubInput
   transfersTo?: Prisma.HubTransferUncheckedCreateNestedManyWithoutToHubInput
 }
@@ -966,7 +966,7 @@ export type HubCreateWithoutTransfersToInput = {
   deletedAt?: Date | string | null
   zones?: Prisma.ZoneCreateNestedManyWithoutHubInput
   couriers?: Prisma.CourierProfileCreateNestedManyWithoutHubInput
-  hubManagerProfile?: Prisma.HubManagerProfileCreateNestedOneWithoutHubInput
+  hubManagerProfiles?: Prisma.HubManagerProfileCreateNestedManyWithoutHubInput
   shipmentsCurrently?: Prisma.ShipmentCreateNestedManyWithoutCurrentHubInput
   transfersFrom?: Prisma.HubTransferCreateNestedManyWithoutFromHubInput
 }
@@ -984,7 +984,7 @@ export type HubUncheckedCreateWithoutTransfersToInput = {
   deletedAt?: Date | string | null
   zones?: Prisma.ZoneUncheckedCreateNestedManyWithoutHubInput
   couriers?: Prisma.CourierProfileUncheckedCreateNestedManyWithoutHubInput
-  hubManagerProfile?: Prisma.HubManagerProfileUncheckedCreateNestedOneWithoutHubInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUncheckedCreateNestedManyWithoutHubInput
   shipmentsCurrently?: Prisma.ShipmentUncheckedCreateNestedManyWithoutCurrentHubInput
   transfersFrom?: Prisma.HubTransferUncheckedCreateNestedManyWithoutFromHubInput
 }
@@ -1018,7 +1018,7 @@ export type HubUpdateWithoutTransfersFromInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   zones?: Prisma.ZoneUpdateManyWithoutHubNestedInput
   couriers?: Prisma.CourierProfileUpdateManyWithoutHubNestedInput
-  hubManagerProfile?: Prisma.HubManagerProfileUpdateOneWithoutHubNestedInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUpdateManyWithoutHubNestedInput
   shipmentsCurrently?: Prisma.ShipmentUpdateManyWithoutCurrentHubNestedInput
   transfersTo?: Prisma.HubTransferUpdateManyWithoutToHubNestedInput
 }
@@ -1036,7 +1036,7 @@ export type HubUncheckedUpdateWithoutTransfersFromInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   zones?: Prisma.ZoneUncheckedUpdateManyWithoutHubNestedInput
   couriers?: Prisma.CourierProfileUncheckedUpdateManyWithoutHubNestedInput
-  hubManagerProfile?: Prisma.HubManagerProfileUncheckedUpdateOneWithoutHubNestedInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUncheckedUpdateManyWithoutHubNestedInput
   shipmentsCurrently?: Prisma.ShipmentUncheckedUpdateManyWithoutCurrentHubNestedInput
   transfersTo?: Prisma.HubTransferUncheckedUpdateManyWithoutToHubNestedInput
 }
@@ -1065,7 +1065,7 @@ export type HubUpdateWithoutTransfersToInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   zones?: Prisma.ZoneUpdateManyWithoutHubNestedInput
   couriers?: Prisma.CourierProfileUpdateManyWithoutHubNestedInput
-  hubManagerProfile?: Prisma.HubManagerProfileUpdateOneWithoutHubNestedInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUpdateManyWithoutHubNestedInput
   shipmentsCurrently?: Prisma.ShipmentUpdateManyWithoutCurrentHubNestedInput
   transfersFrom?: Prisma.HubTransferUpdateManyWithoutFromHubNestedInput
 }
@@ -1083,7 +1083,7 @@ export type HubUncheckedUpdateWithoutTransfersToInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   zones?: Prisma.ZoneUncheckedUpdateManyWithoutHubNestedInput
   couriers?: Prisma.CourierProfileUncheckedUpdateManyWithoutHubNestedInput
-  hubManagerProfile?: Prisma.HubManagerProfileUncheckedUpdateOneWithoutHubNestedInput
+  hubManagerProfiles?: Prisma.HubManagerProfileUncheckedUpdateManyWithoutHubNestedInput
   shipmentsCurrently?: Prisma.ShipmentUncheckedUpdateManyWithoutCurrentHubNestedInput
   transfersFrom?: Prisma.HubTransferUncheckedUpdateManyWithoutFromHubNestedInput
 }
@@ -1096,6 +1096,7 @@ export type HubUncheckedUpdateWithoutTransfersToInput = {
 export type HubCountOutputType = {
   zones: number
   couriers: number
+  hubManagerProfiles: number
   shipmentsCurrently: number
   transfersFrom: number
   transfersTo: number
@@ -1104,6 +1105,7 @@ export type HubCountOutputType = {
 export type HubCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   zones?: boolean | HubCountOutputTypeCountZonesArgs
   couriers?: boolean | HubCountOutputTypeCountCouriersArgs
+  hubManagerProfiles?: boolean | HubCountOutputTypeCountHubManagerProfilesArgs
   shipmentsCurrently?: boolean | HubCountOutputTypeCountShipmentsCurrentlyArgs
   transfersFrom?: boolean | HubCountOutputTypeCountTransfersFromArgs
   transfersTo?: boolean | HubCountOutputTypeCountTransfersToArgs
@@ -1131,6 +1133,13 @@ export type HubCountOutputTypeCountZonesArgs<ExtArgs extends runtime.Types.Exten
  */
 export type HubCountOutputTypeCountCouriersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.CourierProfileWhereInput
+}
+
+/**
+ * HubCountOutputType without action
+ */
+export type HubCountOutputTypeCountHubManagerProfilesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.HubManagerProfileWhereInput
 }
 
 /**
@@ -1168,7 +1177,7 @@ export type HubSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = ru
   deletedAt?: boolean
   zones?: boolean | Prisma.Hub$zonesArgs<ExtArgs>
   couriers?: boolean | Prisma.Hub$couriersArgs<ExtArgs>
-  hubManagerProfile?: boolean | Prisma.Hub$hubManagerProfileArgs<ExtArgs>
+  hubManagerProfiles?: boolean | Prisma.Hub$hubManagerProfilesArgs<ExtArgs>
   shipmentsCurrently?: boolean | Prisma.Hub$shipmentsCurrentlyArgs<ExtArgs>
   transfersFrom?: boolean | Prisma.Hub$transfersFromArgs<ExtArgs>
   transfersTo?: boolean | Prisma.Hub$transfersToArgs<ExtArgs>
@@ -1218,7 +1227,7 @@ export type HubOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
 export type HubInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   zones?: boolean | Prisma.Hub$zonesArgs<ExtArgs>
   couriers?: boolean | Prisma.Hub$couriersArgs<ExtArgs>
-  hubManagerProfile?: boolean | Prisma.Hub$hubManagerProfileArgs<ExtArgs>
+  hubManagerProfiles?: boolean | Prisma.Hub$hubManagerProfilesArgs<ExtArgs>
   shipmentsCurrently?: boolean | Prisma.Hub$shipmentsCurrentlyArgs<ExtArgs>
   transfersFrom?: boolean | Prisma.Hub$transfersFromArgs<ExtArgs>
   transfersTo?: boolean | Prisma.Hub$transfersToArgs<ExtArgs>
@@ -1232,7 +1241,7 @@ export type $HubPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   objects: {
     zones: Prisma.$ZonePayload<ExtArgs>[]
     couriers: Prisma.$CourierProfilePayload<ExtArgs>[]
-    hubManagerProfile: Prisma.$HubManagerProfilePayload<ExtArgs> | null
+    hubManagerProfiles: Prisma.$HubManagerProfilePayload<ExtArgs>[]
     shipmentsCurrently: Prisma.$ShipmentPayload<ExtArgs>[]
     transfersFrom: Prisma.$HubTransferPayload<ExtArgs>[]
     transfersTo: Prisma.$HubTransferPayload<ExtArgs>[]
@@ -1644,7 +1653,7 @@ export interface Prisma__HubClient<T, Null = never, ExtArgs extends runtime.Type
   readonly [Symbol.toStringTag]: "PrismaPromise"
   zones<T extends Prisma.Hub$zonesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hub$zonesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ZonePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   couriers<T extends Prisma.Hub$couriersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hub$couriersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CourierProfilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  hubManagerProfile<T extends Prisma.Hub$hubManagerProfileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hub$hubManagerProfileArgs<ExtArgs>>): Prisma.Prisma__HubManagerProfileClient<runtime.Types.Result.GetResult<Prisma.$HubManagerProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  hubManagerProfiles<T extends Prisma.Hub$hubManagerProfilesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hub$hubManagerProfilesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$HubManagerProfilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   shipmentsCurrently<T extends Prisma.Hub$shipmentsCurrentlyArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hub$shipmentsCurrentlyArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShipmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   transfersFrom<T extends Prisma.Hub$transfersFromArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hub$transfersFromArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$HubTransferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   transfersTo<T extends Prisma.Hub$transfersToArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Hub$transfersToArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$HubTransferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2123,9 +2132,9 @@ export type Hub$couriersArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 }
 
 /**
- * Hub.hubManagerProfile
+ * Hub.hubManagerProfiles
  */
-export type Hub$hubManagerProfileArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type Hub$hubManagerProfilesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the HubManagerProfile
    */
@@ -2139,6 +2148,11 @@ export type Hub$hubManagerProfileArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   include?: Prisma.HubManagerProfileInclude<ExtArgs> | null
   where?: Prisma.HubManagerProfileWhereInput
+  orderBy?: Prisma.HubManagerProfileOrderByWithRelationInput | Prisma.HubManagerProfileOrderByWithRelationInput[]
+  cursor?: Prisma.HubManagerProfileWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.HubManagerProfileScalarFieldEnum | Prisma.HubManagerProfileScalarFieldEnum[]
 }
 
 /**

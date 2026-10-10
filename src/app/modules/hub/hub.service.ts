@@ -62,6 +62,13 @@ export async function getHubById(id: string) {
       ...hubSelect,
       zones: { select: { id: true, name: true, code: true, isActive: true } },
       _count: { select: { shipmentsCurrently: { where: { deletedAt: null, status: { notIn: ['DELIVERED', 'CANCELLED', 'RETURNED'] } } } } },
+      hubManagerProfiles: {
+        where: { hubId: { not: null } },
+        select: {
+          userId: true,
+          user: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+        },
+      },
     },
   });
   if (!hub) throw new NotFoundError('Hub not found.');
@@ -125,7 +132,7 @@ export async function listZones(params: { hubId?: string; isActive?: boolean; pa
       where,
       orderBy: { name: 'asc' },
       ...getPrismaSkipTake(page, limit),
-      select: { id: true, name: true, code: true, hubId: true, description: true, isActive: true, hub: { select: { name: true } } },
+      select: { id: true, name: true, code: true, hubId: true, description: true, isActive: true, hub: { select: { name: true, city: true } } },
     }),
     prisma.zone.count({ where }),
   ]);
@@ -277,15 +284,15 @@ export async function listTransfers(hubId: string, params: { page: number; limit
 // ── Hub Manager Assignment ────────────────────────────────────────────────────
 
 /**
- * getHubWithManager — returns hub + its current manager (if any).
- * Used by the admin hub detail page to show assignment status.
+ * getHubWithManager — returns hub + all its current managers.
  */
 export async function getHubWithManager(hubId: string) {
   const hub = await prisma.hub.findUnique({
     where: { id: hubId, ...notDeleted() },
     select: {
       ...hubSelect,
-      hubManagerProfile: {
+      hubManagerProfiles: {
+        where: { hubId: { not: null } },
         select: {
           userId: true,
           user: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
@@ -298,17 +305,16 @@ export async function getHubWithManager(hubId: string) {
 }
 
 /**
- * assignHubManager — assigns (or re-assigns) a user as the Hub Manager for a hub.
+ * assignHubManager — assigns a user as a Hub Manager for a hub.
  *
  * Rules enforced:
- * - Target hub must exist and be active (not soft-deleted or deactivated).
+ * - Target hub must exist and be active.
  * - Target user must exist, be active, and have role HUB_MANAGER.
- * - If the hub already has a manager, that manager's hubId is cleared first (within the same transaction).
- * - If the target user is already assigned to a DIFFERENT hub, that old assignment is cleared first.
- * - HubManagerProfile is upserted so it works whether or not the profile exists yet.
+ * - If the user is already assigned to this hub, it's a no-op.
+ * - If the user is assigned to a DIFFERENT hub, that old assignment is cleared first.
+ * - Multiple managers can now be assigned to the same hub.
  */
 export async function assignHubManager(hubId: string, userId: string, actorId: string) {
-  // Validate hub
   const hub = await prisma.hub.findUnique({
     where: { id: hubId, ...notDeleted() },
     select: { id: true, name: true, isActive: true },
@@ -316,7 +322,6 @@ export async function assignHubManager(hubId: string, userId: string, actorId: s
   if (!hub) throw new NotFoundError('Hub not found.');
   if (!hub.isActive) throw new BadRequestError('Cannot assign a manager to an inactive hub.');
 
-  // Validate user
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { id: true, role: true, isActive: true, deletedAt: true, firstName: true, lastName: true },
@@ -325,25 +330,21 @@ export async function assignHubManager(hubId: string, userId: string, actorId: s
   if (!user.isActive) throw new BadRequestError('Cannot assign an inactive user as Hub Manager.');
   if (user.role !== 'HUB_MANAGER') throw new BadRequestError(`User must have the HUB_MANAGER role. Current role: ${user.role}`);
 
-  await prisma.$transaction(async (tx: PrismaTx) => {
-    // Clear the hub's existing manager (if any) — respects the @unique constraint
-    await tx.hubManagerProfile.updateMany({
-      where: { hubId, userId: { not: userId } },
-      data: { hubId: null },
-    });
+  // Check if already assigned to this hub
+  const existing = await prisma.hubManagerProfile.findFirst({ where: { userId, hubId } });
+  if (existing) return getHubWithManager(hubId); // idempotent
 
-    // Clear the user's existing hub assignment if they were at a different hub
-    await tx.hubManagerProfile.updateMany({
-      where: { userId, hubId: { not: hubId } },
-      data: { hubId: null },
-    });
+  // Clear any previous hub assignment for this user (they can only belong to one hub at a time)
+  await prisma.hubManagerProfile.updateMany({
+    where: { userId, hubId: { not: hubId } },
+    data: { hubId: null },
+  });
 
-    // Upsert the profile for the target user — works whether profile exists or not
-    await tx.hubManagerProfile.upsert({
-      where: { userId },
-      update: { hubId },
-      create: { userId, hubId },
-    });
+  // Upsert the profile — set hubId
+  await prisma.hubManagerProfile.upsert({
+    where: { userId },
+    update: { hubId },
+    create: { userId, hubId },
   });
 
   await createAuditLog({
@@ -358,26 +359,19 @@ export async function assignHubManager(hubId: string, userId: string, actorId: s
 }
 
 /**
- * removeHubManager — clears the Hub Manager assignment for a hub.
+ * removeHubManager — removes a specific manager from a hub by userId.
  * The HubManagerProfile record is kept but hubId is set to null.
- * The user retains the HUB_MANAGER role; they simply won't be able to log in
- * until reassigned (authenticate middleware enforces this).
+ * The user retains the HUB_MANAGER role.
  */
-export async function removeHubManager(hubId: string, actorId: string) {
-  const hub = await prisma.hub.findUnique({
-    where: { id: hubId, ...notDeleted() },
-    select: { id: true },
-  });
+export async function removeHubManager(hubId: string, userId: string, actorId: string) {
+  const hub = await prisma.hub.findUnique({ where: { id: hubId, ...notDeleted() }, select: { id: true } });
   if (!hub) throw new NotFoundError('Hub not found.');
 
-  const profile = await prisma.hubManagerProfile.findFirst({
-    where: { hubId },
-    select: { userId: true },
-  });
-  if (!profile) throw new NotFoundError('This hub has no assigned Hub Manager.');
+  const profile = await prisma.hubManagerProfile.findFirst({ where: { hubId, userId } });
+  if (!profile) throw new NotFoundError('This user is not a manager of this hub.');
 
-  await prisma.hubManagerProfile.updateMany({
-    where: { hubId },
+  await prisma.hubManagerProfile.update({
+    where: { id: profile.id },
     data: { hubId: null },
   });
 
@@ -386,7 +380,7 @@ export async function removeHubManager(hubId: string, actorId: string) {
     action: 'HUB_UPDATED',
     resourceType: 'HubManagerProfile',
     resourceId: hubId,
-    before: { hubId, userId: profile.userId },
+    before: { hubId, userId },
     after: { hubId: null },
   });
 }
@@ -401,6 +395,7 @@ export async function listUnassignedHubManagers() {
       role: 'HUB_MANAGER',
       isActive: true,
       deletedAt: null,
+      // User is "unassigned" if they have no profile or their profile's hubId is null
       OR: [
         { hubManagerProfile: null },
         { hubManagerProfile: { hubId: null } },

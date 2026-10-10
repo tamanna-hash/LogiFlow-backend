@@ -25,7 +25,7 @@ router.patch('/assignments/:id/cancel',
 );
 
 router.patch('/shipments/:id/status',
-  authorize('OPERATIONS_MANAGER', 'ADMIN'),
+  authorize('HUB_MANAGER', 'OPERATIONS_MANAGER', 'ADMIN'),
   validateRequest({ params: idParam, body: updateShipmentStatusSchema }),
   controller.updateShipmentStatus,
 );

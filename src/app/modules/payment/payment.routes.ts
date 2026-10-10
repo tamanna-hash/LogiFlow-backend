@@ -54,6 +54,16 @@ router.get(
   controller.getPaymentByShipment,
 );
 
+// Stripe: manual verify — polls Stripe directly, completes if paid (webhook fallback)
+router.post(
+  '/stripe/verify/:shipmentId',
+  authenticate,
+  rateLimiter('paymentInitiate'),
+  authorize('CUSTOMER', 'ADMIN'),
+  validateRequest({ params: shipmentIdParam }),
+  controller.verifyStripePayment,
+);
+
 // Admin: list all payments
 router.get(
   '/',

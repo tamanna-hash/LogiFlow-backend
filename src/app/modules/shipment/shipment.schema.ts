@@ -59,6 +59,7 @@ export const shipmentListQuerySchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
   fromDate: z.string().datetime().optional(),
   toDate: z.string().datetime().optional(),
+  pickupQueue: z.enum(['true', 'false']).transform(v => v === 'true').optional(),
 });
 
 export type CreateShipmentInput = z.infer<typeof createShipmentSchema>;

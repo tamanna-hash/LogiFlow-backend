@@ -4,6 +4,8 @@ import {
   createCheckoutSession,
   constructWebhookEvent,
   isStripeConfigured,
+  expireCheckoutSession,
+  retrieveCheckoutSession,
 } from '../../lib/stripe';
 import { NotFoundError, BadRequestError, AuthorizationError, ConflictError, ServiceUnavailableError } from '../../errors';
 import { createAuditLog } from '../audit/audit.service';
@@ -239,13 +241,49 @@ export async function initiateStripeCheckout(shipmentId: string, userId: string)
   if (shipment.paymentStatus === 'COMPLETED') throw new BadRequestError('This shipment has already been paid.');
   if (shipment.status !== 'CREATED') throw new BadRequestError('Payment can only be initiated for shipments in CREATED status.');
 
-  // Check for existing active Stripe session on this shipment
+  // Check for existing active Stripe session on this shipment.
+  // If found, expire the old Stripe session and reuse the payment record
+  // so the user can retry after abandoning a checkout page.
   const existingStripePayment = await prisma.payment.findFirst({
     where: { shipmentId, status: 'PENDING', provider: 'STRIPE', stripeSessionId: { not: null } },
-    select: { id: true, stripeSessionId: true },
+    select: { id: true, stripeSessionId: true, amount: true },
   });
   if (existingStripePayment) {
-    throw new ConflictError('A Stripe payment for this shipment is already in progress. Complete or cancel it first.');
+    // Expire the stale session on Stripe's side (no-op if already expired/completed)
+    await expireCheckoutSession(existingStripePayment.stripeSessionId!);
+
+    // Create a fresh session reusing the same payment record
+    const amountCents = Math.round(Number(existingStripePayment.amount) * 100);
+    const frontendUrl = env.FRONTEND_URL;
+
+    const newSession = await createCheckoutSession({
+      paymentId: existingStripePayment.id,
+      shipmentId,
+      amountCents,
+      currency: 'bdt',
+      customerEmail: shipment.customer.email,
+      successUrl: `${frontendUrl}/payment/success?shipmentId=${shipmentId}`,
+      cancelUrl: `${frontendUrl}/payment/failure?shipmentId=${shipmentId}`,
+    });
+
+    await prisma.payment.update({
+      where: { id: existingStripePayment.id },
+      data: { stripeSessionId: newSession.id },
+    });
+
+    await createAuditLog({
+      actorId: userId,
+      action: 'PAYMENT_INITIATED',
+      resourceType: 'Payment',
+      resourceId: existingStripePayment.id,
+      metadata: { provider: 'STRIPE', sessionId: newSession.id, retried: true },
+    });
+
+    return {
+      paymentId: existingStripePayment.id,
+      checkoutUrl: newSession.url,
+      amount: Number(existingStripePayment.amount).toFixed(2),
+    };
   }
 
   // Find existing pending payment without a Stripe session, or create one
@@ -300,6 +338,90 @@ export async function initiateStripeCheckout(shipmentId: string, userId: string)
     checkoutUrl: session.url,
     amount: Number(payment.amount).toFixed(2),
   };
+}
+
+// ── Stripe Manual Verification ───────────────────────────────────────────────
+
+/**
+ * verifyStripePayment — polls the Stripe session directly and completes the
+ * payment if Stripe reports it as paid. Used as a fallback when the webhook
+ * is delayed (e.g. local dev without the Stripe CLI).
+ */
+export async function verifyStripePayment(shipmentId: string, userId: string) {
+  if (!isStripeConfigured()) {
+    throw new ServiceUnavailableError('Stripe payments are not enabled.');
+  }
+
+  const payment = await prisma.payment.findFirst({
+    where: { shipmentId, provider: 'STRIPE' },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true, status: true, amount: true, stripeSessionId: true,
+      shipment: {
+        select: {
+          customerId: true, trackingNumber: true,
+          customer: { select: { id: true, email: true, firstName: true } },
+        },
+      },
+    },
+  });
+
+  if (!payment) throw new NotFoundError('No Stripe payment found for this shipment.');
+  if (payment.shipment.customerId !== userId) throw new AuthorizationError();
+
+  // Already settled — nothing to do
+  if (payment.status === 'COMPLETED') return { status: 'COMPLETED', alreadyCompleted: true };
+  if (payment.status === 'FAILED') return { status: 'FAILED', alreadyCompleted: false };
+
+  if (!payment.stripeSessionId) throw new BadRequestError('No Stripe session found for this payment.');
+
+  // Retrieve the session from Stripe
+  const session = await retrieveCheckoutSession(payment.stripeSessionId);
+
+  if (session.payment_status !== 'paid') {
+    return { status: payment.status, alreadyCompleted: false };
+  }
+
+  // Session is paid but webhook hasn't fired yet — complete it now
+  const paymentIntentId =
+    typeof session.payment_intent === 'string'
+      ? session.payment_intent
+      : (session.payment_intent as { id?: string } | null)?.id ?? null;
+
+  await prisma.$transaction(async (tx: PrismaTx) => {
+    await tx.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: 'COMPLETED',
+        stripePaymentIntent: paymentIntentId,
+        paidAt: new Date(),
+      },
+    });
+    await tx.shipment.update({
+      where: { id: shipmentId },
+      data: { paymentStatus: 'COMPLETED' },
+    });
+  });
+
+  await createAuditLog({
+    actorId: userId,
+    action: 'PAYMENT_COMPLETED',
+    resourceType: 'Payment',
+    resourceId: payment.id,
+    after: { provider: 'STRIPE', paymentIntentId, source: 'manual_verify' },
+  });
+
+  void notifyPaymentCompleted({
+    userId: payment.shipment.customer.id,
+    email: payment.shipment.customer.email,
+    firstName: payment.shipment.customer.firstName,
+    trackingNumber: payment.shipment.trackingNumber,
+    transactionId: paymentIntentId ?? payment.stripeSessionId,
+    amount: Number(payment.amount).toFixed(2),
+    shipmentId,
+  });
+
+  return { status: 'COMPLETED', alreadyCompleted: false };
 }
 
 // ── Stripe Webhook Handler ────────────────────────────────────────────────────
@@ -501,3 +623,4 @@ export async function handleStripeWebhook(rawBody: Buffer, signature: string) {
 
   return { received: true };
 }
+

@@ -48,6 +48,14 @@ export async function initiateStripeCheckout(req: Request, res: Response): Promi
   sendCreated(res, result, 'Stripe checkout session created');
 }
 
+export async function verifyStripePayment(req: Request, res: Response): Promise<void> {
+  const result = await paymentService.verifyStripePayment(
+    String(req.params.shipmentId),
+    req.user!.id,
+  );
+  sendSuccess(res, result, 'Stripe payment verified');
+}
+
 /**
  * stripeWebhook — receives webhook events from Stripe.
  *

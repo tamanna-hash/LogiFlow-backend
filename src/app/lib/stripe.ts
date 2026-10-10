@@ -115,6 +115,26 @@ export function constructWebhookEvent(
   }
 }
 
+// ── Expire session (called when user retries after abandoning) ────────────────
+
+/**
+ * Expires an open Stripe Checkout Session so a new one can be created.
+ * Stripe only allows expiring sessions that are still `open` — already
+ * expired/complete sessions are silently ignored.
+ */
+export async function expireCheckoutSession(sessionId: string): Promise<void> {
+  const stripe = getStripe();
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    if (session.status === 'open') {
+      await stripe.checkout.sessions.expire(sessionId);
+    }
+  } catch (err) {
+    // If the session is already gone / expired on Stripe's side, that's fine
+    console.warn(`[Stripe] Could not expire session ${sessionId}:`, err instanceof Error ? err.message : err);
+  }
+}
+
 // ── Retrieve session (for manual verification if needed) ─────────────────────
 
 export async function retrieveCheckoutSession(

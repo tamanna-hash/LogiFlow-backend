@@ -43,6 +43,10 @@ export const assignHubManagerSchema = z.object({
   userId: z.string().cuid('Invalid user ID'),
 });
 
+export const removeHubManagerSchema = z.object({
+  userId: z.string().cuid('Invalid user ID'),
+});
+
 export const assignCourierHubSchema = z.object({
   hubId: z.string().cuid('Invalid hub ID').nullable(),
 });

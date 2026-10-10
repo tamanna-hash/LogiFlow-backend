@@ -12,7 +12,7 @@ model Hub {
 
   zones              Zone[]
   couriers           CourierProfile[]
-  hubManagerProfile  HubManagerProfile?
+  hubManagerProfiles HubManagerProfile[]
   shipmentsCurrently Shipment[]         @relation("CurrentHub")
   transfersFrom      HubTransfer[]      @relation("FromHub")
   transfersTo        HubTransfer[]      @relation("ToHub")

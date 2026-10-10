@@ -198,15 +198,15 @@ export type HubManagerProfileOrderByWithRelationInput = {
 export type HubManagerProfileWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   userId?: string
-  hubId?: string
   AND?: Prisma.HubManagerProfileWhereInput | Prisma.HubManagerProfileWhereInput[]
   OR?: Prisma.HubManagerProfileWhereInput[]
   NOT?: Prisma.HubManagerProfileWhereInput | Prisma.HubManagerProfileWhereInput[]
+  hubId?: Prisma.StringNullableFilter<"HubManagerProfile"> | string | null
   createdAt?: Prisma.DateTimeFilter<"HubManagerProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"HubManagerProfile"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   hub?: Prisma.XOR<Prisma.HubNullableScalarRelationFilter, Prisma.HubWhereInput> | null
-}, "id" | "userId" | "hubId">
+}, "id" | "userId">
 
 export type HubManagerProfileOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -235,7 +235,7 @@ export type HubManagerProfileCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutHubManagerProfileInput
-  hub?: Prisma.HubCreateNestedOneWithoutHubManagerProfileInput
+  hub?: Prisma.HubCreateNestedOneWithoutHubManagerProfilesInput
 }
 
 export type HubManagerProfileUncheckedCreateInput = {
@@ -251,7 +251,7 @@ export type HubManagerProfileUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutHubManagerProfileNestedInput
-  hub?: Prisma.HubUpdateOneWithoutHubManagerProfileNestedInput
+  hub?: Prisma.HubUpdateOneWithoutHubManagerProfilesNestedInput
 }
 
 export type HubManagerProfileUncheckedUpdateInput = {
@@ -284,9 +284,14 @@ export type HubManagerProfileUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type HubManagerProfileNullableScalarRelationFilter = {
-  is?: Prisma.HubManagerProfileWhereInput | null
-  isNot?: Prisma.HubManagerProfileWhereInput | null
+export type HubManagerProfileListRelationFilter = {
+  every?: Prisma.HubManagerProfileWhereInput
+  some?: Prisma.HubManagerProfileWhereInput
+  none?: Prisma.HubManagerProfileWhereInput
+}
+
+export type HubManagerProfileOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type HubManagerProfileCountOrderByAggregateInput = {
@@ -313,36 +318,51 @@ export type HubManagerProfileMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
-export type HubManagerProfileCreateNestedOneWithoutHubInput = {
-  create?: Prisma.XOR<Prisma.HubManagerProfileCreateWithoutHubInput, Prisma.HubManagerProfileUncheckedCreateWithoutHubInput>
-  connectOrCreate?: Prisma.HubManagerProfileCreateOrConnectWithoutHubInput
-  connect?: Prisma.HubManagerProfileWhereUniqueInput
+export type HubManagerProfileNullableScalarRelationFilter = {
+  is?: Prisma.HubManagerProfileWhereInput | null
+  isNot?: Prisma.HubManagerProfileWhereInput | null
 }
 
-export type HubManagerProfileUncheckedCreateNestedOneWithoutHubInput = {
-  create?: Prisma.XOR<Prisma.HubManagerProfileCreateWithoutHubInput, Prisma.HubManagerProfileUncheckedCreateWithoutHubInput>
-  connectOrCreate?: Prisma.HubManagerProfileCreateOrConnectWithoutHubInput
-  connect?: Prisma.HubManagerProfileWhereUniqueInput
+export type HubManagerProfileCreateNestedManyWithoutHubInput = {
+  create?: Prisma.XOR<Prisma.HubManagerProfileCreateWithoutHubInput, Prisma.HubManagerProfileUncheckedCreateWithoutHubInput> | Prisma.HubManagerProfileCreateWithoutHubInput[] | Prisma.HubManagerProfileUncheckedCreateWithoutHubInput[]
+  connectOrCreate?: Prisma.HubManagerProfileCreateOrConnectWithoutHubInput | Prisma.HubManagerProfileCreateOrConnectWithoutHubInput[]
+  createMany?: Prisma.HubManagerProfileCreateManyHubInputEnvelope
+  connect?: Prisma.HubManagerProfileWhereUniqueInput | Prisma.HubManagerProfileWhereUniqueInput[]
 }
 
-export type HubManagerProfileUpdateOneWithoutHubNestedInput = {
-  create?: Prisma.XOR<Prisma.HubManagerProfileCreateWithoutHubInput, Prisma.HubManagerProfileUncheckedCreateWithoutHubInput>
-  connectOrCreate?: Prisma.HubManagerProfileCreateOrConnectWithoutHubInput
-  upsert?: Prisma.HubManagerProfileUpsertWithoutHubInput
-  disconnect?: Prisma.HubManagerProfileWhereInput | boolean
-  delete?: Prisma.HubManagerProfileWhereInput | boolean
-  connect?: Prisma.HubManagerProfileWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.HubManagerProfileUpdateToOneWithWhereWithoutHubInput, Prisma.HubManagerProfileUpdateWithoutHubInput>, Prisma.HubManagerProfileUncheckedUpdateWithoutHubInput>
+export type HubManagerProfileUncheckedCreateNestedManyWithoutHubInput = {
+  create?: Prisma.XOR<Prisma.HubManagerProfileCreateWithoutHubInput, Prisma.HubManagerProfileUncheckedCreateWithoutHubInput> | Prisma.HubManagerProfileCreateWithoutHubInput[] | Prisma.HubManagerProfileUncheckedCreateWithoutHubInput[]
+  connectOrCreate?: Prisma.HubManagerProfileCreateOrConnectWithoutHubInput | Prisma.HubManagerProfileCreateOrConnectWithoutHubInput[]
+  createMany?: Prisma.HubManagerProfileCreateManyHubInputEnvelope
+  connect?: Prisma.HubManagerProfileWhereUniqueInput | Prisma.HubManagerProfileWhereUniqueInput[]
 }
 
-export type HubManagerProfileUncheckedUpdateOneWithoutHubNestedInput = {
-  create?: Prisma.XOR<Prisma.HubManagerProfileCreateWithoutHubInput, Prisma.HubManagerProfileUncheckedCreateWithoutHubInput>
-  connectOrCreate?: Prisma.HubManagerProfileCreateOrConnectWithoutHubInput
-  upsert?: Prisma.HubManagerProfileUpsertWithoutHubInput
-  disconnect?: Prisma.HubManagerProfileWhereInput | boolean
-  delete?: Prisma.HubManagerProfileWhereInput | boolean
-  connect?: Prisma.HubManagerProfileWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.HubManagerProfileUpdateToOneWithWhereWithoutHubInput, Prisma.HubManagerProfileUpdateWithoutHubInput>, Prisma.HubManagerProfileUncheckedUpdateWithoutHubInput>
+export type HubManagerProfileUpdateManyWithoutHubNestedInput = {
+  create?: Prisma.XOR<Prisma.HubManagerProfileCreateWithoutHubInput, Prisma.HubManagerProfileUncheckedCreateWithoutHubInput> | Prisma.HubManagerProfileCreateWithoutHubInput[] | Prisma.HubManagerProfileUncheckedCreateWithoutHubInput[]
+  connectOrCreate?: Prisma.HubManagerProfileCreateOrConnectWithoutHubInput | Prisma.HubManagerProfileCreateOrConnectWithoutHubInput[]
+  upsert?: Prisma.HubManagerProfileUpsertWithWhereUniqueWithoutHubInput | Prisma.HubManagerProfileUpsertWithWhereUniqueWithoutHubInput[]
+  createMany?: Prisma.HubManagerProfileCreateManyHubInputEnvelope
+  set?: Prisma.HubManagerProfileWhereUniqueInput | Prisma.HubManagerProfileWhereUniqueInput[]
+  disconnect?: Prisma.HubManagerProfileWhereUniqueInput | Prisma.HubManagerProfileWhereUniqueInput[]
+  delete?: Prisma.HubManagerProfileWhereUniqueInput | Prisma.HubManagerProfileWhereUniqueInput[]
+  connect?: Prisma.HubManagerProfileWhereUniqueInput | Prisma.HubManagerProfileWhereUniqueInput[]
+  update?: Prisma.HubManagerProfileUpdateWithWhereUniqueWithoutHubInput | Prisma.HubManagerProfileUpdateWithWhereUniqueWithoutHubInput[]
+  updateMany?: Prisma.HubManagerProfileUpdateManyWithWhereWithoutHubInput | Prisma.HubManagerProfileUpdateManyWithWhereWithoutHubInput[]
+  deleteMany?: Prisma.HubManagerProfileScalarWhereInput | Prisma.HubManagerProfileScalarWhereInput[]
+}
+
+export type HubManagerProfileUncheckedUpdateManyWithoutHubNestedInput = {
+  create?: Prisma.XOR<Prisma.HubManagerProfileCreateWithoutHubInput, Prisma.HubManagerProfileUncheckedCreateWithoutHubInput> | Prisma.HubManagerProfileCreateWithoutHubInput[] | Prisma.HubManagerProfileUncheckedCreateWithoutHubInput[]
+  connectOrCreate?: Prisma.HubManagerProfileCreateOrConnectWithoutHubInput | Prisma.HubManagerProfileCreateOrConnectWithoutHubInput[]
+  upsert?: Prisma.HubManagerProfileUpsertWithWhereUniqueWithoutHubInput | Prisma.HubManagerProfileUpsertWithWhereUniqueWithoutHubInput[]
+  createMany?: Prisma.HubManagerProfileCreateManyHubInputEnvelope
+  set?: Prisma.HubManagerProfileWhereUniqueInput | Prisma.HubManagerProfileWhereUniqueInput[]
+  disconnect?: Prisma.HubManagerProfileWhereUniqueInput | Prisma.HubManagerProfileWhereUniqueInput[]
+  delete?: Prisma.HubManagerProfileWhereUniqueInput | Prisma.HubManagerProfileWhereUniqueInput[]
+  connect?: Prisma.HubManagerProfileWhereUniqueInput | Prisma.HubManagerProfileWhereUniqueInput[]
+  update?: Prisma.HubManagerProfileUpdateWithWhereUniqueWithoutHubInput | Prisma.HubManagerProfileUpdateWithWhereUniqueWithoutHubInput[]
+  updateMany?: Prisma.HubManagerProfileUpdateManyWithWhereWithoutHubInput | Prisma.HubManagerProfileUpdateManyWithWhereWithoutHubInput[]
+  deleteMany?: Prisma.HubManagerProfileScalarWhereInput | Prisma.HubManagerProfileScalarWhereInput[]
 }
 
 export type HubManagerProfileCreateNestedOneWithoutUserInput = {
@@ -396,36 +416,43 @@ export type HubManagerProfileCreateOrConnectWithoutHubInput = {
   create: Prisma.XOR<Prisma.HubManagerProfileCreateWithoutHubInput, Prisma.HubManagerProfileUncheckedCreateWithoutHubInput>
 }
 
-export type HubManagerProfileUpsertWithoutHubInput = {
-  update: Prisma.XOR<Prisma.HubManagerProfileUpdateWithoutHubInput, Prisma.HubManagerProfileUncheckedUpdateWithoutHubInput>
-  create: Prisma.XOR<Prisma.HubManagerProfileCreateWithoutHubInput, Prisma.HubManagerProfileUncheckedCreateWithoutHubInput>
-  where?: Prisma.HubManagerProfileWhereInput
+export type HubManagerProfileCreateManyHubInputEnvelope = {
+  data: Prisma.HubManagerProfileCreateManyHubInput | Prisma.HubManagerProfileCreateManyHubInput[]
+  skipDuplicates?: boolean
 }
 
-export type HubManagerProfileUpdateToOneWithWhereWithoutHubInput = {
-  where?: Prisma.HubManagerProfileWhereInput
+export type HubManagerProfileUpsertWithWhereUniqueWithoutHubInput = {
+  where: Prisma.HubManagerProfileWhereUniqueInput
+  update: Prisma.XOR<Prisma.HubManagerProfileUpdateWithoutHubInput, Prisma.HubManagerProfileUncheckedUpdateWithoutHubInput>
+  create: Prisma.XOR<Prisma.HubManagerProfileCreateWithoutHubInput, Prisma.HubManagerProfileUncheckedCreateWithoutHubInput>
+}
+
+export type HubManagerProfileUpdateWithWhereUniqueWithoutHubInput = {
+  where: Prisma.HubManagerProfileWhereUniqueInput
   data: Prisma.XOR<Prisma.HubManagerProfileUpdateWithoutHubInput, Prisma.HubManagerProfileUncheckedUpdateWithoutHubInput>
 }
 
-export type HubManagerProfileUpdateWithoutHubInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutHubManagerProfileNestedInput
+export type HubManagerProfileUpdateManyWithWhereWithoutHubInput = {
+  where: Prisma.HubManagerProfileScalarWhereInput
+  data: Prisma.XOR<Prisma.HubManagerProfileUpdateManyMutationInput, Prisma.HubManagerProfileUncheckedUpdateManyWithoutHubInput>
 }
 
-export type HubManagerProfileUncheckedUpdateWithoutHubInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+export type HubManagerProfileScalarWhereInput = {
+  AND?: Prisma.HubManagerProfileScalarWhereInput | Prisma.HubManagerProfileScalarWhereInput[]
+  OR?: Prisma.HubManagerProfileScalarWhereInput[]
+  NOT?: Prisma.HubManagerProfileScalarWhereInput | Prisma.HubManagerProfileScalarWhereInput[]
+  id?: Prisma.StringFilter<"HubManagerProfile"> | string
+  userId?: Prisma.StringFilter<"HubManagerProfile"> | string
+  hubId?: Prisma.StringNullableFilter<"HubManagerProfile"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"HubManagerProfile"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"HubManagerProfile"> | Date | string
 }
 
 export type HubManagerProfileCreateWithoutUserInput = {
   id?: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  hub?: Prisma.HubCreateNestedOneWithoutHubManagerProfileInput
+  hub?: Prisma.HubCreateNestedOneWithoutHubManagerProfilesInput
 }
 
 export type HubManagerProfileUncheckedCreateWithoutUserInput = {
@@ -455,12 +482,40 @@ export type HubManagerProfileUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  hub?: Prisma.HubUpdateOneWithoutHubManagerProfileNestedInput
+  hub?: Prisma.HubUpdateOneWithoutHubManagerProfilesNestedInput
 }
 
 export type HubManagerProfileUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   hubId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type HubManagerProfileCreateManyHubInput = {
+  id?: string
+  userId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type HubManagerProfileUpdateWithoutHubInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutHubManagerProfileNestedInput
+}
+
+export type HubManagerProfileUncheckedUpdateWithoutHubInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type HubManagerProfileUncheckedUpdateManyWithoutHubInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }

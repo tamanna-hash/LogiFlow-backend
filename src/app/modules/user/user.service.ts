@@ -11,6 +11,8 @@ import type { PrismaTx } from '../../types/prisma';
 
 const userWithProfileSelect = {
   ...safeUserSelect,
+  // hasPassword is derived from this — the raw hash is stripped before the response leaves the service
+  passwordHash: true,
   customerProfile: { select: { defaultAddress: true, city: true, postalCode: true } },
   courierProfile: { select: { hubId: true, vehicleType: true, vehicleNumber: true, licenseNumber: true, availability: true, totalDeliveries: true } },
   hubManagerProfile: { select: { hubId: true, hub: { select: { name: true, code: true } } } },
@@ -33,7 +35,9 @@ export async function getMe(userId: string) {
   // CUSTOMER, OPERATIONS, and ADMIN don't require specific profiles to function
   // (CUSTOMER profile is created automatically, OPERATIONS and ADMIN have no profile tables)
 
-  return user;
+  // Derive hasPassword from the hash — never expose the raw hash to the frontend
+  const { passwordHash, ...safeUser } = user;
+  return { ...safeUser, hasPassword: passwordHash !== null };
 }
 
 export async function updateProfile(

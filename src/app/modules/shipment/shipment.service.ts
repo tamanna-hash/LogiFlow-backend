@@ -139,15 +139,30 @@ function buildShipmentWhere(role: Role, userId: string, hubId?: string | null, e
   return base;
 }
 
+/**
+ * buildPickupQueueWhere — for hub managers only.
+ * Returns shipments from their origin zones that need action:
+ * - PICKUP_REQUESTED: courier not yet assigned
+ * - PICKED_UP: courier has the parcel, waiting for hub to confirm receipt
+ */
+function buildPickupQueueWhere(hubId: string, extra?: Record<string, unknown>): Record<string, unknown> {
+  return {
+    deletedAt: null,
+    status: { in: ['PICKUP_REQUESTED', 'PICKED_UP'] },
+    originZone: { hubId },
+    ...extra,
+  };
+}
+
 export async function listShipments(
   role: Role, userId: string, hubId: string | null | undefined,
   params: {
     page: number; limit: number; status?: ShipmentStatus; paymentStatus?: string;
     deliveryType?: string; search?: string; sortBy: string; sortOrder: string;
-    fromDate?: string; toDate?: string;
+    fromDate?: string; toDate?: string; pickupQueue?: boolean;
   },
 ) {
-  const { page, limit, status, paymentStatus, deliveryType, search, sortBy, sortOrder, fromDate, toDate } = params;
+  const { page, limit, status, paymentStatus, deliveryType, search, sortBy, sortOrder, fromDate, toDate, pickupQueue } = params;
 
   const extra: Record<string, unknown> = {
     ...(status && { status }),
@@ -164,7 +179,10 @@ export async function listShipments(
     }),
   };
 
-  const where = buildShipmentWhere(role, userId, hubId, extra);
+  // Hub manager pickup queue: show PICKUP_REQUESTED shipments from their origin zones
+  const where = (role === 'HUB_MANAGER' && pickupQueue && hubId)
+    ? buildPickupQueueWhere(hubId, extra)
+    : buildShipmentWhere(role, userId, hubId, extra);
 
   const [shipments, total] = await Promise.all([
     prisma.shipment.findMany({ where, orderBy: { [sortBy]: sortOrder }, ...getPrismaSkipTake(page, limit), select: shipmentListSelect }),
