@@ -49,7 +49,7 @@ vi.mock('../app/lib/prisma', () => ({
     hubTransfer: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     deliveryAttempt: { create: vi.fn(), count: vi.fn() },
     customerProfile: { create: vi.fn(), upsert: vi.fn() },
-    hubManagerProfile: { findUnique: vi.fn() },
+    hubManagerProfile: { findUnique: vi.fn(), findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), upsert: vi.fn(), updateMany: vi.fn() },
     $transaction: vi.fn(),
     $queryRaw: vi.fn(),
   },

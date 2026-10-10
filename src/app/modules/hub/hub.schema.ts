@@ -36,3 +36,16 @@ export const hubTransferSchema = z.object({
 export type CreateHubInput = z.infer<typeof createHubSchema>;
 export type CreateZoneInput = z.infer<typeof createZoneSchema>;
 export type HubTransferInput = z.infer<typeof hubTransferSchema>;
+
+// ── Assignment schemas ────────────────────────────────────────────────────────
+
+export const assignHubManagerSchema = z.object({
+  userId: z.string().cuid('Invalid user ID'),
+});
+
+export const assignCourierHubSchema = z.object({
+  hubId: z.string().cuid('Invalid hub ID').nullable(),
+});
+
+export type AssignHubManagerInput = z.infer<typeof assignHubManagerSchema>;
+export type AssignCourierHubInput = z.infer<typeof assignCourierHubSchema>;

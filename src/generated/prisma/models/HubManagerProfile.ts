@@ -149,7 +149,7 @@ export type HubManagerProfileGroupByArgs<ExtArgs extends runtime.Types.Extension
 export type HubManagerProfileGroupByOutputType = {
   id: string
   userId: string
-  hubId: string
+  hubId: string | null
   createdAt: Date
   updatedAt: Date
   _count: HubManagerProfileCountAggregateOutputType | null
@@ -178,17 +178,17 @@ export type HubManagerProfileWhereInput = {
   NOT?: Prisma.HubManagerProfileWhereInput | Prisma.HubManagerProfileWhereInput[]
   id?: Prisma.StringFilter<"HubManagerProfile"> | string
   userId?: Prisma.StringFilter<"HubManagerProfile"> | string
-  hubId?: Prisma.StringFilter<"HubManagerProfile"> | string
+  hubId?: Prisma.StringNullableFilter<"HubManagerProfile"> | string | null
   createdAt?: Prisma.DateTimeFilter<"HubManagerProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"HubManagerProfile"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-  hub?: Prisma.XOR<Prisma.HubScalarRelationFilter, Prisma.HubWhereInput>
+  hub?: Prisma.XOR<Prisma.HubNullableScalarRelationFilter, Prisma.HubWhereInput> | null
 }
 
 export type HubManagerProfileOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  hubId?: Prisma.SortOrder
+  hubId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -205,13 +205,13 @@ export type HubManagerProfileWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"HubManagerProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"HubManagerProfile"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-  hub?: Prisma.XOR<Prisma.HubScalarRelationFilter, Prisma.HubWhereInput>
+  hub?: Prisma.XOR<Prisma.HubNullableScalarRelationFilter, Prisma.HubWhereInput> | null
 }, "id" | "userId" | "hubId">
 
 export type HubManagerProfileOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  hubId?: Prisma.SortOrder
+  hubId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.HubManagerProfileCountOrderByAggregateInput
@@ -225,7 +225,7 @@ export type HubManagerProfileScalarWhereWithAggregatesInput = {
   NOT?: Prisma.HubManagerProfileScalarWhereWithAggregatesInput | Prisma.HubManagerProfileScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"HubManagerProfile"> | string
   userId?: Prisma.StringWithAggregatesFilter<"HubManagerProfile"> | string
-  hubId?: Prisma.StringWithAggregatesFilter<"HubManagerProfile"> | string
+  hubId?: Prisma.StringNullableWithAggregatesFilter<"HubManagerProfile"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"HubManagerProfile"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"HubManagerProfile"> | Date | string
 }
@@ -235,13 +235,13 @@ export type HubManagerProfileCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutHubManagerProfileInput
-  hub: Prisma.HubCreateNestedOneWithoutHubManagerProfileInput
+  hub?: Prisma.HubCreateNestedOneWithoutHubManagerProfileInput
 }
 
 export type HubManagerProfileUncheckedCreateInput = {
   id?: string
   userId: string
-  hubId: string
+  hubId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -251,13 +251,13 @@ export type HubManagerProfileUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutHubManagerProfileNestedInput
-  hub?: Prisma.HubUpdateOneRequiredWithoutHubManagerProfileNestedInput
+  hub?: Prisma.HubUpdateOneWithoutHubManagerProfileNestedInput
 }
 
 export type HubManagerProfileUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  hubId?: Prisma.StringFieldUpdateOperationsInput | string
+  hubId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -265,7 +265,7 @@ export type HubManagerProfileUncheckedUpdateInput = {
 export type HubManagerProfileCreateManyInput = {
   id?: string
   userId: string
-  hubId: string
+  hubId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -279,7 +279,7 @@ export type HubManagerProfileUpdateManyMutationInput = {
 export type HubManagerProfileUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  hubId?: Prisma.StringFieldUpdateOperationsInput | string
+  hubId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -425,12 +425,12 @@ export type HubManagerProfileCreateWithoutUserInput = {
   id?: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  hub: Prisma.HubCreateNestedOneWithoutHubManagerProfileInput
+  hub?: Prisma.HubCreateNestedOneWithoutHubManagerProfileInput
 }
 
 export type HubManagerProfileUncheckedCreateWithoutUserInput = {
   id?: string
-  hubId: string
+  hubId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -455,12 +455,12 @@ export type HubManagerProfileUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  hub?: Prisma.HubUpdateOneRequiredWithoutHubManagerProfileNestedInput
+  hub?: Prisma.HubUpdateOneWithoutHubManagerProfileNestedInput
 }
 
 export type HubManagerProfileUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  hubId?: Prisma.StringFieldUpdateOperationsInput | string
+  hubId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -474,7 +474,7 @@ export type HubManagerProfileSelect<ExtArgs extends runtime.Types.Extensions.Int
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  hub?: boolean | Prisma.HubDefaultArgs<ExtArgs>
+  hub?: boolean | Prisma.HubManagerProfile$hubArgs<ExtArgs>
 }, ExtArgs["result"]["hubManagerProfile"]>
 
 export type HubManagerProfileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -484,7 +484,7 @@ export type HubManagerProfileSelectCreateManyAndReturn<ExtArgs extends runtime.T
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  hub?: boolean | Prisma.HubDefaultArgs<ExtArgs>
+  hub?: boolean | Prisma.HubManagerProfile$hubArgs<ExtArgs>
 }, ExtArgs["result"]["hubManagerProfile"]>
 
 export type HubManagerProfileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -494,7 +494,7 @@ export type HubManagerProfileSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  hub?: boolean | Prisma.HubDefaultArgs<ExtArgs>
+  hub?: boolean | Prisma.HubManagerProfile$hubArgs<ExtArgs>
 }, ExtArgs["result"]["hubManagerProfile"]>
 
 export type HubManagerProfileSelectScalar = {
@@ -508,27 +508,27 @@ export type HubManagerProfileSelectScalar = {
 export type HubManagerProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "hubId" | "createdAt" | "updatedAt", ExtArgs["result"]["hubManagerProfile"]>
 export type HubManagerProfileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  hub?: boolean | Prisma.HubDefaultArgs<ExtArgs>
+  hub?: boolean | Prisma.HubManagerProfile$hubArgs<ExtArgs>
 }
 export type HubManagerProfileIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  hub?: boolean | Prisma.HubDefaultArgs<ExtArgs>
+  hub?: boolean | Prisma.HubManagerProfile$hubArgs<ExtArgs>
 }
 export type HubManagerProfileIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  hub?: boolean | Prisma.HubDefaultArgs<ExtArgs>
+  hub?: boolean | Prisma.HubManagerProfile$hubArgs<ExtArgs>
 }
 
 export type $HubManagerProfilePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "HubManagerProfile"
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
-    hub: Prisma.$HubPayload<ExtArgs>
+    hub: Prisma.$HubPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     userId: string
-    hubId: string
+    hubId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["hubManagerProfile"]>
@@ -926,7 +926,7 @@ readonly fields: HubManagerProfileFieldRefs;
 export interface Prisma__HubManagerProfileClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  hub<T extends Prisma.HubDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.HubDefaultArgs<ExtArgs>>): Prisma.Prisma__HubClient<runtime.Types.Result.GetResult<Prisma.$HubPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  hub<T extends Prisma.HubManagerProfile$hubArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.HubManagerProfile$hubArgs<ExtArgs>>): Prisma.Prisma__HubClient<runtime.Types.Result.GetResult<Prisma.$HubPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1354,6 +1354,25 @@ export type HubManagerProfileDeleteManyArgs<ExtArgs extends runtime.Types.Extens
    * Limit how many HubManagerProfiles to delete.
    */
   limit?: number
+}
+
+/**
+ * HubManagerProfile.hub
+ */
+export type HubManagerProfile$hubArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Hub
+   */
+  select?: Prisma.HubSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Hub
+   */
+  omit?: Prisma.HubOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.HubInclude<ExtArgs> | null
+  where?: Prisma.HubWhereInput
 }
 
 /**

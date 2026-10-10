@@ -273,3 +273,233 @@ export async function listTransfers(hubId: string, params: { page: number; limit
  ]);
  return { transfers, meta: buildPaginationMeta(total, params.page, params.limit) };
 }
+
+// ── Hub Manager Assignment ────────────────────────────────────────────────────
+
+/**
+ * getHubWithManager — returns hub + its current manager (if any).
+ * Used by the admin hub detail page to show assignment status.
+ */
+export async function getHubWithManager(hubId: string) {
+  const hub = await prisma.hub.findUnique({
+    where: { id: hubId, ...notDeleted() },
+    select: {
+      ...hubSelect,
+      hubManagerProfile: {
+        select: {
+          userId: true,
+          user: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+        },
+      },
+    },
+  });
+  if (!hub) throw new NotFoundError('Hub not found.');
+  return hub;
+}
+
+/**
+ * assignHubManager — assigns (or re-assigns) a user as the Hub Manager for a hub.
+ *
+ * Rules enforced:
+ * - Target hub must exist and be active (not soft-deleted or deactivated).
+ * - Target user must exist, be active, and have role HUB_MANAGER.
+ * - If the hub already has a manager, that manager's hubId is cleared first (within the same transaction).
+ * - If the target user is already assigned to a DIFFERENT hub, that old assignment is cleared first.
+ * - HubManagerProfile is upserted so it works whether or not the profile exists yet.
+ */
+export async function assignHubManager(hubId: string, userId: string, actorId: string) {
+  // Validate hub
+  const hub = await prisma.hub.findUnique({
+    where: { id: hubId, ...notDeleted() },
+    select: { id: true, name: true, isActive: true },
+  });
+  if (!hub) throw new NotFoundError('Hub not found.');
+  if (!hub.isActive) throw new BadRequestError('Cannot assign a manager to an inactive hub.');
+
+  // Validate user
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, isActive: true, deletedAt: true, firstName: true, lastName: true },
+  });
+  if (!user || user.deletedAt) throw new NotFoundError('User not found.');
+  if (!user.isActive) throw new BadRequestError('Cannot assign an inactive user as Hub Manager.');
+  if (user.role !== 'HUB_MANAGER') throw new BadRequestError(`User must have the HUB_MANAGER role. Current role: ${user.role}`);
+
+  await prisma.$transaction(async (tx: PrismaTx) => {
+    // Clear the hub's existing manager (if any) — respects the @unique constraint
+    await tx.hubManagerProfile.updateMany({
+      where: { hubId, userId: { not: userId } },
+      data: { hubId: null },
+    });
+
+    // Clear the user's existing hub assignment if they were at a different hub
+    await tx.hubManagerProfile.updateMany({
+      where: { userId, hubId: { not: hubId } },
+      data: { hubId: null },
+    });
+
+    // Upsert the profile for the target user — works whether profile exists or not
+    await tx.hubManagerProfile.upsert({
+      where: { userId },
+      update: { hubId },
+      create: { userId, hubId },
+    });
+  });
+
+  await createAuditLog({
+    actorId,
+    action: 'HUB_UPDATED',
+    resourceType: 'HubManagerProfile',
+    resourceId: hubId,
+    after: { hubId, userId, managerName: `${user.firstName} ${user.lastName}` },
+  });
+
+  return getHubWithManager(hubId);
+}
+
+/**
+ * removeHubManager — clears the Hub Manager assignment for a hub.
+ * The HubManagerProfile record is kept but hubId is set to null.
+ * The user retains the HUB_MANAGER role; they simply won't be able to log in
+ * until reassigned (authenticate middleware enforces this).
+ */
+export async function removeHubManager(hubId: string, actorId: string) {
+  const hub = await prisma.hub.findUnique({
+    where: { id: hubId, ...notDeleted() },
+    select: { id: true },
+  });
+  if (!hub) throw new NotFoundError('Hub not found.');
+
+  const profile = await prisma.hubManagerProfile.findFirst({
+    where: { hubId },
+    select: { userId: true },
+  });
+  if (!profile) throw new NotFoundError('This hub has no assigned Hub Manager.');
+
+  await prisma.hubManagerProfile.updateMany({
+    where: { hubId },
+    data: { hubId: null },
+  });
+
+  await createAuditLog({
+    actorId,
+    action: 'HUB_UPDATED',
+    resourceType: 'HubManagerProfile',
+    resourceId: hubId,
+    before: { hubId, userId: profile.userId },
+    after: { hubId: null },
+  });
+}
+
+/**
+ * listUnassignedHubManagers — returns HUB_MANAGER users who have no hub assigned.
+ * Used to populate the assignment dropdown.
+ */
+export async function listUnassignedHubManagers() {
+  return prisma.user.findMany({
+    where: {
+      role: 'HUB_MANAGER',
+      isActive: true,
+      deletedAt: null,
+      OR: [
+        { hubManagerProfile: null },
+        { hubManagerProfile: { hubId: null } },
+      ],
+    },
+    select: {
+      id: true, firstName: true, lastName: true, email: true, avatarUrl: true,
+      hubManagerProfile: { select: { hubId: true } },
+    },
+    orderBy: { firstName: 'asc' },
+  });
+}
+
+// ── Courier Hub Assignment ────────────────────────────────────────────────────
+
+/**
+ * assignCourierHub — assigns (or reassigns) a courier to a hub.
+ *
+ * Rules:
+ * - Target hub must exist and be active.
+ * - Target user must have role COURIER, be active, and have a CourierProfile.
+ * - Courier must not have an ACTIVE assignment (pickup/delivery in progress).
+ * - If courier is already at the same hub, this is a no-op (idempotent).
+ */
+export async function assignCourierHub(
+  courierUserId: string,
+  newHubId: string | null,
+  actorId: string,
+) {
+  const user = await prisma.user.findUnique({
+    where: { id: courierUserId },
+    select: { id: true, role: true, isActive: true, deletedAt: true },
+  });
+  if (!user || user.deletedAt) throw new NotFoundError('User not found.');
+  if (!user.isActive) throw new BadRequestError('Cannot assign an inactive user.');
+  if (user.role !== 'COURIER') throw new BadRequestError(`User must have the COURIER role. Current role: ${user.role}`);
+
+  const profile = await prisma.courierProfile.findUnique({
+    where: { userId: courierUserId },
+    select: { id: true, hubId: true },
+  });
+  if (!profile) throw new NotFoundError('Courier profile not found.');
+
+  if (newHubId !== null) {
+    const hub = await prisma.hub.findUnique({
+      where: { id: newHubId, ...notDeleted() },
+      select: { id: true, isActive: true },
+    });
+    if (!hub) throw new NotFoundError('Hub not found.');
+    if (!hub.isActive) throw new BadRequestError('Cannot assign a courier to an inactive hub.');
+  }
+
+  // Block reassignment if courier has active work in progress
+  const hasActiveAssignment = await prisma.courierAssignment.count({
+    where: { courierProfileId: profile.id, status: 'ACTIVE' },
+  });
+  if (hasActiveAssignment > 0) {
+    throw new BadRequestError(
+      'Courier has an active assignment. Resolve it before reassigning to a different hub.',
+    );
+  }
+
+  const oldHubId = profile.hubId;
+
+  await prisma.courierProfile.update({
+    where: { id: profile.id },
+    data: { hubId: newHubId },
+  });
+
+  await createAuditLog({
+    actorId,
+    action: 'COURIER_AVAILABILITY_CHANGED',
+    resourceType: 'CourierProfile',
+    resourceId: profile.id,
+    before: { hubId: oldHubId },
+    after: { hubId: newHubId },
+  });
+}
+
+/**
+ * getCouriersByHub — returns all couriers for a hub (admin view).
+ */
+export async function getCouriersByHub(hubId: string, params: { page: number; limit: number }) {
+  const hub = await prisma.hub.findUnique({ where: { id: hubId, ...notDeleted() }, select: { id: true } });
+  if (!hub) throw new NotFoundError('Hub not found.');
+
+  const where = { hubId };
+  const [couriers, total] = await Promise.all([
+    prisma.courierProfile.findMany({
+      where,
+      orderBy: { user: { firstName: 'asc' } },
+      ...getPrismaSkipTake(params.page, params.limit),
+      select: {
+        id: true, hubId: true, availability: true, vehicleType: true, totalDeliveries: true,
+        user: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true, isActive: true } },
+      },
+    }),
+    prisma.courierProfile.count({ where }),
+  ]);
+
+  return { couriers, meta: buildPaginationMeta(total, params.page, params.limit) };
+}

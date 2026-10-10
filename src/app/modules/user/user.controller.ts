@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import * as userService from './user.service';
+import * as hubService from '../hub/hub.service';
 import { sendSuccess } from '../../utils/response';
 import { userListQuerySchema } from './user.schema';
 
@@ -33,4 +34,10 @@ export async function updateUserRole(req: Request, res: Response): Promise<void>
 export async function deleteUser(req: Request, res: Response): Promise<void> {
   await userService.softDeleteUser(String(req.params.id), req.user!.id);
   sendSuccess(res, null, 'User deactivated successfully');
+}
+
+export async function assignCourierHub(req: Request, res: Response): Promise<void> {
+  const { hubId } = req.body as { hubId: string | null };
+  await hubService.assignCourierHub(String(req.params.id), hubId, req.user!.id);
+  sendSuccess(res, null, hubId ? 'Courier assigned to hub' : 'Courier unassigned from hub');
 }

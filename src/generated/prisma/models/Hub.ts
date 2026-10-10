@@ -506,10 +506,12 @@ export type HubCreateNestedOneWithoutHubManagerProfileInput = {
   connect?: Prisma.HubWhereUniqueInput
 }
 
-export type HubUpdateOneRequiredWithoutHubManagerProfileNestedInput = {
+export type HubUpdateOneWithoutHubManagerProfileNestedInput = {
   create?: Prisma.XOR<Prisma.HubCreateWithoutHubManagerProfileInput, Prisma.HubUncheckedCreateWithoutHubManagerProfileInput>
   connectOrCreate?: Prisma.HubCreateOrConnectWithoutHubManagerProfileInput
   upsert?: Prisma.HubUpsertWithoutHubManagerProfileInput
+  disconnect?: Prisma.HubWhereInput | boolean
+  delete?: Prisma.HubWhereInput | boolean
   connect?: Prisma.HubWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.HubUpdateToOneWithWhereWithoutHubManagerProfileInput, Prisma.HubUpdateWithoutHubManagerProfileInput>, Prisma.HubUncheckedUpdateWithoutHubManagerProfileInput>
 }

@@ -25,4 +25,12 @@ router.get('/:id', authorize('ADMIN'), validateRequest({ params: idParam }), con
 router.patch('/:id/role', authorize('ADMIN'), validateRequest({ params: idParam, body: updateRoleSchema }), controller.updateUserRole);
 router.delete('/:id', authorize('ADMIN'), validateRequest({ params: idParam }), controller.deleteUser);
 
+// Admin — courier hub assignment
+router.patch(
+  '/:id/courier-hub',
+  authorize('ADMIN'),
+  validateRequest({ params: idParam, body: z.object({ hubId: z.string().cuid('Invalid hub ID').nullable() }) }),
+  controller.assignCourierHub,
+);
+
 export default router;

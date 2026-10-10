@@ -82,3 +82,46 @@ export async function listTransfers(req: Request, res: Response): Promise<void> 
  const { transfers, meta } = await hubService.listTransfers(hubId, transferQuerySchema.parse(req.query));
  sendSuccess(res, transfers, 'Transfers fetched', 200, meta);
 }
+
+// ── Hub Manager Assignment ────────────────────────────────────────────────────
+
+export async function getHubManager(req: Request, res: Response): Promise<void> {
+  const hub = await hubService.getHubWithManager(String(req.params.id));
+  sendSuccess(res, hub, 'Hub manager fetched');
+}
+
+export async function assignHubManager(req: Request, res: Response): Promise<void> {
+  const hub = await hubService.assignHubManager(
+    String(req.params.id),
+    req.body.userId,
+    req.user!.id,
+  );
+  sendSuccess(res, hub, 'Hub Manager assigned successfully');
+}
+
+export async function removeHubManager(req: Request, res: Response): Promise<void> {
+  await hubService.removeHubManager(String(req.params.id), req.user!.id);
+  sendSuccess(res, null, 'Hub Manager removed successfully');
+}
+
+export async function listUnassignedManagers(_req: Request, res: Response): Promise<void> {
+  const managers = await hubService.listUnassignedHubManagers();
+  sendSuccess(res, managers, 'Unassigned Hub Managers fetched');
+}
+
+// ── Courier Hub Assignment ────────────────────────────────────────────────────
+
+export async function assignCourierHub(req: Request, res: Response): Promise<void> {
+  await hubService.assignCourierHub(
+    String(req.params.userId),
+    req.body.hubId,    // null = unassign
+    req.user!.id,
+  );
+  sendSuccess(res, null, req.body.hubId ? 'Courier assigned to hub' : 'Courier unassigned from hub');
+}
+
+export async function listHubCouriers(req: Request, res: Response): Promise<void> {
+  const { page, limit } = paginationSchema.parse(req.query);
+  const { couriers, meta } = await hubService.getCouriersByHub(String(req.params.id), { page, limit });
+  sendSuccess(res, couriers, 'Hub couriers fetched', 200, meta);
+}

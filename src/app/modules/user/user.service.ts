@@ -22,6 +22,17 @@ export async function getMe(userId: string) {
     select: userWithProfileSelect,
   });
   if (!user) throw new NotFoundError('User not found.');
+
+  // Validate role-specific profile exists and throw helpful error if missing
+  if (user.role === 'HUB_MANAGER' && !user.hubManagerProfile) {
+    throw new BadRequestError('No hub is assigned to this account. Contact an administrator.');
+  }
+  if (user.role === 'COURIER' && !user.courierProfile) {
+    throw new BadRequestError('Courier profile is not set up. Contact an administrator.');
+  }
+  // CUSTOMER, OPERATIONS, and ADMIN don't require specific profiles to function
+  // (CUSTOMER profile is created automatically, OPERATIONS and ADMIN have no profile tables)
+
   return user;
 }
 
@@ -135,10 +146,38 @@ export async function updateUserRole(
   }
 
   const before = { role: user.role };
-  const updated = await prisma.user.update({
-    where: { id: targetId },
-    data: { role: input.role },
-    select: safeUserSelect,
+  
+  // Update role and create corresponding profile if needed
+  const updated = await prisma.$transaction(async (tx: PrismaTx) => {
+    const updatedUser = await tx.user.update({
+      where: { id: targetId },
+      data: { role: input.role },
+      select: safeUserSelect,
+    });
+
+    // Create role-specific profile if it doesn't exist
+    if (input.role === 'CUSTOMER') {
+      await tx.customerProfile.upsert({
+        where: { userId: targetId },
+        update: {},
+        create: { userId: targetId },
+      });
+    } else if (input.role === 'COURIER') {
+      await tx.courierProfile.upsert({
+        where: { userId: targetId },
+        update: {},
+        create: { userId: targetId },
+      });
+    } else if (input.role === 'HUB_MANAGER') {
+      await tx.hubManagerProfile.upsert({
+        where: { userId: targetId },
+        update: {},
+        create: { userId: targetId },
+      });
+    }
+    // OPERATIONS and ADMIN roles don't have profile tables
+
+    return updatedUser;
   });
 
   await createAuditLog({

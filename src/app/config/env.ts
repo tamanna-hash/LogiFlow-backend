@@ -64,6 +64,14 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url('FRONTEND_URL must be a valid URL'),
 
   MAX_DELIVERY_ATTEMPTS: z.coerce.number().int().positive().default(3),
+
+  // ── Demo mode ────────────────────────────────────────────────────────────────
+  // When set, any user whose email ends with @<DEMO_DOMAIN> is restricted to
+  // read-only access. All mutating requests (POST/PATCH/PUT/DELETE) outside the
+  // auth whitelist are blocked with HTTP 403.
+  // Example: DEMO_DOMAIN=demo.logiflow.app
+  // Leave unset (or empty) to disable demo-mode enforcement entirely.
+  DEMO_DOMAIN: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

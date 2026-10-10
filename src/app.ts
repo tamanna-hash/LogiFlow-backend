@@ -6,6 +6,7 @@ import passport from 'passport';
 import { env } from './app/config/env';
 import { globalErrorHandler } from './app/middleware/globalErrorHandler';
 import { notFound } from './app/middleware/notFound';
+import { demoGuard } from './app/middleware/demoGuard';
 import { initGoogleStrategy } from './app/lib/googleAuth';
 import { rateLimiter } from './app/lib/rateLimiter';
 import apiRouter from './app/routes/index';
@@ -58,6 +59,11 @@ if (env.NODE_ENV === 'development') {
 
 // ── General rate limit on all API routes ─────────────────────────────────────
 app.use('/api/v1', rateLimiter('unauthenticated'));
+
+// ── Demo read-only guard ──────────────────────────────────────────────────────
+// Must run after body parsers but before route handlers.
+// Blocks all mutating requests for @demo.logiflow.app accounts.
+app.use('/api/v1', demoGuard);
 
 // ── Health check (no rate limit, no auth) ────────────────────────────────────
 app.get('/health', (_req, res) => {

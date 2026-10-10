@@ -37,12 +37,12 @@ model CourierProfile {
 model HubManagerProfile {
   id        String   @id @default(cuid())
   userId    String   @unique
-  hubId     String   @unique
+  hubId     String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hub  Hub  @relation(fields: [hubId], references: [id])
+  hub  Hub?  @relation(fields: [hubId], references: [id])
 
   @@map("hub_manager_profiles")
 }
