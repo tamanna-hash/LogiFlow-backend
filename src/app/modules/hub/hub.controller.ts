@@ -72,9 +72,8 @@ export async function deleteZone(req: Request, res: Response): Promise<void> {
 }
 
 export async function destinations(req: Request, res: Response): Promise<void> {
- const { page, limit } = paginationSchema.parse(req.query);
- const { hubs, meta } = await hubService.listHubs({ page, limit, isActive: true });
- sendSuccess(res, hubs.map(h => ({ id: h.id, name: h.name, city: h.city })), 'Destination hubs fetched', 200, meta);
+ const { hubs } = await hubService.listHubs({ page: 1, limit: 1000, isActive: true });
+ sendSuccess(res, hubs.map(h => ({ id: h.id, name: h.name, city: h.city })), 'Destination hubs fetched');
 }
 export async function listTransfers(req: Request, res: Response): Promise<void> {
  const hubId = String(req.params.hubId);
