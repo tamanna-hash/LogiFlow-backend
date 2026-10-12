@@ -59,8 +59,25 @@ export const setPasswordSchema = z.object({
     .max(64, 'Password must be at most 64 characters'),
 });
 
-export type RegisterInput      = z.infer<typeof registerSchema>;
-export type VerifyEmailInput   = z.infer<typeof verifyEmailSchema>;
-export type LoginInput         = z.infer<typeof loginSchema>;
-export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
-export type SetPasswordInput   = z.infer<typeof setPasswordSchema>;
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .email('Invalid email address')
+    .transform((v) => v.trim().toLowerCase()),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Reset token is required'),
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(64, 'Password must be at most 64 characters'),
+});
+
+export type RegisterInput         = z.infer<typeof registerSchema>;
+export type VerifyEmailInput      = z.infer<typeof verifyEmailSchema>;
+export type LoginInput            = z.infer<typeof loginSchema>;
+export type ChangePasswordInput   = z.infer<typeof changePasswordSchema>;
+export type SetPasswordInput      = z.infer<typeof setPasswordSchema>;
+export type ForgotPasswordInput   = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput    = z.infer<typeof resetPasswordSchema>;

@@ -11,6 +11,8 @@ import {
   logoutSchema,
   changePasswordSchema,
   setPasswordSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from './auth.schema';
 
 const router = Router();
@@ -66,6 +68,22 @@ router.post(
   rateLimiter('changePassword'), // same bucket — same abuse vector
   validateRequest({ body: setPasswordSchema }),
   controller.setPassword,
+);
+
+// ── Forgot password (request reset link) ─────────────────────────────────────
+router.post(
+  '/forgot-password',
+  rateLimiter('register'), // use register bucket to prevent abuse
+  validateRequest({ body: forgotPasswordSchema }),
+  controller.forgotPassword,
+);
+
+// ── Reset password (complete password reset with token) ──────────────────────
+router.post(
+  '/reset-password',
+  rateLimiter('register'), // use register bucket to prevent abuse
+  validateRequest({ body: resetPasswordSchema }),
+  controller.resetPassword,
 );
 
 export default router;

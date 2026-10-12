@@ -94,3 +94,15 @@ export function googleCallback(req: Request, res: Response, next: NextFunction):
     },
   )(req, res, next);
 }
+
+// ── Forgot password ───────────────────────────────────────────────────────────
+export async function forgotPassword(req: Request, res: Response): Promise<void> {
+  await authService.forgotPassword(req.body);
+  sendSuccess(res, null, 'If an account exists with that email, a password reset link has been sent.');
+}
+
+// ── Reset password ────────────────────────────────────────────────────────────
+export async function resetPassword(req: Request, res: Response): Promise<void> {
+  await authService.resetPassword(req.body);
+  sendSuccess(res, null, 'Password reset successfully. You can now sign in with your new password.');
+}

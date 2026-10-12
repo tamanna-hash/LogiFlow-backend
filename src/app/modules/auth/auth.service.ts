@@ -448,3 +448,217 @@ export async function setPassword(
 
 // ── Backward-compat alias ────────────────────────────────────────────────────
 export const register = registerUser;
+
+// ── 8. FORGOT PASSWORD — send reset token via email ──────────────────────────
+
+export async function forgotPassword(
+  input: { email: string },
+): Promise<void> {
+  const email = input.email; // already normalized by Zod
+
+  const user = await prisma.user.findUnique({
+    where:  { email },
+    select: { id: true, email: true, firstName: true, googleId: true, deletedAt: true, isActive: true },
+  });
+
+  // SECURITY: Always return success (don't reveal if email exists or not)
+  // This prevents email enumeration attacks
+  if (!user || user.deletedAt || !user.isActive) {
+    // Silently succeed — don't tell attacker if email exists
+    return;
+  }
+
+  // If Google-only account (no password), don't allow password reset
+  if (user.googleId) {
+    // Still silently succeed — don't reveal account type
+    return;
+  }
+
+  // Generate secure reset token (128 random hex chars)
+  const rawToken = generateRefreshToken(); // reuse same generator (128 hex)
+  const hashedToken = await hashToken(rawToken);
+  const tokenPrefix = rawToken.substring(0, 16);
+
+  // Store hashed token in Redis with 1-hour expiry
+  const redisKey = `${CacheKeys.PASSWORD_RESET}:${tokenPrefix}`;
+  await redis.setex(
+    redisKey,
+    60 * 60, // 1 hour TTL
+    JSON.stringify({ userId: user.id, hashedToken }),
+  );
+
+  // Send password reset email
+  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${rawToken}`;
+  
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: 'Reset Your Password - LogiFlow',
+      html: passwordResetEmail(user.firstName, resetUrl),
+    });
+  } catch (emailError) {
+    // Log error but don't expose to user (security)
+    console.error('[Forgot Password] Failed to send email:', emailError);
+    // Still return success to prevent email enumeration
+  }
+
+  await createAuditLog({
+    actorId:      user.id,
+    action:       'PASSWORD_RESET_REQUESTED',
+    resourceType: 'User',
+    resourceId:   user.id,
+  });
+}
+
+// ── 9. RESET PASSWORD — verify token and update password ─────────────────────
+
+export async function resetPassword(
+  input: { token: string; newPassword: string },
+): Promise<void> {
+  const { token: rawToken, newPassword } = input;
+
+  if (rawToken.length < 16) {
+    throw new BadRequestError('Invalid or expired reset token.');
+  }
+
+  const tokenPrefix = rawToken.substring(0, 16);
+  const redisKey = `${CacheKeys.PASSWORD_RESET}:${tokenPrefix}`;
+
+  // Retrieve stored data from Redis
+  const stored = await redis.get(redisKey);
+  if (!stored) {
+    throw new BadRequestError('Invalid or expired reset token.');
+  }
+
+  let data: { userId: string; hashedToken: string };
+  try {
+    // Upstash Redis auto-deserializes JSON — handle both string and object
+    data = (typeof stored === 'string'
+      ? JSON.parse(stored)
+      : stored) as { userId: string; hashedToken: string };
+    if (!data.userId || !data.hashedToken) throw new Error('missing fields');
+  } catch {
+    throw new BadRequestError('Invalid reset token format.');
+  }
+
+  // Verify token hash
+  const valid = await verifyToken(data.hashedToken, rawToken);
+  if (!valid) {
+    throw new BadRequestError('Invalid or expired reset token.');
+  }
+
+  // Verify user still exists and is active
+  const user = await prisma.user.findUnique({
+    where:  { id: data.userId },
+    select: { id: true, deletedAt: true, isActive: true },
+  });
+
+  if (!user || user.deletedAt || !user.isActive) {
+    throw new NotFoundError('User account not found or inactive.');
+  }
+
+  // Hash new password
+  const newHash = await hashPassword(newPassword);
+
+  // Update password and revoke all refresh tokens
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: user.id }, data: { passwordHash: newHash } }),
+    prisma.refreshToken.updateMany({
+      where: { userId: user.id, revokedAt: null },
+      data:  { revokedAt: new Date() },
+    }),
+  ]);
+
+  // Delete the reset token from Redis (one-time use)
+  await redis.del(redisKey);
+
+  await createAuditLog({
+    actorId:      user.id,
+    action:       'PASSWORD_RESET_COMPLETED',
+    resourceType: 'User',
+    resourceId:   user.id,
+  });
+}
+
+// ── Password reset email template ─────────────────────────────────────────────
+
+function passwordResetEmail(firstName: string, resetUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Your Password</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 0;">
+        <table role="presentation" style="width: 600px; max-width: 100%; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; border-bottom: 2px solid #2563eb;">
+              <h1 style="margin: 0; color: #2563eb; font-size: 28px; font-weight: 700;">LogiFlow</h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; color: #1e293b; font-size: 24px; font-weight: 600;">Reset Your Password</h2>
+              
+              <p style="margin: 0 0 20px; color: #475569; font-size: 16px; line-height: 1.6;">
+                Hi ${firstName},
+              </p>
+              
+              <p style="margin: 0 0 20px; color: #475569; font-size: 16px; line-height: 1.6;">
+                We received a request to reset your password for your LogiFlow account. Click the button below to create a new password:
+              </p>
+              
+              <!-- CTA Button -->
+              <table role="presentation" style="margin: 30px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${resetUrl}" style="display: inline-block; padding: 14px 32px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">Reset Password</a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 20px 0; color: #475569; font-size: 14px; line-height: 1.6;">
+                Or copy and paste this link into your browser:
+              </p>
+              
+              <p style="margin: 0 0 20px; padding: 12px; background-color: #f1f5f9; border-radius: 4px; color: #475569; font-size: 13px; word-break: break-all;">
+                ${resetUrl}
+              </p>
+              
+              <div style="margin: 30px 0; padding: 16px; background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 4px;">
+                <p style="margin: 0; color: #991b1b; font-size: 14px; line-height: 1.6;">
+                  <strong>Security Notice:</strong> This link will expire in 1 hour. If you didn't request a password reset, please ignore this email or contact support if you have concerns.
+                </p>
+              </div>
+              
+              <p style="margin: 20px 0 0; color: #64748b; font-size: 14px; line-height: 1.6;">
+                Thanks,<br>
+                The LogiFlow Team
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px 40px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 8px 8px;">
+              <p style="margin: 0; color: #94a3b8; font-size: 12px; line-height: 1.6; text-align: center;">
+                This is an automated email from LogiFlow. Please do not reply to this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}

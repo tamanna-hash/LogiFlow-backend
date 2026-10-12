@@ -57,4 +57,6 @@ export const CacheKeys = {
   // OTP registration keys — namespaced, always TTL'd
   registrationOtp: (email: string) => `registration-otp:${email}`,
   registrationData: (email: string) => `registration-data:${email}`,
+  // Password reset token — 1 hour TTL
+  PASSWORD_RESET: 'password-reset',
 };

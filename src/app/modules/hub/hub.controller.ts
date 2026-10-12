@@ -71,7 +71,7 @@ export async function deleteZone(req: Request, res: Response): Promise<void> {
   sendSuccess(res, null, 'Zone deactivated');
 }
 
-export async function destinations(req: Request, res: Response): Promise<void> {
+export async function destinations(_req: Request, res: Response): Promise<void> {
  const { hubs } = await hubService.listHubs({ page: 1, limit: 1000, isActive: true });
  sendSuccess(res, hubs.map(h => ({ id: h.id, name: h.name, city: h.city })), 'Destination hubs fetched');
 }

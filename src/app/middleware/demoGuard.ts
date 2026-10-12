@@ -34,6 +34,8 @@ const ALWAYS_ALLOWED_PATHS = [
   '/auth/google/callback',
   '/auth/register',
   '/auth/verify-email',
+  '/auth/forgot-password',
+  '/auth/reset-password',
   // Stripe/bKash callbacks are server-to-server — no JWT present anyway
   '/payments/stripe/webhook',
   '/payments/bkash/callback',
