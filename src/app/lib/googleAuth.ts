@@ -22,7 +22,7 @@
 
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { env } from '../config/env';
+import { env, googleOAuthUrls } from '../config/env';
 import { prisma } from './prisma';
 import { ConflictError } from '../errors';
 import { createAuditLog } from '../modules/audit/audit.service';
@@ -42,7 +42,7 @@ export function initGoogleStrategy(): void {
       {
         clientID: env.GOOGLE_CLIENT_ID,
         clientSecret: env.GOOGLE_CLIENT_SECRET,
-        callbackURL: env.GOOGLE_CALLBACK_URL,
+        callbackURL: googleOAuthUrls.callback,
         scope: ['email', 'profile'],
       },
       async (_accessToken, _refreshToken, profile, done) => {

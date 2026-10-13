@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import passport from 'passport';
 import * as authService from './auth.service';
 import { sendSuccess, sendCreated } from '../../utils/response';
-import { env } from '../../config/env';
+import { googleOAuthUrls } from '../../config/env';
 
 // ── Registration — step 1: send OTP ──────────────────────────────────────────
 export async function register(req: Request, res: Response): Promise<void> {
@@ -75,7 +75,7 @@ export function googleCallback(req: Request, res: Response, next: NextFunction):
       try {
         if (err || !user) {
           const msg = encodeURIComponent(err?.message ?? 'Google authentication failed');
-          res.redirect(`${env.FRONTEND_URL}/error?message=${msg}`);
+          res.redirect(`${googleOAuthUrls.frontend}/error?message=${msg}`);
           return;
         }
 
@@ -86,7 +86,7 @@ export function googleCallback(req: Request, res: Response, next: NextFunction):
         });
 
         res.redirect(
-          `${env.FRONTEND_URL}/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
+          `${googleOAuthUrls.frontend}/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
         );
       } catch (callbackErr) {
         next(callbackErr);
