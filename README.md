@@ -1,142 +1,669 @@
-<<<<<<< HEAD
-# LogiFlow Backend
+# 🚚 LogiFlow — Backend API
 
-Node.js/Express REST API for LogiFlow — a courier and logistics management platform for Bangladesh.
+**LogiFlow** is Bangladesh's intelligent courier and logistics management platform. This is the backend REST API powering the entire platform — authentication, shipment lifecycle, payments, multi-hub logistics, courier management, real-time tracking, and admin operations.
+
+![Node.js](https://img.shields.io/badge/Node.js-20-green?logo=node.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
+![Express](https://img.shields.io/badge/Express-4-black?logo=express)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Prisma-blue?logo=postgresql)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
-## Technology stack
+## 🔗 Live Links
+
+| Resource | URL |
+|----------|-----|
+| 🌐 **Live API** | [https://logiflow-backend-ai0r.onrender.com](https://logiflow-backend-ai0r.onrender.com) |
+| ❤️ **Health Check** | [/health](https://logiflow-backend-ai0r.onrender.com/health) |
+| 📖 **Postman Docs** | [Postman Collection](https://documenter.getpostman.com/view/49731960/2sBYAxPV15) |
+| 💻 **Frontend** | [https://logiflow-hash.vercel.app](https://logiflow-hash.vercel.app) |
+| 🐙 **GitHub** | [LogiFlow Backend](https://github.com/tamanna-hash/LogiFlow-backend) |
+
+---
+
+## 🛠️ Technology Stack
 
 | Layer | Technology |
-|---|---|
-| Runtime | Node.js 20 + TypeScript |
-| Framework | Express |
-| Database | PostgreSQL + Prisma ORM |
-| Cache / Rate limits | Upstash Redis |
-| Auth | JWT (HS256) — access + opaque refresh tokens |
-| Email | Resend (default) or Gmail SMTP via Nodemailer |
-| Payments | bKash (tokenized checkout) + Stripe Checkout |
-| Uploads | Cloudinary |
-| OAuth | Google OAuth 2.0 via Passport |
-| Validation | Zod |
-| Testing | Vitest |
-| Build | tsup |
+|-------|-----------|
+| **Runtime** | Node.js 20 + TypeScript (strict) |
+| **Framework** | Express 4 |
+| **Database** | PostgreSQL + Prisma ORM |
+| **Cache / Rate Limits** | Upstash Redis (HTTP-based) |
+| **Authentication** | JWT HS256 — access + opaque refresh tokens |
+| **OAuth** | Google OAuth 2.0 via Passport |
+| **Email** | Resend (default) or Gmail SMTP via Nodemailer |
+| **Payments** | bKash tokenized checkout + Stripe Checkout |
+| **File Uploads** | Cloudinary |
+| **Validation** | Zod |
+| **Testing** | Vitest (107+ tests) |
+| **Build** | tsup |
+| **Linting** | ESLint + Biome |
 
 ---
 
-## Quick start
+## 🚀 Quick Start
 
 ```bash
+# Install dependencies
 npm install
-cp .env.example .env    # fill in required variables
-npm run db:migrate:prod  # apply migrations
-npm run db:seed          # seed demo data
-npm run dev              # start dev server
+
+# Configure environment
+cp .env.example .env
+# Fill in all required variables (see Environment Variables section)
+
+# Apply database migrations
+npm run db:migrate:prod
+
+# Seed demo data
+npm run db:seed
+
+# Start development server
+npm run dev
 ```
 
-See [DEMO_SETUP.md](./DEMO_SETUP.md) for the full first-time setup guide.
+API is available at `http://localhost:5000/api/v1`
 
 ---
 
-## Scripts
+## 📜 Available Scripts
 
 | Command | Purpose |
-|---|---|
+|---------|---------|
 | `npm run dev` | Development server with hot reload |
 | `npm run build` | Production build |
 | `npm start` | Start production server |
-| `npm test` | Run unit tests |
+| `npm test` | Run all unit tests |
+| `npm run test:coverage` | Tests with coverage report |
 | `npm run type-check` | TypeScript type check |
 | `npm run lint` | ESLint + Biome lint |
 | `npm run db:generate` | Regenerate Prisma client |
 | `npm run db:migrate` | Create + apply dev migration |
 | `npm run db:migrate:prod` | Apply pending migrations (production-safe) |
 | `npm run db:seed` | Seed demo data (idempotent) |
-| `npm run db:seed:demo` | Alias for db:seed |
 | `npm run db:studio` | Open Prisma Studio |
 
 ---
 
-## API base URL
+## ⚙️ Environment Variables
 
-```
-/api/v1
-```
+```env
+# ── Application ──────────────────────────────────────
+NODE_ENV=production
+PORT=5000
 
-Health check: `GET /health`
+# ── Database ─────────────────────────────────────────
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/logiflow?sslmode=require
+
+# ── JWT ──────────────────────────────────────────────
+JWT_ACCESS_SECRET=your_64_char_random_string
+JWT_REFRESH_SECRET=your_other_64_char_random_string
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+# ── Upstash Redis ─────────────────────────────────────
+UPSTASH_REDIS_REST_URL=https://your-upstash-url.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_upstash_token
+
+# ── Google OAuth ──────────────────────────────────────
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CALLBACK_URL=https://logiflow-backend-ai0r.onrender.com/api/v1/auth/google/callback
+
+# ── Email (Resend default) ────────────────────────────
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=re_your_api_key
+RESEND_FROM_EMAIL=noreply@yourdomain.com
+
+# ── Email (Gmail SMTP alternative) ───────────────────
+# EMAIL_PROVIDER=gmail
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=465
+# SMTP_SECURE=true
+# SMTP_USER=yourapp@gmail.com
+# SMTP_PASS=your_16_char_app_password
+
+# ── Cloudinary ────────────────────────────────────────
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# ── bKash ─────────────────────────────────────────────
+BKASH_BASE_URL=https://tokenized.sandbox.bka.sh/v1.2.0-beta
+BKASH_USERNAME=your_bkash_username
+BKASH_PASSWORD=your_bkash_password
+BKASH_APP_KEY=your_bkash_app_key
+BKASH_APP_SECRET=your_bkash_app_secret
+BKASH_CALLBACK_URL=https://logiflow-backend-ai0r.onrender.com/api/v1/payments/bkash/callback
+
+# ── Stripe ────────────────────────────────────────────
+STRIPE_SECRET_KEY=sk_test_your_key
+STRIPE_PUBLISHABLE_KEY=pk_test_your_key
+STRIPE_WEBHOOK_SECRET=whsec_your_signing_secret
+
+# ── Frontend ──────────────────────────────────────────
+FRONTEND_URL=https://logiflow-hash.vercel.app
+
+# ── Business Rules ────────────────────────────────────
+MAX_DELIVERY_ATTEMPTS=3
+```
 
 ---
 
-## Authentication
+## 📁 Project Structure
 
-**Scheme:** Bearer token
+```
+src/
+├── app/
+│   ├── config/
+│   │   └── env.ts                # Zod-validated env config
+│   │
+│   ├── errors/
+│   │   ├── AppError.ts           # Base error class
+│   │   ├── HttpErrors.ts         # 400, 401, 403, 404, 409, 503...
+│   │   └── index.ts
+│   │
+│   ├── lib/
+│   │   ├── prisma.ts             # Prisma client singleton
+│   │   ├── redis.ts              # Upstash Redis + CacheKeys
+│   │   ├── jwt.ts                # signAccessToken, generateRefreshToken
+│   │   ├── argon2.ts             # hashPassword, verifyPassword, hashToken
+│   │   ├── mailer.ts             # sendEmail (Resend / Gmail)
+│   │   ├── resend.ts             # Resend email templates
+│   │   ├── nodemailer.ts         # Gmail SMTP transport
+│   │   ├── cloudinary.ts         # Image upload helpers
+│   │   ├── stripe.ts             # Stripe SDK wrapper (optional)
+│   │   ├── googleAuth.ts         # Passport Google strategy
+│   │   └── rateLimiter.ts        # Upstash Redis rate limiter
+│   │
+│   ├── middleware/
+│   │   ├── checkAuth.ts          # JWT bearer / cookie auth
+│   │   ├── validateRequest.ts    # Zod body/query/param validation
+│   │   ├── globalErrorHandler.ts # Centralized error formatting
+│   │   ├── notFound.ts           # 404 catch-all
+│   │   └── demoGuard.ts          # Read-only enforcement for demo accounts
+│   │
+│   ├── modules/
+│   │   ├── auth/
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── auth.service.ts
+│   │   │   ├── auth.routes.ts
+│   │   │   └── auth.schema.ts
+│   │   │
+│   │   ├── user/
+│   │   │   ├── user.controller.ts
+│   │   │   ├── user.service.ts
+│   │   │   ├── user.routes.ts
+│   │   │   └── user.schema.ts
+│   │   │
+│   │   ├── shipment/
+│   │   ├── courier/
+│   │   ├── hub/
+│   │   ├── payment/
+│   │   ├── pricing/
+│   │   ├── notification/
+│   │   ├── operations/
+│   │   └── audit/
+│   │
+│   ├── routes/
+│   │   └── index.ts              # Mount all module routers
+│   │
+│   ├── types/
+│   │   ├── index.ts              # Shared TypeScript types
+│   │   ├── enums.ts              # Re-exports from Prisma
+│   │   └── prisma.ts             # PrismaTx type
+│   │
+│   └── utils/
+│       ├── response.ts           # sendSuccess, sendCreated helpers
+│       └── pagination.ts         # Page/limit parsing
+│
+├── app.ts                        # Express app setup (CORS, middleware, routes)
+├── server.ts                     # HTTP server entry point
+│
+├── tests/
+│   ├── unit/                     # Vitest unit tests
+│   └── setup.ts                  # Test setup + mocks
+│
+prisma/
+├── schema/                       # Split Prisma schema files
+│   ├── schema.prisma             # Generator + datasource
+│   ├── user.prisma
+│   ├── shipment.prisma
+│   ├── payment.prisma
+│   ├── hub.prisma
+│   ├── assignment.prisma
+│   ├── pricing.prisma
+│   ├── notification.prisma
+│   ├── audit.prisma
+│   └── enums.prisma
+├── migrations/                   # Migration history
+└── seed.ts                       # Demo data seeder
+
+scripts/
+├── postgenerate.ts               # Post-generate Prisma hooks
+└── fix-missing-profiles.ts       # Utility script
+```
+
+---
+
+## 👥 Roles & Permissions
+
+| Role | Description |
+|------|-------------|
+| `CUSTOMER` | Create shipments, pay, request pickup, track parcels |
+| `COURIER` | Accept assignments, confirm pickup, record delivery |
+| `HUB_MANAGER` | Manage shipments + transfers at their assigned hub |
+| `OPERATIONS_MANAGER` | Cross-hub oversight, assign couriers, update statuses |
+| `ADMIN` | Full platform access — users, hubs, pricing, analytics |
+
+---
+
+## 🔐 Authentication
+
+**Scheme:** JWT Bearer token
 
 ```
 Authorization: Bearer <access_token>
 ```
 
-- Access token: JWT (15 min default), payload `{ sub: userId, role }`
-- Refresh token: opaque hex string, 7-day TTL, stored hashed in DB
-- Token refresh: `POST /api/v1/auth/refresh` with `{ refreshToken }` in body
-- Logout: `POST /api/v1/auth/logout` — revokes the provided refresh token
+| Token | Expiry | Storage |
+|-------|--------|---------|
+| Access token | 15 minutes | Client localStorage |
+| Refresh token | 7 days | DB (hashed with Argon2id) |
+
+**Token refresh:** `POST /api/v1/auth/refresh` with `{ refreshToken }` in body  
+**Logout:** `POST /api/v1/auth/logout` — revokes the provided refresh token  
+**Password change:** revokes ALL refresh tokens (forces re-login on all devices)
 
 ---
 
-## Roles
+## 📡 API Reference
 
-| Role | Description |
-|---|---|
-| `CUSTOMER` | Create/track/pay for shipments |
-| `COURIER` | Accept assignments, pick up, deliver |
-| `HUB_MANAGER` | Manage own hub's shipments and couriers |
-| `OPERATIONS_MANAGER` | Cross-hub oversight, assign couriers, update statuses |
-| `ADMIN` | Full platform access |
+### Base URLs
+```
+Development:  http://localhost:5000/api/v1
+Production:   https://logiflow-backend-ai0r.onrender.com/api/v1
+```
 
----
+### Response Format
+```json
+{
+  "success": true,
+  "message": "Operation successful",
+  "data": { ... },
+  "meta": { "page": 1, "limit": 10, "total": 100, "totalPages": 10 }
+}
+```
 
-## Payment providers
-
-### bKash (existing)
-1. `POST /api/v1/payments/bkash/initiate` — returns `bkashURL`
-2. Redirect browser to `bkashURL`
-3. bKash redirects to backend callback
-4. Backend verifies via bKash `executepayment` API
-5. Backend redirects to `FRONTEND_URL/payment/success?shipmentId=<id>` or `.../failure?shipmentId=<id>`
-
-### Stripe Checkout (new)
-1. `POST /api/v1/payments/stripe/checkout` — returns `checkoutUrl`
-2. Redirect browser to `checkoutUrl`
-3. Stripe redirects to `FRONTEND_URL/payment/success?shipmentId=<id>` or `.../failure?shipmentId=<id>`
-4. Stripe sends webhook `POST /api/v1/payments/stripe/webhook` (raw body required)
-5. Backend verifies signature, updates payment/shipment status atomically
+```json
+{
+  "success": false,
+  "message": "Error description",
+  "errors": [ { "field": "email", "message": "Invalid email" } ]
+}
+```
 
 ---
 
-## Email providers
+### 🔑 Authentication Endpoints
 
-Controlled by `EMAIL_PROVIDER` environment variable:
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/auth/register` | ❌ | Step 1: Send OTP to email |
+| `POST` | `/auth/verify-email` | ❌ | Step 2: Verify OTP → create account + issue tokens |
+| `POST` | `/auth/login` | ❌ | Login with email + password |
+| `POST` | `/auth/refresh` | ❌ | Refresh access token |
+| `POST` | `/auth/logout` | ✅ | Revoke refresh token |
+| `GET` | `/auth/google` | ❌ | Initiate Google OAuth |
+| `GET` | `/auth/google/callback` | ❌ | Google OAuth callback |
+| `PATCH` | `/auth/change-password` | ✅ | Change password (authenticated) |
+| `POST` | `/auth/set-password` | ✅ | Set password (Google-only users) |
+| `POST` | `/auth/forgot-password` | ❌ | Request password reset email |
+| `POST` | `/auth/reset-password` | ❌ | Reset password with token |
 
-- `EMAIL_PROVIDER=resend` (default) — Resend API
-- `EMAIL_PROVIDER=gmail` — Gmail SMTP via Nodemailer (requires App Password)
+**Register — Step 1:**
+```json
+POST /auth/register
+{
+  "firstName": "Tamanna",
+  "lastName": "Ahmed",
+  "email": "tamanna@example.com",
+  "password": "SecurePass123!",
+  "phone": "+8801712345678"
+}
+```
 
-Both providers use the same send interface in `src/app/lib/mailer.ts`.
+**Verify Email — Step 2:**
+```json
+POST /auth/verify-email
+{
+  "email": "tamanna@example.com",
+  "otp": "123456"
+}
+→ Returns: { user, accessToken, refreshToken }
+```
+
+**Login:**
+```json
+POST /auth/login
+{
+  "email": "tamanna@example.com",
+  "password": "SecurePass123!"
+}
+→ Returns: { user, accessToken, refreshToken }
+```
+
+**Forgot Password:**
+```json
+POST /auth/forgot-password
+{ "email": "tamanna@example.com" }
+→ Always returns 200 (prevents email enumeration)
+```
+
+**Reset Password:**
+```json
+POST /auth/reset-password
+{
+  "token": "128-char-hex-from-email-link",
+  "newPassword": "NewSecurePass456!"
+}
+```
 
 ---
 
-## Database schema
+### 👤 User Endpoints
 
-Key models: `User`, `Shipment`, `ShipmentItem`, `ShipmentTrackingEvent`, `Payment`, `CourierAssignment`, `DeliveryAttempt`, `Hub`, `Zone`, `HubTransfer`, `PickupRequest`, `PricingRule`, `Notification`, `AuditLog`, `RefreshToken`
-
-Migrations are in `prisma/migrations/`.
+| Method | Endpoint | Auth | Role | Description |
+|--------|----------|------|------|-------------|
+| `GET` | `/users/me` | ✅ | Any | Get own profile |
+| `PATCH` | `/users/me` | ✅ | Any | Update profile + avatar upload |
+| `GET` | `/users` | ✅ | ADMIN | List all users (paginated) |
+| `GET` | `/users/:id` | ✅ | ADMIN | Get user by ID |
+| `PATCH` | `/users/:id/role` | ✅ | ADMIN | Change user role |
+| `PATCH` | `/users/:id/courier-hub` | ✅ | ADMIN | Assign courier to hub |
+| `DELETE` | `/users/:id` | ✅ | ADMIN | Soft delete user |
 
 ---
 
-## Demo accounts
+### 📦 Shipment Endpoints
+
+| Method | Endpoint | Auth | Role | Description |
+|--------|----------|------|------|-------------|
+| `POST` | `/shipments` | ✅ | CUSTOMER, ADMIN | Create shipment |
+| `GET` | `/shipments` | ✅ | Any | List shipments (role-filtered) |
+| `GET` | `/shipments/:id` | ✅ | Any | Get shipment details |
+| `PATCH` | `/shipments/:id` | ✅ | CUSTOMER, ADMIN | Update shipment |
+| `POST` | `/shipments/:id/cancel` | ✅ | CUSTOMER, OPS, ADMIN | Cancel shipment |
+| `POST` | `/shipments/:id/pickup-request` | ✅ | CUSTOMER, ADMIN | Request courier pickup |
+| `GET` | `/shipments/:id/tracking` | ✅ | Any | Get tracking history |
+| `POST` | `/shipments/:id/return` | ✅ | OPS, ADMIN | Initiate return |
+
+**Create Shipment:**
+```json
+POST /shipments
+{
+  "senderName": "Arif Hasan",
+  "senderPhone": "+8801712345678",
+  "senderAddress": "House 5, Road 12, Dhanmondi",
+  "senderCity": "Dhaka",
+  "originZoneId": "cm...",
+  "recipientName": "Rubel Chowdhury",
+  "recipientPhone": "+8801811234567",
+  "recipientAddress": "Panchlaish, Chattogram",
+  "recipientCity": "Chattogram",
+  "destinationZoneId": "cm...",
+  "deliveryType": "STANDARD",
+  "parcelType": "REGULAR",
+  "declaredWeightKg": 2.5
+}
+→ Returns: { id, trackingNumber: "LF-20261012-XXXXXXXX", status: "CREATED", price: 110 }
+```
+
+**Shipment Status Flow:**
+```
+CREATED → PICKUP_REQUESTED → ASSIGNED → PICKED_UP
+    → AT_ORIGIN_HUB → IN_TRANSIT → AT_DESTINATION_HUB
+    → OUT_FOR_DELIVERY → DELIVERED
+
+On failure:
+OUT_FOR_DELIVERY → DELIVERY_FAILED → (retry) → OUT_FOR_DELIVERY
+                                   → (max attempts) → RETURN_INITIATED → RETURNING → RETURNED
+```
+
+---
+
+### 🌐 Public Tracking
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/tracking/:trackingNumber` | ❌ | Track by tracking number |
+
+```
+GET /tracking/LF-20261012-DEMO0001
+→ Returns timeline of shipment events, status, origin/destination
+```
+
+---
+
+### 💳 Payment Endpoints
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/payments/bkash/initiate` | ✅ | Initiate bKash payment → returns `bkashURL` |
+| `GET` | `/payments/bkash/callback` | ❌ | bKash server callback (verify + update DB) |
+| `POST` | `/payments/stripe/checkout` | ✅ | Create Stripe Checkout → returns `checkoutUrl` |
+| `POST` | `/payments/stripe/verify/:shipmentId` | ✅ | Manually verify Stripe session |
+| `POST` | `/payments/stripe/webhook` | ❌ | Stripe webhook (raw body, signature verified) |
+| `GET` | `/payments/shipment/:shipmentId` | ✅ | Get payment for a shipment |
+| `GET` | `/payments` | ✅ ADMIN | List all payments |
+
+**bKash Flow:**
+```
+POST /payments/bkash/initiate { shipmentId }
+→ { bkashURL } → redirect browser → bKash completes
+→ GET /payments/bkash/callback (server-to-server)
+→ Backend verifies with bKash executepayment API
+→ Redirects to FRONTEND_URL/payment/success?shipmentId=...
+```
+
+**Stripe Flow:**
+```
+POST /payments/stripe/checkout { shipmentId }
+→ { checkoutUrl } → redirect browser → Stripe Checkout
+→ POST /payments/stripe/webhook (Stripe → backend)
+→ Backend verifies signature → updates DB
+→ Redirects to FRONTEND_URL/payment/success?shipmentId=...
+```
+
+---
+
+### 🛵 Courier Endpoints
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/courier/assignments` | ✅ COURIER | List own assignments |
+| `GET` | `/courier/assignments/:id` | ✅ COURIER | Get assignment details |
+| `PATCH` | `/courier/assignments/:id/accept` | ✅ COURIER | Accept assignment |
+| `PATCH` | `/courier/assignments/:id/reject` | ✅ COURIER | Reject assignment |
+| `PATCH` | `/courier/availability` | ✅ COURIER | Update availability status |
+| `POST` | `/courier/shipments/:id/pickup-confirm` | ✅ COURIER | Confirm parcel pickup |
+| `POST` | `/courier/shipments/:id/deliver` | ✅ COURIER | Record delivery (+ proof image) |
+| `POST` | `/courier/shipments/:id/delivery-failed` | ✅ COURIER | Record delivery failure |
+| `GET` | `/courier/earnings` | ✅ COURIER | View earnings summary |
+
+---
+
+### 🏢 Hub Endpoints
+
+| Method | Endpoint | Auth | Role | Description |
+|--------|----------|------|------|-------------|
+| `GET` | `/hubs/destinations` | ✅ | HUB_MGR, OPS, ADMIN | Get all active hubs |
+| `GET` | `/hubs/unassigned-managers` | ✅ | ADMIN | Users with HUB_MANAGER role, not yet assigned |
+| `POST` | `/hubs` | ✅ | ADMIN | Create hub |
+| `GET` | `/hubs` | ✅ | HUB_MGR, OPS, ADMIN | List hubs |
+| `GET` | `/hubs/:id` | ✅ | HUB_MGR, OPS, ADMIN | Get hub details |
+| `PATCH` | `/hubs/:id` | ✅ | ADMIN | Update hub |
+| `DELETE` | `/hubs/:id` | ✅ | ADMIN | Deactivate hub |
+| `GET` | `/hubs/:id/manager` | ✅ | ADMIN | Get hub manager |
+| `PUT` | `/hubs/:id/manager` | ✅ | ADMIN | Assign hub manager |
+| `DELETE` | `/hubs/:id/manager` | ✅ | ADMIN | Remove hub manager |
+| `GET` | `/hubs/:id/couriers` | ✅ | HUB_MGR, ADMIN | List hub couriers |
+| `POST` | `/hubs/:hubId/transfers` | ✅ | HUB_MGR, OPS, ADMIN | Create hub transfer |
+| `PATCH` | `/hubs/:hubId/transfers/:id/arrive` | ✅ | HUB_MGR, OPS, ADMIN | Confirm arrival |
+| `GET` | `/hubs/:hubId/transfers` | ✅ | HUB_MGR, OPS, ADMIN | List hub transfers |
+
+---
+
+### 🗺️ Zone Endpoints
+
+| Method | Endpoint | Auth | Role | Description |
+|--------|----------|------|------|-------------|
+| `POST` | `/zones` | ✅ | ADMIN | Create zone |
+| `GET` | `/zones` | ✅ | Any | List zones |
+| `PATCH` | `/zones/:id` | ✅ | ADMIN | Update zone |
+| `DELETE` | `/zones/:id` | ✅ | ADMIN | Deactivate zone |
+
+---
+
+### ⚙️ Operations Endpoints
+
+| Method | Endpoint | Auth | Role | Description |
+|--------|----------|------|------|-------------|
+| `POST` | `/operations/assignments` | ✅ | OPS, ADMIN | Assign courier to shipment |
+| `GET` | `/operations/assignments` | ✅ | OPS, ADMIN | List all assignments |
+| `PATCH` | `/operations/assignments/:id/cancel` | ✅ | OPS, ADMIN | Cancel assignment |
+| `PATCH` | `/operations/shipments/:id/status` | ✅ | HUB_MGR, OPS, ADMIN | Force update status |
+| `GET` | `/operations/couriers` | ✅ | HUB_MGR, OPS, ADMIN | List couriers |
+| `PATCH` | `/operations/couriers/:id/availability` | ✅ | OPS, ADMIN | Update courier availability |
+
+---
+
+### 💰 Pricing Endpoints
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/pricing/calculate` | ✅ | Calculate shipping cost |
+| `POST` | `/pricing/rules` | ✅ ADMIN | Create pricing rule |
+| `GET` | `/pricing/rules` | ✅ ADMIN | List pricing rules |
+| `PATCH` | `/pricing/rules/:id` | ✅ ADMIN | Update pricing rule |
+| `DELETE` | `/pricing/rules/:id` | ✅ ADMIN | Deactivate pricing rule |
+
+---
+
+### 🔔 Notification Endpoints
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/notifications` | ✅ | Get user notifications |
+| `PATCH` | `/notifications/:id/read` | ✅ | Mark notification read |
+| `PATCH` | `/notifications/read-all` | ✅ | Mark all notifications read |
+
+---
+
+### 👑 Admin Endpoints
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/admin/stats` | ✅ ADMIN | System-wide stats dashboard |
+| `GET` | `/admin/audit-logs` | ✅ ADMIN | All audit logs |
+| `GET` | `/admin/audit-logs/operational` | ✅ OPS, ADMIN | Operational audit logs |
+
+**Stats response includes:** total users, total shipments, revenue, active shipments, delivered today, shipments by status, users by role, revenue by month.
+
+---
+
+## 🔄 Business Workflows
+
+### Complete Shipment Lifecycle
+
+```
+Customer registers → verifies email → logs in
+    ↓
+GET /pricing/calculate (optional — check cost)
+    ↓
+POST /shipments (status: CREATED, payment: PENDING)
+    ↓
+POST /payments/bkash/initiate OR /payments/stripe/checkout
+    ↓
+[Payment gateway → server callback → payment verified]
+    ↓
+POST /shipments/:id/pickup-request (status: PICKUP_REQUESTED)
+    ↓
+POST /operations/assignments { type: "PICKUP" }
+    ↓  (status: ASSIGNED)
+PATCH /courier/assignments/:id/accept
+    ↓
+POST /courier/shipments/:id/pickup-confirm (status: PICKED_UP)
+    ↓
+PATCH /operations/shipments/:id/status { status: "AT_ORIGIN_HUB" }
+    ↓
+POST /hubs/:hubId/transfers { toHubId, shipmentId } (status: IN_TRANSIT)
+    ↓
+PATCH /hubs/:hubId/transfers/:id/arrive (status: AT_DESTINATION_HUB)
+    ↓
+POST /operations/assignments { type: "DELIVERY" }
+    ↓  (status: OUT_FOR_DELIVERY)
+POST /courier/shipments/:id/deliver (status: DELIVERED) ✅
+```
+
+### Password Reset Workflow
+
+```
+POST /auth/forgot-password { email }
+    ↓
+Email sent with reset link (token hashed in Redis, 1-hour TTL)
+    ↓
+User clicks link → /reset-password?token=...
+    ↓
+POST /auth/reset-password { token, newPassword }
+    ↓
+Token verified → password updated → all sessions revoked
+```
+
+---
+
+## 🔒 Security Architecture
+
+| Rule | Implementation |
+|------|----------------|
+| Passwords hashed | Argon2id (never stored plaintext) |
+| Refresh tokens hashed | Argon2id in DB, raw value only sent to client once |
+| JWT verification | On every authenticated request |
+| Customer isolation | `shipment.customerId === req.user.id` enforced |
+| Courier authorization | Active assignment verified before any courier action |
+| Hub isolation | Hub Manager's hub loaded from DB, never trusted from JWT |
+| State machine | Invalid status transitions rejected automatically |
+| Server-side pricing | Client cannot set shipment price |
+| Payment verification | Never trust redirect — bKash/Stripe verified server-side |
+| Soft delete blocking | Deleted users blocked at authentication middleware |
+| OTP single-use | Deleted from Redis immediately after verification |
+| Admin protection | Last active admin cannot be demoted or deleted |
+| Reset token single-use | Deleted from Redis after successful reset |
+| Demo guard | `@demo.logiflow.app` accounts are read-only in production |
+
+---
+
+## 🗃️ Rate Limits
+
+| Endpoint | Limit |
+|----------|-------|
+| `POST /auth/register` | 5 req / 15 min |
+| `POST /auth/verify-email` | 5 req / 15 min |
+| `POST /auth/login` | 10 req / 15 min |
+| `GET /auth/google` | 10 req / 15 min |
+| `POST /auth/forgot-password` | 5 req / 15 min |
+| `POST /auth/reset-password` | 5 req / 15 min |
+| `PATCH /auth/change-password` | 5 req / 15 min |
+| `GET /tracking/:trackingNumber` | 20 req / min |
+
+---
+
+## 🎭 Demo Accounts
 
 After running `npm run db:seed`:
 
 | Role | Email | Password |
-|---|---|---|
+|------|-------|----------|
 | ADMIN | admin@demo.logiflow.app | Demo@LogiFlow2026 |
 | OPERATIONS_MANAGER | ops@demo.logiflow.app | Demo@LogiFlow2026 |
 | HUB_MANAGER | hub.dhaka@demo.logiflow.app | Demo@LogiFlow2026 |
@@ -144,839 +671,83 @@ After running `npm run db:seed`:
 | COURIER | courier1@demo.logiflow.app | Demo@LogiFlow2026 |
 | CUSTOMER | customer1@demo.logiflow.app | Demo@LogiFlow2026 |
 
-Demo tracking numbers for public tracking: `LF-20260901-DEMO0001` through `LF-20260901-DEMO0013`
+Demo tracking numbers: `LF-20260901-DEMO0001` through `LF-20260901-DEMO0013`
 
 ---
 
-## Testing
+## 🧪 Testing
 
 ```bash
-npm test                # run all unit tests
-npm run test:coverage   # with coverage report
+# Run all unit tests
+npm test
+
+# With coverage report
+npm run test:coverage
 ```
 
-107+ tests covering: auth service, payment service (bKash + Stripe), pricing, shipment state machine, JWT, validation, pagination, and email provider selection.
+**107+ tests** covering: auth service, payment service (bKash + Stripe), pricing engine, shipment state machine, JWT helpers, Zod validation, pagination, email provider selection, and webhook signature verification.
 
 ---
 
-## Security notes
+## 🚀 Production Deployment (Render)
 
-- Passwords hashed with Argon2id
-- Refresh tokens stored as Argon2id hashes, never plaintext
-- JWT signed with HS256, verified on every authenticated request
-- bKash: server-side `executepayment` verification — browser redirects are never trusted
-- Stripe: webhook signature verified with `stripe.webhooks.constructEvent()` using raw body
-- No secrets in responses — password hashes, tokens, and OTPs are never returned
-- Rate limiting on login, register, OTP, payment initiation, and public tracking
-=======
-# 🚚 LogiFlow — Courier & Logistics Management Platform
-
-**LogiFlow** is a role-based Courier & Logistics Management Platform designed to manage the complete parcel delivery lifecycle — from customer registration and shipment booking to payment, courier pickup, multi-hub transfers, final delivery, tracking, and returns.
-
-The backend is built with a strong focus on **security, role-based access control, business logic, payment verification, shipment state management, and scalable architecture**.
-
-## 🔗 Live Links
-
-* 🌐 **Live API:** `https://logiflow-backend-ai0r.onrender.com/`
-* 📖 **API Documentation:** `https://documenter.getpostman.com/view/49731960/2sBYAxPV15`
-* 💻 **Frontend:** `Working on it`
-* 📦 **GitHub Repository:** `https://github.com/tamanna-hash/LogiFlow-backend`
-
----
-
-## ✨ Key Features
-
-### 🔐 Authentication & Security
-
-* Email and password registration
-* 6-digit OTP email verification
-* OTP stored securely in Redis with 5-minute expiration
-* Single-use OTP verification
-* Email verification before login
-* JWT access and refresh token authentication
-* Refresh token rotation
-* Logout with refresh-token revocation
-* Revoke all sessions when changing password
-* Google OAuth authentication
-* Soft-deleted users are immediately blocked
-* Role-based authorization
-* Server-side validation with protected business rules
-
-### 👥 Role-Based Access Control
-
-LogiFlow provides five dedicated roles:
-
-| Role                         | Responsibility                                                 |
-| ---------------------------- | -------------------------------------------------------------- |
-| 👤 **CUSTOMER**              | Create shipments, make payments, request pickup, track parcels |
-| 🛵 **COURIER**               | Pickup and deliver assigned shipments                          |
-| 🏢 **HUB_MANAGER**           | Manage shipments, couriers and transfers within their hub      |
-| 👨‍💼 **OPERATIONS_MANAGER** | Manage logistics operations across all hubs                    |
-| 👑 **ADMIN**                 | Complete system administration and management                  |
-
-Each role has strictly controlled permissions to prevent unauthorized access.
-
----
-
-## 📦 Shipment Management
-
-Customers can:
-
-* Calculate delivery pricing
-* Create shipments
-* View their shipments
-* Search and filter shipments
-* Use pagination
-* View shipment details
-* Edit recipient information before processing
-* Cancel eligible shipments
-* Request courier pickup after payment
-* Track complete shipment history
-* Track parcels publicly using a tracking number
-
-### Shipment Lifecycle
-
-```text
-CREATED
-   ↓
-PICKUP_REQUESTED
-   ↓
-ASSIGNED
-   ↓
-PICKED_UP
-   ↓
-IN_TRANSIT
-   ↓
-AT_DESTINATION_HUB
-   ↓
-OUT_FOR_DELIVERY
-   ↓
-DELIVERED
-```
-
-If delivery fails:
-
-```text
-OUT_FOR_DELIVERY
-       ↓
-DELIVERY_FAILED
-       ↓
-Retry
-       ↓
-OUT_FOR_DELIVERY
-```
-
-After the maximum number of delivery attempts:
-
-```text
-DELIVERY_FAILED
-       ↓
-RETURN_INITIATED
-       ↓
-RETURNING
-       ↓
-RETURNED
-```
-
-The backend validates every transition, preventing invalid status jumps.
-
----
-
-## 💳 bKash Payment Integration
-
-LogiFlow integrates **bKash** for shipment payments.
-
-Payment flow:
-
-```text
-Create Shipment
-      ↓
-Payment = PENDING
-      ↓
-Initiate bKash Payment
-      ↓
-Customer Completes Payment
-      ↓
-bKash Callback
-      ↓
-Server-side Payment Verification
-      ↓
-Payment = COMPLETED
-      ↓
-Shipment Can Request Pickup
-```
-
-### 🔒 Payment Security
-
-The backend never trusts payment status received from the client.
-
-Instead, payment confirmation is verified through the bKash server-side execution flow before updating the database.
-
----
-
-## 💰 Dynamic Pricing
-
-Customers can calculate delivery charges before creating a shipment.
-
-Pricing can be based on configurable pricing rules such as:
-
-* Delivery zone
-* Parcel weight
-* Shipment type
-* Distance/route
-* Other configured pricing factors
-
-### Important Security Rule
-
-The client cannot directly set the shipment price.
-
-```text
-Client Request
-      ↓
-Shipment Information
-      ↓
-Server-side Pricing Engine
-      ↓
-Calculated Price
-      ↓
-Database
-```
-
-This prevents users from manipulating delivery charges.
-
----
-
-## 🛵 Courier Management
-
-Couriers can:
-
-* View assigned shipments
-* Filter assignments
-* Accept assignments
-* Reject assignments
-* Toggle availability
-* Confirm parcel pickup
-* Complete deliveries
-* Mark delivery failures
-* Provide delivery failure reasons
-* Upload optional delivery proof
-* View completed-delivery earnings
-
-Couriers can only perform actions on shipments assigned to them.
-
----
-
-## 🏢 Hub Management
-
-LogiFlow supports a multi-hub logistics system.
-
-A **HUB_MANAGER** is strictly restricted to their assigned hub.
-
-They can:
-
-* View their hub
-* View hub details
-* View zones belonging to their hub
-* View shipments currently at their hub
-* Manage hub-level courier assignments
-* Dispatch shipments to another hub
-* Confirm shipment arrival
-
-Example:
-
-```text
-Dhaka Hub
-    ↓
-Shipment dispatched
-    ↓
-IN_TRANSIT
-    ↓
-Comilla Hub
-    ↓
-Shipment arrived
-    ↓
-AT_DESTINATION_HUB
-```
-
----
-
-## 👨‍💼 Operations Management
-
-The **OPERATIONS_MANAGER** has cross-hub operational visibility.
-
-They can:
-
-* View all shipments
-* Search and filter shipments
-* View shipment details
-* Cancel eligible shipments
-* Initiate returns
-* Advance shipment status
-* Manage couriers across hubs
-* Assign couriers
-* Cancel active assignments
-* Update courier availability
-* Create hub transfers
-* Confirm hub arrivals
-* View pricing rules
-* View operational audit logs
-
-However, they cannot manage user accounts, system finances, or administrative settings.
-
----
-
-## 👑 Admin Management
-
-The **ADMIN** has unrestricted system access.
-
-### User Management
-
-* View all users
-* Search and filter users
-* View user profiles
-* Change user roles
-* Soft-delete users
-* Protect the last active administrator from being demoted or deleted
-
-### Hub & Zone Management
-
-* Create hubs
-* Update hubs
-* Deactivate hubs
-* Create zones
-* Update zones
-* Deactivate zones
-
-### Pricing Management
-
-* Create pricing rules
-* Update pricing rules
-* Deactivate pricing rules
-
-### Shipment Override
-
-Admins can force a shipment status transition when necessary.
-
-Every forced transition requires a reason and is recorded in the audit log.
-
-### Payment Management
-
-Admins can:
-
-* View complete payment history
-* View shipment-specific payment details
-* Inspect bKash response information
-
-### Analytics
-
-The admin dashboard provides system-wide statistics such as:
-
-* Total users
-* Total shipments
-* Revenue
-* Deliveries today
-
----
-
-## 📍 Shipment Tracking
-
-Customers can track shipments through:
-
-### Authenticated Tracking
-
-```http
-GET /api/v1/shipments/:id/tracking
-```
-
-Provides the complete shipment event timeline.
-
-### Public Tracking
-
-```http
-GET /api/v1/tracking/:trackingNumber
-```
-
-No authentication is required.
-
-Example tracking flow:
-
-```text
-Shipment Created
-      ↓
-Payment Completed
-      ↓
-Pickup Requested
-      ↓
-Courier Assigned
-      ↓
-Picked Up
-      ↓
-In Transit
-      ↓
-Destination Hub
-      ↓
-Out for Delivery
-      ↓
-Delivered
-```
-
----
-
-## 🔔 Notifications
-
-Customers can:
-
-* View notifications
-* Mark individual notifications as read
-* Mark all notifications as read
-
-Notifications can be triggered by important shipment events such as courier assignment, shipment movement, delivery updates, and successful delivery.
-
----
-
-## 🔐 Security Architecture
-
-Security is one of the core parts of LogiFlow.
-
-### Customer Isolation
-
-Customers can only access their own shipments.
-
-```text
-shipment.customerId === req.user.id
-```
-
-### Courier Authorization
-
-Before a courier performs a shipment action, the backend verifies an active courier assignment.
-
-### Hub Isolation
-
-Hub Managers cannot access shipments belonging to another hub.
-
-The assigned hub is retrieved from the database instead of blindly trusting a hub ID from the JWT.
-
-### State Validation
-
-Shipment statuses are controlled through a predefined valid-transition map.
-
-```text
-CREATED → PICKUP_REQUESTED
-PICKUP_REQUESTED → ASSIGNED
-ASSIGNED → PICKED_UP
-...
-```
-
-Invalid transitions are rejected automatically.
-
-### Server-Side Pricing
-
-Prices are calculated by the backend and cannot be supplied by the client.
-
-### Server-Side Payment Verification
-
-Payment completion is determined only after verifying the payment with bKash.
-
-### Soft Delete Protection
-
-Soft-deleted users are blocked from authenticated requests.
-
-### OTP Protection
-
-Verified OTPs are immediately removed from Redis, making them single-use.
-
----
-
-## 📝 Audit Logging
-
-Important system operations are recorded in audit logs.
-
-Audit information can include:
-
-* Actor/user
-* Action
-* Resource
-* Resource ID
-* Previous state
-* New state
-* Reason
-* Timestamp
-* Operational events
-
-This provides accountability and makes sensitive administrative actions traceable.
-
----
-
-## 🧑‍💻 Technology Stack
-
-### Backend
-
-* **Node.js**
-* **Express.js**
-* **TypeScript**
-* **Prisma ORM**
-* **PostgreSQL**
-
-### Authentication & Security
-
-* **JWT**
-* **Refresh Token Rotation**
-* **Google OAuth**
-* **OTP Email Verification**
-* **Redis**
-
-### External Services
-
-* **Resend** — transactional email / OTP delivery
-* **bKash** — payment processing
-* **Cloudinary** — image and avatar storage
-* **Redis / Upstash** — OTP and temporary data storage
-
-### Development & API Testing
-
-* **Postman**
-* **Prisma Studio**
-* **Biome**
-* **TypeScript**
-* **Git & GitHub**
-
----
-
-## 🏗️ High-Level Architecture
-
-```text
-                    ┌─────────────────┐
-                    │    Frontend     │
-                    └────────┬────────┘
-                             │
-                             ▼
-                    ┌─────────────────┐
-                    │   Express API   │
-                    └────────┬────────┘
-                             │
-             ┌───────────────┼───────────────┐
-             ▼               ▼               ▼
-        Authentication    Services       Middleware
-             │               │               │
-             ▼               ▼               ▼
-          Redis          PostgreSQL       RBAC/Auth
-             │               │
-             │               │
-       ┌─────┴─────┐   ┌─────┴─────────┐
-       ▼           ▼   ▼               ▼
-     Resend      OAuth Prisma       Business Logic
-                   │
-                   ▼
-                 bKash
-                   │
-                   ▼
-              Payment System
-```
-
----
-
-## 🔄 Complete Business Flow
-
-```text
-Register
-   ↓
-OTP Verification
-   ↓
-Account Created
-   ↓
-Login
-   ↓
-Calculate Delivery Price
-   ↓
-Create Shipment
-   ↓
-Create Pending Payment
-   ↓
-bKash Payment
-   ↓
-Server-side Verification
-   ↓
-Pickup Request
-   ↓
-Courier Assignment
-   ↓
-Courier Pickup
-   ↓
-Hub Transfer
-   ↓
-Destination Hub Arrival
-   ↓
-Delivery Assignment
-   ↓
-Out for Delivery
-   ↓
-       ┌───────────────┐
-       │               │
-       ▼               ▼
-   Delivered      Delivery Failed
-                       ↓
-                    Retry
-                       ↓
-                  Max Attempts
-                       ↓
-                    Return
-```
-
----
-
-## 📂 Project Structure
-
-```text
-src/
-├── app/
-│   ├── modules/
-│   │   ├── auth/
-│   │   ├── user/
-│   │   ├── shipment/
-│   │   ├── courier/
-│   │   ├── hub/
-│   │   ├── payment/
-│   │   ├── pricing/
-│   │   ├── notification/
-│   │   └── audit/
-│   │
-│   ├── middleware/
-│   ├── routes/
-│   ├── utils/
-│   ├── config/
-│   └── app.ts
-│
-├── server.ts
-│
-prisma/
-├── schema.prisma
-└── migrations/
-
-scripts/
-.env
-.gitignore
-package.json
-tsconfig.json
-```
-
----
-
-## ⚙️ Environment Variables
-
-Create a `.env` file and configure the required environment variables.
+**Required environment variables on Render:**
 
 ```env
-DATABASE_URL=
-JWT_ACCESS_SECRET=
-JWT_REFRESH_SECRET=
-
-REDIS_URL=
-REDIS_TOKEN=
-
-RESEND_API_KEY=
-
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-
-BKASH_APP_KEY=
-BKASH_APP_SECRET=
-BKASH_USERNAME=
-BKASH_PASSWORD=
-BKASH_BASE_URL=
+NODE_ENV=production
+DATABASE_URL=...
+JWT_ACCESS_SECRET=...
+JWT_REFRESH_SECRET=...
+UPSTASH_REDIS_REST_URL=...
+UPSTASH_REDIS_REST_TOKEN=...
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_CALLBACK_URL=https://logiflow-backend-ai0r.onrender.com/api/v1/auth/google/callback
+FRONTEND_URL=https://logiflow-hash.vercel.app
+RESEND_API_KEY=...
+RESEND_FROM_EMAIL=...
+BKASH_APP_KEY=...  (+ other bKash vars)
+STRIPE_SECRET_KEY=...
+STRIPE_WEBHOOK_SECRET=...
+CLOUDINARY_CLOUD_NAME=...  (+ other Cloudinary vars)
+MAX_DELIVERY_ATTEMPTS=3
 ```
 
-> Never commit `.env`, API keys, tokens, credentials, or service-account files to GitHub.
+**Keep alive:** Use [UptimeRobot](https://uptimerobot.com) to ping `GET /health` every 14 minutes — prevents Render free tier from sleeping.
 
 ---
 
-## 🚀 Getting Started
+## 🔧 HTTP Status Codes
 
-### 1. Clone the repository
-
-```bash
-git clone YOUR_GITHUB_REPO_URL
-cd logiflow-backend
-```
-
-### 2. Install dependencies
-
-```bash
-npm install
-```
-
-### 3. Configure environment variables
-
-Create a `.env` file and add the required credentials.
-
-### 4. Generate Prisma Client
-
-```bash
-npx prisma generate
-```
-
-### 5. Run database migrations
-
-```bash
-npx prisma migrate deploy
-```
-
-For local development:
-
-```bash
-npx prisma migrate dev
-```
-
-### 6. Start development server
-
-```bash
-npm run dev
-```
-
-The API should now be available at:
-
-```text
-http://localhost:5000
-```
+| Status | Meaning |
+|--------|---------|
+| `200` | OK |
+| `201` | Created |
+| `400` | Bad Request — validation failed |
+| `401` | Unauthorized — missing or invalid token |
+| `403` | Forbidden — insufficient role |
+| `404` | Not Found |
+| `409` | Conflict — duplicate or constraint violation |
+| `429` | Too Many Requests — rate limited |
+| `500` | Internal Server Error |
+| `503` | Service Unavailable — external service down |
 
 ---
 
-## 📡 API Overview
+## 📬 Postman Collection
 
-### Authentication
+A complete, pre-configured Postman collection with 96 requests across 13 folders:
 
-```text
-POST   /api/v1/auth/register
-POST   /api/v1/auth/verify-email
-POST   /api/v1/auth/login
-POST   /api/v1/auth/refresh
-POST   /api/v1/auth/logout
-PATCH  /api/v1/auth/change-password
-GET    /api/v1/auth/google
-```
+- `postman/LogiFlow.postman_collection.json`
+- `postman/LogiFlow.postman_environment.json`
 
-### Customer
-
-```text
-GET    /api/v1/users/me
-PATCH  /api/v1/users/me
-
-POST   /api/v1/pricing/calculate
-
-POST   /api/v1/shipments
-GET    /api/v1/shipments
-GET    /api/v1/shipments/:id
-PATCH  /api/v1/shipments/:id
-POST   /api/v1/shipments/:id/cancel
-POST   /api/v1/shipments/:id/pickup-request
-
-GET    /api/v1/shipments/:id/tracking
-GET    /api/v1/tracking/:trackingNumber
-
-POST   /api/v1/payments/bkash/initiate
-GET    /api/v1/payments/shipment/:id
-
-GET    /api/v1/notifications
-PATCH  /api/v1/notifications/:id/read
-PATCH  /api/v1/notifications/read-all
-```
-
-### Courier
-
-```text
-GET    /api/v1/courier/assignments
-PATCH  /api/v1/courier/assignments/:id/accept
-PATCH  /api/v1/courier/assignments/:id/reject
-
-PATCH  /api/v1/courier/availability
-
-POST   /api/v1/courier/shipments/:id/pickup-confirm
-POST   /api/v1/courier/shipments/:id/deliver
-POST   /api/v1/courier/shipments/:id/delivery-failed
-
-GET    /api/v1/courier/earnings
-```
-
-### Hub & Operations
-
-```text
-GET    /api/v1/hubs
-GET    /api/v1/hubs/:id
-GET    /api/v1/zones
-
-POST   /api/v1/hubs/:hubId/transfers
-PATCH  /api/v1/hubs/:hubId/transfers/:id/arrive
-
-GET    /api/v1/operations/couriers
-POST   /api/v1/operations/assignments
-PATCH  /api/v1/operations/assignments/:id/cancel
-```
-
-### Admin
-
-```text
-GET    /api/v1/users
-GET    /api/v1/users/:id
-PATCH  /api/v1/users/:id/role
-DELETE /api/v1/users/:id
-
-POST   /api/v1/hubs
-PATCH  /api/v1/hubs/:id
-DELETE /api/v1/hubs/:id
-
-POST   /api/v1/zones
-PATCH  /api/v1/zones/:id
-DELETE /api/v1/zones/:id
-
-POST   /api/v1/pricing/rules
-PATCH  /api/v1/pricing/rules/:id
-DELETE /api/v1/pricing/rules/:id
-
-GET    /api/v1/payments
-GET    /api/v1/payments/shipment/:id
-
-GET    /api/v1/admin/stats
-GET    /api/v1/admin/audit-logs
-```
+Import both into Postman. The environment is pre-configured with the production URL. Test scripts auto-populate variables like `accessToken`, `shipmentId`, `trackingNumber` etc.
 
 ---
 
-## 🧠 Important Business Rules
+## 📄 License
 
-| Rule                                    | Implementation                        |
-| --------------------------------------- | ------------------------------------- |
-| Customer sees only own shipments        | Customer ownership verification       |
-| Courier acts only on assigned shipments | Active assignment verification        |
-| Hub Manager sees only their hub         | Database-based hub scoping            |
-| Shipment states cannot be skipped       | Valid transition map                  |
-| Client cannot manipulate price          | Server-side pricing                   |
-| Client cannot fake payment              | bKash server-side verification        |
-| Deleted users cannot access API         | Authentication-time DB check          |
-| OTP cannot be reused                    | Redis OTP deletion after verification |
-| Last Admin cannot be removed            | Admin protection logic                |
-| Admin overrides require justification   | Reason + audit log                    |
-
----
-
-## 📈 Future Improvements
-
-Possible future enhancements include:
-
-* Real-time shipment tracking
-* WebSocket-based courier location updates
-* SMS notifications
-* Advanced delivery analytics
-* Route optimization
-* Automated courier assignment
-* Delivery zone optimization
-* Customer reviews and ratings
-* Invoice generation
-* Advanced reporting
-* Mobile application for couriers
-* Automated retry and return workflows
+MIT License
 
 ---
 
@@ -984,16 +755,10 @@ Possible future enhancements include:
 
 Hello! I'm **Tamanna**.
 
-Building **LogiFlow** gave me the opportunity to strengthen my understanding of backend development, RESTful API design, authentication, role-based access control, database modeling, multi-hub logistics, shipment state management, and secure payment integration with **bKash**.
+Building LogiFlow gave me the opportunity to strengthen my understanding of backend development — RESTful API design, JWT authentication with refresh token rotation, role-based access control, database modeling with Prisma, multi-hub logistics architecture, shipment state machine validation, secure payment integration with both bKash and Stripe, OTP-based email verification, Google OAuth with account auto-linking, password reset with Redis-backed tokens, and comprehensive audit logging.
 
-Through this project, I also explored real-world backend challenges such as server-side price calculation, payment verification, OTP-based email authentication, refresh-token rotation, courier assignment, shipment tracking, audit logging, and enforcing strict business rules across different user roles.
+Every design decision — from server-side price calculation to Argon2id password hashing, from hub isolation to single-use OTP deletion — was made with security and correctness in mind.
 
-I believe great software is built through continuous learning, curiosity, and persistence. Thank you for taking the time to explore my work, and I hope you find **LogiFlow** useful and interesting!
+I believe great software is built through continuous learning, curiosity, and persistence. Thank you for taking the time to explore LogiFlow. I hope you find it well-structured and interesting!
 
 Thank you for checking out this project! ❤️
-
-
-## 📄 License
-
-This project is licensed under the **MIT License**.
->>>>>>> 2354237d77da33854f43435dabfd06774df48993
