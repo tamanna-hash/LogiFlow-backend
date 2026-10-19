@@ -941,6 +941,578 @@ async function main() {
     skipDuplicates: false,
   });
 
+  // ══════════════════════════════════════════════════════════════════════════════
+  // ── PHASE 2: ADDITIONAL DATA — makes every dashboard feel fully populated ────
+  // ══════════════════════════════════════════════════════════════════════════════
+  console.log('\n🔄  Phase 2: Enriching demo data for full dashboard coverage…');
+
+  // ── P2-A: Extra shipments (s14-s30) ──────────────────────────────────────────
+  // Gives every customer a rich history so stat cards, charts and tables are full
+  console.log('📬  Adding extra shipments…');
+
+  type ExtraShipment = {
+    trackingNumber: string;
+    customerId: string;
+    status: string;
+    paymentStatus: string;
+    senderName: string; senderPhone: string; senderAddress: string; senderCity: string;
+    originZoneId: string;
+    recipientName: string; recipientPhone: string; recipientAddress: string; recipientCity: string;
+    destinationZoneId: string;
+    deliveryType: string; parcelType: string;
+    declaredWeightKg: number;
+    price: number;
+    description?: string;
+    currentHubId?: string;
+    deliveryAttemptCount?: number;
+    deliveredAt?: Date;
+    cancelledAt?: Date;
+    cancellationReason?: string;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+
+  const extraShipments: ExtraShipment[] = [
+    // ── customer1 (Arif Hasan) — needs more history ──────────────────────────
+    {
+      trackingNumber: 'LF-20260901-DEMO0014',
+      customerId: IDS.customer1, status: 'DELIVERED', paymentStatus: 'COMPLETED',
+      senderName: 'Arif Hasan', senderPhone: '01911000001', senderAddress: 'Dhanmondi Dhaka', senderCity: 'Dhaka', originZoneId: IDS.zoneDhakaSouth,
+      recipientName: 'Sonia Islam', recipientPhone: '01911000004', recipientAddress: 'Kotwali Cumilla', recipientCity: 'Cumilla', destinationZoneId: IDS.zoneCumillaMain,
+      deliveryType: 'STANDARD', parcelType: 'REGULAR', declaredWeightKg: 1.5, price: 100.00,
+      description: 'Grocery items', deliveredAt: daysAgo(10),
+      createdAt: daysAgo(18), updatedAt: daysAgo(10),
+    },
+    {
+      trackingNumber: 'LF-20260901-DEMO0015',
+      customerId: IDS.customer1, status: 'DELIVERED', paymentStatus: 'COMPLETED',
+      senderName: 'Arif Hasan', senderPhone: '01911000001', senderAddress: 'Dhanmondi Dhaka', senderCity: 'Dhaka', originZoneId: IDS.zoneDhakaSouth,
+      recipientName: 'Mitu Khatun', recipientPhone: '01911000002', recipientAddress: 'Mirpur Dhaka', recipientCity: 'Dhaka', destinationZoneId: IDS.zoneDhakaNorth,
+      deliveryType: 'EXPRESS', parcelType: 'DOCUMENT', declaredWeightKg: 0.2, price: 130.00,
+      description: 'Office documents', deliveredAt: daysAgo(18),
+      createdAt: daysAgo(25), updatedAt: daysAgo(18),
+    },
+    {
+      trackingNumber: 'LF-20260901-DEMO0016',
+      customerId: IDS.customer1, status: 'DELIVERED', paymentStatus: 'COMPLETED',
+      senderName: 'Arif Hasan', senderPhone: '01911000001', senderAddress: 'Dhanmondi Dhaka', senderCity: 'Dhaka', originZoneId: IDS.zoneDhakaSouth,
+      recipientName: 'Tarek Ahmed', recipientPhone: '01911000005', recipientAddress: 'Gulshan Dhaka', recipientCity: 'Dhaka', destinationZoneId: IDS.zoneDhakaNorth,
+      deliveryType: 'SAME_DAY', parcelType: 'FRAGILE', declaredWeightKg: 0.8, price: 200.00,
+      description: 'Birthday gift (fragile)', deliveredAt: daysAgo(22),
+      createdAt: daysAgo(22), updatedAt: daysAgo(22),
+    },
+    // ── customer2 (Mitu Khatun) ──────────────────────────────────────────────
+    {
+      trackingNumber: 'LF-20260901-DEMO0017',
+      customerId: IDS.customer2, status: 'DELIVERED', paymentStatus: 'COMPLETED',
+      senderName: 'Mitu Khatun', senderPhone: '01911000002', senderAddress: 'Mirpur Dhaka', senderCity: 'Dhaka', originZoneId: IDS.zoneDhakaNorth,
+      recipientName: 'Rubel Chowdhury', recipientPhone: '01911000003', recipientAddress: 'Panchlaish CTG', recipientCity: 'Chattogram', destinationZoneId: IDS.zoneCTGCity,
+      deliveryType: 'STANDARD', parcelType: 'REGULAR', declaredWeightKg: 3.5, price: 135.00,
+      description: 'Clothing bundle', deliveredAt: daysAgo(12),
+      createdAt: daysAgo(20), updatedAt: daysAgo(12),
+    },
+    {
+      trackingNumber: 'LF-20260901-DEMO0018',
+      customerId: IDS.customer2, status: 'DELIVERED', paymentStatus: 'COMPLETED',
+      senderName: 'Mitu Khatun', senderPhone: '01911000002', senderAddress: 'Mirpur Dhaka', senderCity: 'Dhaka', originZoneId: IDS.zoneDhakaNorth,
+      recipientName: 'Sonia Islam', recipientPhone: '01911000004', recipientAddress: 'Kotwali Cumilla', recipientCity: 'Cumilla', destinationZoneId: IDS.zoneCumillaMain,
+      deliveryType: 'EXPRESS', parcelType: 'REGULAR', declaredWeightKg: 2.0, price: 150.00,
+      description: 'Electronics accessories', deliveredAt: daysAgo(8),
+      createdAt: daysAgo(15), updatedAt: daysAgo(8),
+    },
+    {
+      trackingNumber: 'LF-20260901-DEMO0019',
+      customerId: IDS.customer2, status: 'CANCELLED', paymentStatus: 'CANCELLED',
+      senderName: 'Mitu Khatun', senderPhone: '01911000002', senderAddress: 'Mirpur Dhaka', senderCity: 'Dhaka', originZoneId: IDS.zoneDhakaNorth,
+      recipientName: 'Arif Hasan', recipientPhone: '01911000001', recipientAddress: 'Dhanmondi Dhaka', recipientCity: 'Dhaka', destinationZoneId: IDS.zoneDhakaSouth,
+      deliveryType: 'SAME_DAY', parcelType: 'REGULAR', declaredWeightKg: 0.5, price: 200.00,
+      description: 'Demo cancelled shipment', cancelledAt: daysAgo(19),
+      cancellationReason: 'Recipient not available',
+      createdAt: daysAgo(19), updatedAt: daysAgo(19),
+    },
+    // ── customer3 (Rubel Chowdhury) ──────────────────────────────────────────
+    {
+      trackingNumber: 'LF-20260901-DEMO0020',
+      customerId: IDS.customer3, status: 'DELIVERED', paymentStatus: 'COMPLETED',
+      senderName: 'Rubel Chowdhury', senderPhone: '01911000003', senderAddress: 'Panchlaish CTG', senderCity: 'Chattogram', originZoneId: IDS.zoneCTGCity,
+      recipientName: 'Arif Hasan', recipientPhone: '01911000001', recipientAddress: 'Dhanmondi Dhaka', recipientCity: 'Dhaka', destinationZoneId: IDS.zoneDhakaSouth,
+      deliveryType: 'STANDARD', parcelType: 'FRAGILE', declaredWeightKg: 2.0, price: 145.00,
+      description: 'Handmade pottery', deliveredAt: daysAgo(7),
+      createdAt: daysAgo(14), updatedAt: daysAgo(7),
+    },
+    {
+      trackingNumber: 'LF-20260901-DEMO0021',
+      customerId: IDS.customer3, status: 'IN_TRANSIT', paymentStatus: 'COMPLETED',
+      senderName: 'Rubel Chowdhury', senderPhone: '01911000003', senderAddress: 'Nasirabad CTG', senderCity: 'Chattogram', originZoneId: IDS.zoneCTGCity,
+      recipientName: 'Tarek Ahmed', recipientPhone: '01911000005', recipientAddress: 'Gulshan Dhaka', recipientCity: 'Dhaka', destinationZoneId: IDS.zoneDhakaNorth,
+      deliveryType: 'EXPRESS', parcelType: 'REGULAR', declaredWeightKg: 1.8, price: 150.00,
+      description: 'Business samples',
+      createdAt: daysAgo(5), updatedAt: daysAgo(2),
+    },
+    // ── customer4 (Sonia Islam) ──────────────────────────────────────────────
+    {
+      trackingNumber: 'LF-20260901-DEMO0022',
+      customerId: IDS.customer4, status: 'DELIVERED', paymentStatus: 'COMPLETED',
+      senderName: 'Sonia Islam', senderPhone: '01911000004', senderAddress: 'Kotwali Cumilla', senderCity: 'Cumilla', originZoneId: IDS.zoneCumillaMain,
+      recipientName: 'Rubel Chowdhury', recipientPhone: '01911000003', recipientAddress: 'Panchlaish CTG', recipientCity: 'Chattogram', destinationZoneId: IDS.zoneCTGCity,
+      deliveryType: 'STANDARD', parcelType: 'REGULAR', declaredWeightKg: 4.0, price: 140.00,
+      description: 'Local products', deliveredAt: daysAgo(6),
+      createdAt: daysAgo(13), updatedAt: daysAgo(6),
+    },
+    {
+      trackingNumber: 'LF-20260901-DEMO0023',
+      customerId: IDS.customer4, status: 'OUT_FOR_DELIVERY', paymentStatus: 'COMPLETED',
+      senderName: 'Sonia Islam', senderPhone: '01911000004', senderAddress: 'Kotwali Cumilla', senderCity: 'Cumilla', originZoneId: IDS.zoneCumillaMain,
+      recipientName: 'Mitu Khatun', recipientPhone: '01911000002', recipientAddress: 'Mirpur Dhaka', recipientCity: 'Dhaka', destinationZoneId: IDS.zoneDhakaNorth,
+      deliveryType: 'EXPRESS', parcelType: 'REGULAR', declaredWeightKg: 1.2, price: 150.00,
+      description: 'Fashion accessories',
+      createdAt: daysAgo(6), updatedAt: hoursAgo(3),
+    },
+    // ── customer5 (Tarek Ahmed) ──────────────────────────────────────────────
+    {
+      trackingNumber: 'LF-20260901-DEMO0024',
+      customerId: IDS.customer5, status: 'DELIVERED', paymentStatus: 'COMPLETED',
+      senderName: 'Tarek Ahmed', senderPhone: '01911000005', senderAddress: 'Gulshan Dhaka', senderCity: 'Dhaka', originZoneId: IDS.zoneDhakaNorth,
+      recipientName: 'Sonia Islam', recipientPhone: '01911000004', recipientAddress: 'Kotwali Cumilla', recipientCity: 'Cumilla', destinationZoneId: IDS.zoneCumillaMain,
+      deliveryType: 'STANDARD', parcelType: 'DOCUMENT', declaredWeightKg: 0.5, price: 95.00,
+      description: 'Contract papers', deliveredAt: daysAgo(9),
+      createdAt: daysAgo(16), updatedAt: daysAgo(9),
+    },
+    {
+      trackingNumber: 'LF-20260901-DEMO0025',
+      customerId: IDS.customer5, status: 'DELIVERED', paymentStatus: 'COMPLETED',
+      senderName: 'Tarek Ahmed', senderPhone: '01911000005', senderAddress: 'Gulshan Dhaka', senderCity: 'Dhaka', originZoneId: IDS.zoneDhakaNorth,
+      recipientName: 'Arif Hasan', recipientPhone: '01911000001', recipientAddress: 'Dhanmondi Dhaka', recipientCity: 'Dhaka', destinationZoneId: IDS.zoneDhakaSouth,
+      deliveryType: 'EXPRESS', parcelType: 'REGULAR', declaredWeightKg: 2.2, price: 130.00,
+      description: 'Tech gadgets', deliveredAt: daysAgo(14),
+      createdAt: daysAgo(21), updatedAt: daysAgo(14),
+    },
+    {
+      trackingNumber: 'LF-20260901-DEMO0026',
+      customerId: IDS.customer5, status: 'PICKUP_REQUESTED', paymentStatus: 'COMPLETED',
+      senderName: 'Tarek Ahmed', senderPhone: '01911000005', senderAddress: 'Gulshan Dhaka', senderCity: 'Dhaka', originZoneId: IDS.zoneDhakaNorth,
+      recipientName: 'Rubel Chowdhury', recipientPhone: '01911000003', recipientAddress: 'Nasirabad CTG', recipientCity: 'Chattogram', destinationZoneId: IDS.zoneCTGCity,
+      deliveryType: 'STANDARD', parcelType: 'OVERSIZED', declaredWeightKg: 6.0, price: 180.00,
+      description: 'Office equipment',
+      createdAt: daysAgo(2), updatedAt: daysAgo(1),
+    },
+    // ── More delivered for admin revenue stats ───────────────────────────────
+    {
+      trackingNumber: 'LF-20260901-DEMO0027',
+      customerId: IDS.customer1, status: 'DELIVERED', paymentStatus: 'COMPLETED',
+      senderName: 'Arif Hasan', senderPhone: '01911000001', senderAddress: 'Dhanmondi Dhaka', senderCity: 'Dhaka', originZoneId: IDS.zoneDhakaSouth,
+      recipientName: 'Rubel Chowdhury', recipientPhone: '01911000003', recipientAddress: 'Panchlaish CTG', recipientCity: 'Chattogram', destinationZoneId: IDS.zoneCTGCity,
+      deliveryType: 'STANDARD', parcelType: 'REGULAR', declaredWeightKg: 2.5, price: 120.00,
+      description: 'Monthly package', deliveredAt: daysAgo(28),
+      createdAt: daysAgo(35), updatedAt: daysAgo(28),
+    },
+    {
+      trackingNumber: 'LF-20260901-DEMO0028',
+      customerId: IDS.customer3, status: 'DELIVERED', paymentStatus: 'COMPLETED',
+      senderName: 'Rubel Chowdhury', senderPhone: '01911000003', senderAddress: 'Panchlaish CTG', senderCity: 'Chattogram', originZoneId: IDS.zoneCTGCity,
+      recipientName: 'Sonia Islam', recipientPhone: '01911000004', recipientAddress: 'Kotwali Cumilla', recipientCity: 'Cumilla', destinationZoneId: IDS.zoneCumillaMain,
+      deliveryType: 'EXPRESS', parcelType: 'REGULAR', declaredWeightKg: 1.0, price: 130.00,
+      description: 'Regular delivery', deliveredAt: daysAgo(30),
+      createdAt: daysAgo(37), updatedAt: daysAgo(30),
+    },
+    {
+      trackingNumber: 'LF-20260901-DEMO0029',
+      customerId: IDS.customer4, status: 'DELIVERED', paymentStatus: 'COMPLETED',
+      senderName: 'Sonia Islam', senderPhone: '01911000004', senderAddress: 'Kotwali Cumilla', senderCity: 'Cumilla', originZoneId: IDS.zoneCumillaMain,
+      recipientName: 'Mitu Khatun', recipientPhone: '01911000002', recipientAddress: 'Mirpur Dhaka', recipientCity: 'Dhaka', destinationZoneId: IDS.zoneDhakaNorth,
+      deliveryType: 'STANDARD', parcelType: 'DOCUMENT', declaredWeightKg: 0.4, price: 85.00,
+      description: 'Legal papers', deliveredAt: daysAgo(24),
+      createdAt: daysAgo(31), updatedAt: daysAgo(24),
+    },
+    {
+      trackingNumber: 'LF-20260901-DEMO0030',
+      customerId: IDS.customer5, status: 'DELIVERED', paymentStatus: 'COMPLETED',
+      senderName: 'Tarek Ahmed', senderPhone: '01911000005', senderAddress: 'Gulshan Dhaka', senderCity: 'Dhaka', originZoneId: IDS.zoneDhakaNorth,
+      recipientName: 'Arif Hasan', recipientPhone: '01911000001', recipientAddress: 'Dhanmondi Dhaka', recipientCity: 'Dhaka', destinationZoneId: IDS.zoneDhakaSouth,
+      deliveryType: 'SAME_DAY', parcelType: 'REGULAR', declaredWeightKg: 0.8, price: 200.00,
+      description: 'Urgent parcel', deliveredAt: daysAgo(32),
+      createdAt: daysAgo(32), updatedAt: daysAgo(32),
+    },
+  ];
+
+  // Store IDs for phase 2 shipments
+  const extraIds: Record<string, string> = {};
+
+  for (const s of extraShipments) {
+    const shipment = await prisma.shipment.upsert({
+      where: { trackingNumber: s.trackingNumber },
+      update: { status: s.status as never, updatedAt: s.updatedAt },
+      create: {
+        trackingNumber: s.trackingNumber,
+        customerId: s.customerId,
+        status: s.status as never,
+        paymentStatus: s.paymentStatus as never,
+        senderName: s.senderName, senderPhone: s.senderPhone,
+        senderAddress: s.senderAddress, senderCity: s.senderCity,
+        originZoneId: s.originZoneId,
+        recipientName: s.recipientName, recipientPhone: s.recipientPhone,
+        recipientAddress: s.recipientAddress, recipientCity: s.recipientCity,
+        destinationZoneId: s.destinationZoneId,
+        deliveryType: s.deliveryType as never,
+        parcelType: s.parcelType as never,
+        declaredWeightKg: s.declaredWeightKg,
+        price: s.price,
+        description: s.description,
+        currentHubId: s.currentHubId,
+        deliveryAttemptCount: s.deliveryAttemptCount ?? 0,
+        deliveredAt: s.deliveredAt,
+        cancelledAt: s.cancelledAt,
+        cancellationReason: s.cancellationReason,
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+      },
+      select: { id: true, trackingNumber: true },
+    });
+    extraIds[s.trackingNumber] = shipment.id;
+  }
+
+  // Tracking events for delivered extra shipments
+  const extraDeliveredNumbers = [
+    'LF-20260901-DEMO0014', 'LF-20260901-DEMO0015', 'LF-20260901-DEMO0016',
+    'LF-20260901-DEMO0017', 'LF-20260901-DEMO0018',
+    'LF-20260901-DEMO0020',
+    'LF-20260901-DEMO0022',
+    'LF-20260901-DEMO0024', 'LF-20260901-DEMO0025',
+    'LF-20260901-DEMO0027', 'LF-20260901-DEMO0028', 'LF-20260901-DEMO0029', 'LF-20260901-DEMO0030',
+  ];
+
+  for (const tn of extraDeliveredNumbers) {
+    const sid = extraIds[tn];
+    const ship = extraShipments.find(s => s.trackingNumber === tn)!;
+    await prisma.shipmentTrackingEvent.createMany({
+      data: [
+        { shipmentId: sid, status: 'CREATED',          description: 'Shipment booked',           actorId: ship.customerId, createdAt: ship.createdAt },
+        { shipmentId: sid, status: 'PICKUP_REQUESTED',  description: 'Pickup requested',          actorId: ship.customerId, createdAt: new Date(ship.createdAt.getTime() + 1 * 60 * 60 * 1000) },
+        { shipmentId: sid, status: 'ASSIGNED',          description: 'Courier assigned',          actorId: IDS.ops, createdAt: new Date(ship.createdAt.getTime() + 4 * 60 * 60 * 1000) },
+        { shipmentId: sid, status: 'PICKED_UP',         description: 'Parcel picked up',          actorId: IDS.courier1, createdAt: new Date(ship.createdAt.getTime() + 8 * 60 * 60 * 1000) },
+        { shipmentId: sid, status: 'AT_ORIGIN_HUB',     description: 'Arrived at origin hub',     actorId: IDS.hubMgr1, createdAt: new Date(ship.createdAt.getTime() + 12 * 60 * 60 * 1000) },
+        { shipmentId: sid, status: 'IN_TRANSIT',        description: 'Dispatched for delivery',   actorId: IDS.hubMgr1, createdAt: new Date(ship.createdAt.getTime() + 24 * 60 * 60 * 1000) },
+        { shipmentId: sid, status: 'AT_DESTINATION_HUB',description: 'Arrived at destination',   actorId: IDS.hubMgr2, createdAt: new Date(ship.createdAt.getTime() + 36 * 60 * 60 * 1000) },
+        { shipmentId: sid, status: 'OUT_FOR_DELIVERY',   description: 'Out for delivery',         actorId: IDS.ops, createdAt: new Date(ship.createdAt.getTime() + 40 * 60 * 60 * 1000) },
+        { shipmentId: sid, status: 'DELIVERED',          description: 'Delivered successfully',   actorId: IDS.courier1, createdAt: ship.deliveredAt ?? ship.updatedAt },
+      ] as never,
+      skipDuplicates: false,
+    });
+  }
+
+  // Tracking events for in-progress extra shipments
+  const s21id = extraIds['LF-20260901-DEMO0021'];
+  const s23id = extraIds['LF-20260901-DEMO0023'];
+  const s26id = extraIds['LF-20260901-DEMO0026'];
+
+  await prisma.shipmentTrackingEvent.createMany({
+    data: [
+      // s21 — IN_TRANSIT
+      { shipmentId: s21id, status: 'CREATED',         description: 'Shipment booked', actorId: IDS.customer3, createdAt: daysAgo(5) },
+      { shipmentId: s21id, status: 'PICKUP_REQUESTED', description: 'Pickup requested', actorId: IDS.customer3, createdAt: daysAgo(4) },
+      { shipmentId: s21id, status: 'ASSIGNED',         description: 'Courier assigned', actorId: IDS.ops, createdAt: daysAgo(3) },
+      { shipmentId: s21id, status: 'PICKED_UP',        description: 'Parcel picked up', actorId: IDS.courier3, createdAt: daysAgo(3) },
+      { shipmentId: s21id, status: 'AT_ORIGIN_HUB',    description: 'Arrived at Chattogram Port Hub', actorId: IDS.hubMgr2, createdAt: daysAgo(2) },
+      { shipmentId: s21id, status: 'IN_TRANSIT',       description: 'Dispatched to Dhaka Central Hub', actorId: IDS.hubMgr2, createdAt: daysAgo(2) },
+      // s23 — OUT_FOR_DELIVERY
+      { shipmentId: s23id, status: 'CREATED',          description: 'Shipment booked', actorId: IDS.customer4, createdAt: daysAgo(6) },
+      { shipmentId: s23id, status: 'PICKUP_REQUESTED', description: 'Pickup requested', actorId: IDS.customer4, createdAt: daysAgo(5) },
+      { shipmentId: s23id, status: 'ASSIGNED',         description: 'Courier assigned', actorId: IDS.ops, createdAt: daysAgo(4) },
+      { shipmentId: s23id, status: 'PICKED_UP',        description: 'Parcel picked up', actorId: IDS.courier3, createdAt: daysAgo(4) },
+      { shipmentId: s23id, status: 'AT_ORIGIN_HUB',    description: 'Arrived at hub', actorId: IDS.hubMgr2, createdAt: daysAgo(3) },
+      { shipmentId: s23id, status: 'AT_DESTINATION_HUB', description: 'Arrived at Dhaka hub', actorId: IDS.hubMgr1, createdAt: daysAgo(1) },
+      { shipmentId: s23id, status: 'OUT_FOR_DELIVERY', description: 'Out for delivery', actorId: IDS.ops, createdAt: hoursAgo(3) },
+      // s26 — PICKUP_REQUESTED
+      { shipmentId: s26id, status: 'CREATED',          description: 'Shipment booked', actorId: IDS.customer5, createdAt: daysAgo(2) },
+      { shipmentId: s26id, status: 'PICKUP_REQUESTED', description: 'Pickup requested', actorId: IDS.customer5, createdAt: daysAgo(1) },
+    ] as never,
+    skipDuplicates: false,
+  });
+
+  // Cancelled s19
+  const s19id = extraIds['LF-20260901-DEMO0019'];
+  await prisma.shipmentTrackingEvent.createMany({
+    data: [
+      { shipmentId: s19id, status: 'CREATED',   description: 'Shipment booked', actorId: IDS.customer2, createdAt: daysAgo(19) },
+      { shipmentId: s19id, status: 'CANCELLED', description: 'Cancelled by customer', actorId: IDS.customer2, createdAt: daysAgo(19) },
+    ] as never,
+    skipDuplicates: false,
+  });
+
+  console.log(`   ✓ ${extraShipments.length} extra shipments seeded`);
+
+  // ── P2-B: Payments for extra delivered shipments ──────────────────────────────
+  console.log('💳  Adding extra payments…');
+
+  const extraPaymentsData = [
+    { tn: 'LF-20260901-DEMO0014', amount: 100.00, provider: 'BKASH',  trx: 'DEMO_TRX_008', bid: 'DEMO_BK_008', paidAt: daysAgo(18) },
+    { tn: 'LF-20260901-DEMO0015', amount: 130.00, provider: 'STRIPE', si:  'pi_demo_0000003', ss: 'cs_demo_0000003', paidAt: daysAgo(25) },
+    { tn: 'LF-20260901-DEMO0016', amount: 200.00, provider: 'BKASH',  trx: 'DEMO_TRX_009', bid: 'DEMO_BK_009', paidAt: daysAgo(22) },
+    { tn: 'LF-20260901-DEMO0017', amount: 135.00, provider: 'BKASH',  trx: 'DEMO_TRX_010', bid: 'DEMO_BK_010', paidAt: daysAgo(20) },
+    { tn: 'LF-20260901-DEMO0018', amount: 150.00, provider: 'STRIPE', si:  'pi_demo_0000004', ss: 'cs_demo_0000004', paidAt: daysAgo(15) },
+    { tn: 'LF-20260901-DEMO0019', amount: 200.00, provider: 'BKASH',  cancelled: true },
+    { tn: 'LF-20260901-DEMO0020', amount: 145.00, provider: 'BKASH',  trx: 'DEMO_TRX_011', bid: 'DEMO_BK_011', paidAt: daysAgo(14) },
+    { tn: 'LF-20260901-DEMO0021', amount: 150.00, provider: 'BKASH',  trx: 'DEMO_TRX_012', bid: 'DEMO_BK_012', paidAt: daysAgo(5) },
+    { tn: 'LF-20260901-DEMO0022', amount: 140.00, provider: 'STRIPE', si:  'pi_demo_0000005', ss: 'cs_demo_0000005', paidAt: daysAgo(13) },
+    { tn: 'LF-20260901-DEMO0023', amount: 150.00, provider: 'BKASH',  trx: 'DEMO_TRX_013', bid: 'DEMO_BK_013', paidAt: daysAgo(6) },
+    { tn: 'LF-20260901-DEMO0024', amount: 95.00,  provider: 'BKASH',  trx: 'DEMO_TRX_014', bid: 'DEMO_BK_014', paidAt: daysAgo(16) },
+    { tn: 'LF-20260901-DEMO0025', amount: 130.00, provider: 'STRIPE', si:  'pi_demo_0000006', ss: 'cs_demo_0000006', paidAt: daysAgo(21) },
+    { tn: 'LF-20260901-DEMO0026', amount: 180.00, provider: 'BKASH',  trx: 'DEMO_TRX_015', bid: 'DEMO_BK_015', paidAt: daysAgo(2) },
+    { tn: 'LF-20260901-DEMO0027', amount: 120.00, provider: 'BKASH',  trx: 'DEMO_TRX_016', bid: 'DEMO_BK_016', paidAt: daysAgo(35) },
+    { tn: 'LF-20260901-DEMO0028', amount: 130.00, provider: 'STRIPE', si:  'pi_demo_0000007', ss: 'cs_demo_0000007', paidAt: daysAgo(37) },
+    { tn: 'LF-20260901-DEMO0029', amount: 85.00,  provider: 'BKASH',  trx: 'DEMO_TRX_017', bid: 'DEMO_BK_017', paidAt: daysAgo(31) },
+    { tn: 'LF-20260901-DEMO0030', amount: 200.00, provider: 'STRIPE', si:  'pi_demo_0000008', ss: 'cs_demo_0000008', paidAt: daysAgo(32) },
+  ];
+
+  for (const p of extraPaymentsData) {
+    const sid = extraIds[p.tn];
+    if (!sid) continue;
+    const exists = await prisma.payment.findFirst({ where: { shipmentId: sid }, select: { id: true } });
+    if (!exists) {
+      await prisma.payment.create({
+        data: {
+          shipmentId: sid,
+          amount: p.amount,
+          status: p.cancelled ? 'CANCELLED' : 'COMPLETED',
+          provider: p.provider as never,
+          bkashTransactionId: p.trx ?? null,
+          bkashPaymentId: p.bid ?? null,
+          stripePaymentIntent: p.si ?? null,
+          stripeSessionId: p.ss ?? null,
+          paidAt: p.paidAt ?? null,
+          cancelledAt: p.cancelled ? daysAgo(19) : null,
+        },
+      });
+    }
+  }
+
+  console.log(`   ✓ ${extraPaymentsData.length} extra payments seeded`);
+
+  // ── P2-C: Extra courier assignments for rich courier dashboard ────────────────
+  // courier1 needs many COMPLETED assignments (earnings history)
+  // courier2 needs ACTIVE assignments to show on dashboard table
+  console.log('🛵  Adding extra courier assignments…');
+
+  const extraAssignments = [
+    // courier1 — historical COMPLETED deliveries (earnings)
+    { shipmentId: extraIds['LF-20260901-DEMO0014'], courierProfileId: IDS.cpCourier1, type: 'DELIVERY', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(11), acceptedAt: daysAgo(11), deliveredAt: daysAgo(10) },
+    { shipmentId: extraIds['LF-20260901-DEMO0015'], courierProfileId: IDS.cpCourier1, type: 'DELIVERY', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(19), acceptedAt: daysAgo(19), deliveredAt: daysAgo(18) },
+    { shipmentId: extraIds['LF-20260901-DEMO0016'], courierProfileId: IDS.cpCourier1, type: 'DELIVERY', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(23), acceptedAt: daysAgo(23), deliveredAt: daysAgo(22) },
+    { shipmentId: extraIds['LF-20260901-DEMO0020'], courierProfileId: IDS.cpCourier1, type: 'DELIVERY', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(8), acceptedAt: daysAgo(8), deliveredAt: daysAgo(7) },
+    { shipmentId: extraIds['LF-20260901-DEMO0027'], courierProfileId: IDS.cpCourier1, type: 'DELIVERY', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(29), acceptedAt: daysAgo(29), deliveredAt: daysAgo(28) },
+    { shipmentId: extraIds['LF-20260901-DEMO0029'], courierProfileId: IDS.cpCourier1, type: 'DELIVERY', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(25), acceptedAt: daysAgo(25), deliveredAt: daysAgo(24) },
+    { shipmentId: extraIds['LF-20260901-DEMO0030'], courierProfileId: IDS.cpCourier1, type: 'DELIVERY', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(32), acceptedAt: daysAgo(32), deliveredAt: daysAgo(32) },
+    // courier2 — active delivery for s23 (OUT_FOR_DELIVERY)
+    { shipmentId: extraIds['LF-20260901-DEMO0023'], courierProfileId: IDS.cpCourier2, type: 'DELIVERY', status: 'ACTIVE', assignedBy: IDS.ops, assignedAt: hoursAgo(3), acceptedAt: hoursAgo(3) },
+    // courier2 — historical completions
+    { shipmentId: extraIds['LF-20260901-DEMO0017'], courierProfileId: IDS.cpCourier2, type: 'DELIVERY', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(13), acceptedAt: daysAgo(13), deliveredAt: daysAgo(12) },
+    { shipmentId: extraIds['LF-20260901-DEMO0022'], courierProfileId: IDS.cpCourier2, type: 'DELIVERY', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(7), acceptedAt: daysAgo(7), deliveredAt: daysAgo(6) },
+    { shipmentId: extraIds['LF-20260901-DEMO0024'], courierProfileId: IDS.cpCourier2, type: 'DELIVERY', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(10), acceptedAt: daysAgo(10), deliveredAt: daysAgo(9) },
+    { shipmentId: extraIds['LF-20260901-DEMO0028'], courierProfileId: IDS.cpCourier2, type: 'DELIVERY', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(31), acceptedAt: daysAgo(31), deliveredAt: daysAgo(30) },
+    // courier3 — active pickup for s26
+    { shipmentId: extraIds['LF-20260901-DEMO0026'], courierProfileId: IDS.cpCourier3, type: 'PICKUP', status: 'ACTIVE', assignedBy: IDS.ops, assignedAt: daysAgo(1), acceptedAt: daysAgo(1) },
+    // courier3 — completions
+    { shipmentId: extraIds['LF-20260901-DEMO0021'], courierProfileId: IDS.cpCourier3, type: 'PICKUP', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(4), acceptedAt: daysAgo(4), pickedUpAt: daysAgo(3) },
+    // courier4 — completions
+    { shipmentId: extraIds['LF-20260901-DEMO0018'], courierProfileId: IDS.cpCourier4, type: 'DELIVERY', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(9), acceptedAt: daysAgo(9), deliveredAt: daysAgo(8) },
+    { shipmentId: extraIds['LF-20260901-DEMO0025'], courierProfileId: IDS.cpCourier4, type: 'DELIVERY', status: 'COMPLETED', assignedBy: IDS.ops, assignedAt: daysAgo(15), acceptedAt: daysAgo(15), deliveredAt: daysAgo(14) },
+  ];
+
+  for (const a of extraAssignments) {
+    if (!a.shipmentId) continue; // skip if extraIds lookup failed
+    const exists = await prisma.courierAssignment.findFirst({
+      where: { shipmentId: a.shipmentId, courierProfileId: a.courierProfileId, type: a.type as never },
+      select: { id: true },
+    });
+    if (!exists) {
+      await prisma.courierAssignment.create({ data: a as never });
+    }
+  }
+
+  // Update totalDeliveries to reflect full history
+  await prisma.courierProfile.update({ where: { id: IDS.cpCourier1 }, data: { totalDeliveries: 54 } });
+  await prisma.courierProfile.update({ where: { id: IDS.cpCourier2 }, data: { totalDeliveries: 31 } });
+  await prisma.courierProfile.update({ where: { id: IDS.cpCourier3 }, data: { totalDeliveries: 16 } });
+  await prisma.courierProfile.update({ where: { id: IDS.cpCourier4 }, data: { totalDeliveries: 38 } });
+
+  console.log(`   ✓ ${extraAssignments.length} extra courier assignments seeded`);
+
+  // Delivery attempts for extra completed deliveries
+  const extraDeliveryAttempts = [
+    ...['LF-20260901-DEMO0014','LF-20260901-DEMO0015','LF-20260901-DEMO0016',
+        'LF-20260901-DEMO0017','LF-20260901-DEMO0018','LF-20260901-DEMO0020',
+        'LF-20260901-DEMO0022','LF-20260901-DEMO0024','LF-20260901-DEMO0025',
+        'LF-20260901-DEMO0027','LF-20260901-DEMO0028','LF-20260901-DEMO0029',
+        'LF-20260901-DEMO0030',
+    ].map((tn) => {
+      const ship = extraShipments.find(s => s.trackingNumber === tn)!;
+      const cpId = ['LF-20260901-DEMO0017','LF-20260901-DEMO0022','LF-20260901-DEMO0024','LF-20260901-DEMO0028'].includes(tn) ? IDS.cpCourier2
+                 : ['LF-20260901-DEMO0018','LF-20260901-DEMO0025'].includes(tn) ? IDS.cpCourier4
+                 : IDS.cpCourier1;
+      return {
+        shipmentId: extraIds[tn],
+        courierProfileId: cpId,
+        attemptNumber: 1,
+        status: 'SUCCESS',
+        notes: 'Delivered to recipient',
+        deliveredAt: ship.deliveredAt ?? ship.updatedAt,
+        attemptedAt: ship.deliveredAt ?? ship.updatedAt,
+      };
+    }),
+  ];
+
+  for (const attempt of extraDeliveryAttempts) {
+    if (!attempt.shipmentId) continue;
+    const exists = await prisma.deliveryAttempt.findFirst({ where: { shipmentId: attempt.shipmentId }, select: { id: true } });
+    if (!exists) {
+      await prisma.deliveryAttempt.create({ data: attempt as never });
+    }
+  }
+
+  // ── P2-D: Extra hub transfers ─────────────────────────────────────────────────
+  console.log('🏭  Adding extra hub transfers…');
+
+  const extraTransfers = [
+    // Dhaka → Chattogram (for s21 — IN_TRANSIT)
+    { shipmentId: extraIds['LF-20260901-DEMO0021'], fromHubId: IDS.hubCTG, toHubId: IDS.hubDhaka, status: 'IN_TRANSIT', dispatchedAt: daysAgo(2) },
+    // Cumilla → Dhaka (for s23 — arrived)
+    { shipmentId: extraIds['LF-20260901-DEMO0023'], fromHubId: IDS.hubCumilla, toHubId: IDS.hubDhaka, status: 'ARRIVED', dispatchedAt: daysAgo(3), arrivedAt: daysAgo(1) },
+    // Historical transfers for admin/hub view
+    { shipmentId: extraIds['LF-20260901-DEMO0014'], fromHubId: IDS.hubDhaka, toHubId: IDS.hubCumilla, status: 'ARRIVED', dispatchedAt: daysAgo(16), arrivedAt: daysAgo(14) },
+    { shipmentId: extraIds['LF-20260901-DEMO0015'], fromHubId: IDS.hubDhaka, toHubId: IDS.hubDhaka,   status: 'ARRIVED', dispatchedAt: daysAgo(23), arrivedAt: daysAgo(22) },
+    { shipmentId: extraIds['LF-20260901-DEMO0017'], fromHubId: IDS.hubDhaka, toHubId: IDS.hubCTG,    status: 'ARRIVED', dispatchedAt: daysAgo(18), arrivedAt: daysAgo(16) },
+    { shipmentId: extraIds['LF-20260901-DEMO0022'], fromHubId: IDS.hubCumilla, toHubId: IDS.hubCTG,   status: 'ARRIVED', dispatchedAt: daysAgo(11), arrivedAt: daysAgo(9) },
+    { shipmentId: extraIds['LF-20260901-DEMO0027'], fromHubId: IDS.hubDhaka, toHubId: IDS.hubCTG,    status: 'ARRIVED', dispatchedAt: daysAgo(33), arrivedAt: daysAgo(31) },
+    { shipmentId: extraIds['LF-20260901-DEMO0028'], fromHubId: IDS.hubCTG, toHubId: IDS.hubCumilla,  status: 'ARRIVED', dispatchedAt: daysAgo(35), arrivedAt: daysAgo(33) },
+  ];
+
+  for (const t of extraTransfers) {
+    if (!t.shipmentId) continue;
+    const exists = await prisma.hubTransfer.findFirst({
+      where: { shipmentId: t.shipmentId, fromHubId: t.fromHubId, toHubId: t.toHubId },
+      select: { id: true },
+    });
+    if (!exists) {
+      await prisma.hubTransfer.create({ data: t as never });
+    }
+  }
+
+  console.log(`   ✓ ${extraTransfers.length} extra hub transfers seeded`);
+
+  // ── P2-E: Extra notifications for every role ──────────────────────────────────
+  console.log('🔔  Adding extra notifications…');
+
+  const extraNotifications = [
+    // customer1 — full notification inbox
+    { userId: IDS.customer1, type: 'PAYMENT_COMPLETED',  title: 'Payment Confirmed',       message: 'Payment of BDT 200.00 confirmed for DEMO0016 via bKash. TrxID: DEMO_TRX_009', isRead: true },
+    { userId: IDS.customer1, type: 'COURIER_ASSIGNED',   title: 'Courier Assigned',        message: 'A courier has been assigned to your shipment DEMO0015', isRead: true },
+    { userId: IDS.customer1, type: 'PARCEL_PICKED_UP',   title: 'Parcel Picked Up',        message: 'Your parcel DEMO0014 has been picked up by courier', isRead: true },
+    { userId: IDS.customer1, type: 'DELIVERED',          title: 'Parcel Delivered',        message: 'Your shipment DEMO0014 was delivered successfully', isRead: false },
+    { userId: IDS.customer1, type: 'DELIVERED',          title: 'Parcel Delivered',        message: 'Your shipment DEMO0027 was delivered successfully', isRead: false },
+    { userId: IDS.customer1, type: 'IN_TRANSIT',         title: 'Shipment In Transit',     message: 'Your shipment DEMO0004 is now in transit', isRead: false },
+    // customer2
+    { userId: IDS.customer2, type: 'PARCEL_PICKED_UP',   title: 'Parcel Picked Up',        message: 'Your parcel DEMO0017 has been picked up by courier', isRead: true },
+    { userId: IDS.customer2, type: 'DELIVERED',          title: 'Parcel Delivered',        message: 'Your shipment DEMO0017 was delivered successfully', isRead: false },
+    { userId: IDS.customer2, type: 'OUT_FOR_DELIVERY',   title: 'Out For Delivery',        message: 'Your shipment DEMO0007 is out for delivery', isRead: false },
+    { userId: IDS.customer2, type: 'PAYMENT_COMPLETED',  title: 'Payment Confirmed',       message: 'Payment of BDT 150.00 confirmed for DEMO0018 via Stripe', isRead: true },
+    // customer3
+    { userId: IDS.customer3, type: 'IN_TRANSIT',         title: 'Shipment In Transit',     message: 'Your shipment DEMO0021 is now in transit to Dhaka', isRead: false },
+    { userId: IDS.customer3, type: 'DELIVERED',          title: 'Parcel Delivered',        message: 'Your shipment DEMO0020 was delivered successfully', isRead: false },
+    { userId: IDS.customer3, type: 'PAYMENT_COMPLETED',  title: 'Payment Confirmed',       message: 'Payment of BDT 145.00 confirmed for DEMO0020 via bKash', isRead: true },
+    // customer4
+    { userId: IDS.customer4, type: 'OUT_FOR_DELIVERY',   title: 'Out For Delivery',        message: 'Your shipment DEMO0023 is out for delivery now', isRead: false },
+    { userId: IDS.customer4, type: 'DELIVERED',          title: 'Parcel Delivered',        message: 'Your shipment DEMO0022 was delivered successfully', isRead: false },
+    { userId: IDS.customer4, type: 'PAYMENT_COMPLETED',  title: 'Payment Confirmed',       message: 'Payment of BDT 140.00 confirmed for DEMO0022 via Stripe', isRead: true },
+    // customer5
+    { userId: IDS.customer5, type: 'SHIPMENT_CREATED',   title: 'Shipment Booked',         message: 'Your shipment DEMO0026 has been booked. Awaiting pickup', isRead: false },
+    { userId: IDS.customer5, type: 'DELIVERED',          title: 'Parcel Delivered',        message: 'Your shipment DEMO0024 was delivered successfully', isRead: false },
+    { userId: IDS.customer5, type: 'DELIVERED',          title: 'Parcel Delivered',        message: 'Your shipment DEMO0025 was delivered successfully', isRead: true },
+    // couriers
+    { userId: IDS.courier1,  type: 'COURIER_ASSIGNED',   title: 'New Delivery Assignment', message: 'You have a new delivery assignment for DEMO0014', isRead: true },
+    { userId: IDS.courier1,  type: 'COURIER_ASSIGNED',   title: 'New Delivery Assignment', message: 'You have a new delivery assignment for DEMO0020', isRead: false },
+    { userId: IDS.courier2,  type: 'COURIER_ASSIGNED',   title: 'New Delivery Assignment', message: 'You have a new delivery assignment for DEMO0023', isRead: false },
+    { userId: IDS.courier2,  type: 'COURIER_ASSIGNED',   title: 'New Delivery Assignment', message: 'You have a new delivery assignment for DEMO0017', isRead: true },
+    { userId: IDS.courier3,  type: 'COURIER_ASSIGNED',   title: 'New Pickup Assignment',   message: 'You have a new pickup assignment for DEMO0026', isRead: false },
+    { userId: IDS.courier4,  type: 'COURIER_ASSIGNED',   title: 'New Delivery Assignment', message: 'You have a new delivery assignment for DEMO0006', isRead: false },
+    // hub managers
+    { userId: IDS.hubMgr1,   type: 'ARRIVED_AT_HUB',     title: 'Shipment Arrived',        message: 'DEMO0005 has arrived at Dhaka Central Hub from Cumilla', isRead: false },
+    { userId: IDS.hubMgr1,   type: 'ARRIVED_AT_HUB',     title: 'Shipment Arrived',        message: 'DEMO0023 has arrived at Dhaka Central Hub', isRead: false },
+    { userId: IDS.hubMgr1,   type: 'IN_TRANSIT',          title: 'Transfer Dispatched',     message: 'DEMO0006 has been dispatched to Chattogram Port Hub', isRead: true },
+    { userId: IDS.hubMgr2,   type: 'ARRIVED_AT_HUB',     title: 'Shipment Arrived',        message: 'DEMO0006 has arrived at Chattogram Port Hub from Dhaka', isRead: false },
+    { userId: IDS.hubMgr2,   type: 'IN_TRANSIT',          title: 'Transfer Dispatched',     message: 'DEMO0021 has been dispatched to Dhaka Central Hub', isRead: false },
+    // ops manager
+    { userId: IDS.ops,       type: 'DELIVERY_FAILED',     title: 'Delivery Failed',         message: 'DEMO0009 delivery failed — No one home. Attempt 1/3', isRead: false },
+    { userId: IDS.ops,       type: 'SHIPMENT_CANCELLED',  title: 'Shipment Cancelled',      message: 'DEMO0010 was cancelled by customer', isRead: true },
+    { userId: IDS.ops,       type: 'GENERAL',             title: 'Return Initiated',        message: 'DEMO0011 return has been initiated after 2 failed attempts', isRead: false },
+    // admin
+    { userId: IDS.admin,     type: 'GENERAL',             title: 'New Hub Manager Assigned', message: 'Karim Hussain assigned as manager of Dhaka Central Hub', isRead: true },
+    { userId: IDS.admin,     type: 'PAYMENT_COMPLETED',   title: 'Large Payment Received',  message: 'Payment of BDT 280.00 received for DEMO0006 via Stripe', isRead: false },
+    { userId: IDS.admin,     type: 'GENERAL',             title: 'System Healthy',          message: '30 shipments seeded. All hubs active. 4 couriers available.', isRead: false },
+  ];
+
+  await prisma.notification.createMany({
+    data: extraNotifications as never,
+    skipDuplicates: false,
+  });
+
+  console.log(`   ✓ ${extraNotifications.length} extra notifications seeded`);
+
+  // ── P2-F: Extra audit logs for admin panel ────────────────────────────────────
+  console.log('📝  Adding extra audit logs…');
+
+  const extraAuditLogs = [
+    // User management
+    { actorId: IDS.admin, action: 'USER_ROLE_CHANGED',  resourceType: 'User',        resourceId: IDS.courier1,          before: { role: 'CUSTOMER' }, after: { role: 'COURIER' },      createdAt: daysAgo(29) },
+    { actorId: IDS.admin, action: 'USER_ROLE_CHANGED',  resourceType: 'User',        resourceId: IDS.hubMgr1,           before: { role: 'CUSTOMER' }, after: { role: 'HUB_MANAGER' },  createdAt: daysAgo(28) },
+    { actorId: IDS.admin, action: 'USER_ROLE_CHANGED',  resourceType: 'User',        resourceId: IDS.hubMgr2,           before: { role: 'CUSTOMER' }, after: { role: 'HUB_MANAGER' },  createdAt: daysAgo(27) },
+    // Pricing
+    { actorId: IDS.admin, action: 'PRICING_RULE_CREATED', resourceType: 'PricingRule', resourceId: 'pr_default_logiflow1', after: { name: 'Standard Default Rate', basePrice: 80 }, createdAt: daysAgo(55) },
+    { actorId: IDS.admin, action: 'PRICING_RULE_CREATED', resourceType: 'PricingRule', resourceId: 'pr_express_logiflow2', after: { name: 'Express Surcharge', surcharge: 50 },     createdAt: daysAgo(54) },
+    { actorId: IDS.admin, action: 'PRICING_RULE_UPDATED', resourceType: 'PricingRule', resourceId: 'pr_sameday_logiflo3',  after: { deliveryTypeSurcharge: 120 },                     createdAt: daysAgo(40) },
+    // Shipments
+    { actorId: IDS.customer1, action: 'SHIPMENT_CREATED',    resourceType: 'Shipment', resourceId: IDS.s4,  after: { trackingNumber: 'LF-20260901-DEMO0004' }, createdAt: daysAgo(1) },
+    { actorId: IDS.customer5, action: 'SHIPMENT_CREATED',    resourceType: 'Shipment', resourceId: IDS.s6,  after: { trackingNumber: 'LF-20260901-DEMO0006' }, createdAt: daysAgo(7) },
+    { actorId: IDS.customer4, action: 'SHIPMENT_CREATED',    resourceType: 'Shipment', resourceId: IDS.s9,  after: { trackingNumber: 'LF-20260901-DEMO0009' }, createdAt: daysAgo(12) },
+    { actorId: IDS.customer1, action: 'SHIPMENT_CANCELLED',  resourceType: 'Shipment', resourceId: IDS.s10, after: { reason: 'Changed my mind' },              createdAt: daysAgo(5) },
+    { actorId: IDS.ops, action: 'SHIPMENT_STATUS_CHANGED',   resourceType: 'Shipment', resourceId: IDS.s5,  after: { status: 'IN_TRANSIT' },                   createdAt: daysAgo(2) },
+    // Couriers
+    { actorId: IDS.ops, action: 'COURIER_ASSIGNED',              resourceType: 'CourierAssignment', resourceId: IDS.s3, after: { courier: 'courier1', type: 'PICKUP' },   createdAt: daysAgo(3) },
+    { actorId: IDS.ops, action: 'COURIER_ASSIGNED',              resourceType: 'CourierAssignment', resourceId: IDS.s4, after: { courier: 'courier1', type: 'PICKUP' },   createdAt: hoursAgo(8) },
+    { actorId: IDS.ops, action: 'COURIER_ASSIGNED',              resourceType: 'CourierAssignment', resourceId: IDS.s6, after: { courier: 'courier4', type: 'DELIVERY' }, createdAt: daysAgo(1) },
+    { actorId: IDS.ops, action: 'COURIER_REASSIGNED',            resourceType: 'CourierAssignment', resourceId: IDS.s7, after: { courier: 'courier2' },                   createdAt: daysAgo(6) },
+    { actorId: IDS.ops, action: 'COURIER_ASSIGNMENT_CANCELLED',  resourceType: 'CourierAssignment', resourceId: IDS.s9, after: { reason: 'Failed delivery' },             createdAt: daysAgo(2) },
+    // Payments
+    { actorId: null, action: 'PAYMENT_INITIATED',  resourceType: 'Payment', resourceId: IDS.s2,  after: { provider: 'BKASH',  amount: 130 }, createdAt: daysAgo(4) },
+    { actorId: null, action: 'PAYMENT_COMPLETED',  resourceType: 'Payment', resourceId: IDS.s2,  after: { provider: 'BKASH',  trxId: 'DEMO_TRX_001' }, createdAt: daysAgo(3) },
+    { actorId: null, action: 'PAYMENT_COMPLETED',  resourceType: 'Payment', resourceId: IDS.s4,  after: { provider: 'STRIPE', amount: 200 }, createdAt: daysAgo(1) },
+    { actorId: null, action: 'PAYMENT_COMPLETED',  resourceType: 'Payment', resourceId: IDS.s6,  after: { provider: 'STRIPE', amount: 280 }, createdAt: daysAgo(6) },
+    { actorId: null, action: 'PAYMENT_COMPLETED',  resourceType: 'Payment', resourceId: IDS.s7,  after: { provider: 'BKASH',  amount: 95  }, createdAt: daysAgo(7) },
+    { actorId: null, action: 'PAYMENT_CANCELLED',  resourceType: 'Payment', resourceId: IDS.s10, after: { reason: 'Cancelled before payment' }, createdAt: daysAgo(5) },
+    // Hub operations
+    { actorId: IDS.hubMgr1, action: 'HUB_TRANSFER_CREATED', resourceType: 'HubTransfer', resourceId: IDS.hubDhaka,   after: { from: 'Dhaka', to: 'Chattogram', shipment: 'DEMO0006' }, createdAt: daysAgo(3) },
+    { actorId: IDS.hubMgr2, action: 'HUB_TRANSFER_ARRIVED', resourceType: 'HubTransfer', resourceId: IDS.hubCTG,     after: { shipment: 'DEMO0006', status: 'ARRIVED' }, createdAt: daysAgo(1) },
+    { actorId: IDS.hubMgr1, action: 'HUB_TRANSFER_CREATED', resourceType: 'HubTransfer', resourceId: IDS.hubDhaka,   after: { from: 'Dhaka', to: 'Cumilla', shipment: 'DEMO0008' }, createdAt: daysAgo(5) },
+    { actorId: IDS.hubMgr2, action: 'HUB_TRANSFER_ARRIVED', resourceType: 'HubTransfer', resourceId: IDS.hubCumilla, after: { shipment: 'DEMO0008', status: 'ARRIVED' }, createdAt: daysAgo(3) },
+    // Delivery
+    { actorId: IDS.courier4, action: 'DELIVERY_CONFIRMED', resourceType: 'Shipment', resourceId: IDS.s8, after: { status: 'DELIVERED' }, createdAt: daysAgo(1) },
+    { actorId: IDS.courier2, action: 'DELIVERY_FAILED',    resourceType: 'Shipment', resourceId: IDS.s9, after: { reason: 'NO_ONE_HOME', attempt: 1 }, createdAt: daysAgo(2) },
+    // Pickup
+    { actorId: IDS.courier1, action: 'PICKUP_COMPLETED', resourceType: 'Shipment', resourceId: IDS.s4, after: { status: 'PICKED_UP' }, createdAt: hoursAgo(4) },
+    { actorId: IDS.courier3, action: 'PICKUP_COMPLETED', resourceType: 'Shipment', resourceId: IDS.s5, after: { status: 'PICKED_UP' }, createdAt: daysAgo(4) },
+    // Auth
+    { actorId: IDS.admin,   action: 'USER_LOGIN', resourceType: 'User', resourceId: IDS.admin,   createdAt: daysAgo(1) },
+    { actorId: IDS.ops,     action: 'USER_LOGIN', resourceType: 'User', resourceId: IDS.ops,     createdAt: daysAgo(1) },
+    { actorId: IDS.hubMgr1, action: 'USER_LOGIN', resourceType: 'User', resourceId: IDS.hubMgr1, createdAt: daysAgo(1) },
+  ];
+
+  await prisma.auditLog.createMany({
+    data: extraAuditLogs as never,
+    skipDuplicates: false,
+  });
+
+  console.log(`   ✓ ${extraAuditLogs.length} extra audit logs seeded`);
+  console.log('\n✅  Phase 2 enrichment complete!');
+
   // ── Done ───────────────────────────────────────────────────────────────────────
 
   console.log('\n✅  Demo seed complete!\n');
