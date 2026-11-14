@@ -462,6 +462,7 @@ export type ShipmentWhereInput = {
   hubTransfers?: Prisma.HubTransferListRelationFilter
   deliveryAttempts?: Prisma.DeliveryAttemptListRelationFilter
   payments?: Prisma.PaymentListRelationFilter
+  riskAssessments?: Prisma.ShipmentRiskAssessmentListRelationFilter
 }
 
 export type ShipmentOrderByWithRelationInput = {
@@ -509,6 +510,7 @@ export type ShipmentOrderByWithRelationInput = {
   hubTransfers?: Prisma.HubTransferOrderByRelationAggregateInput
   deliveryAttempts?: Prisma.DeliveryAttemptOrderByRelationAggregateInput
   payments?: Prisma.PaymentOrderByRelationAggregateInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentOrderByRelationAggregateInput
 }
 
 export type ShipmentWhereUniqueInput = Prisma.AtLeast<{
@@ -559,6 +561,7 @@ export type ShipmentWhereUniqueInput = Prisma.AtLeast<{
   hubTransfers?: Prisma.HubTransferListRelationFilter
   deliveryAttempts?: Prisma.DeliveryAttemptListRelationFilter
   payments?: Prisma.PaymentListRelationFilter
+  riskAssessments?: Prisma.ShipmentRiskAssessmentListRelationFilter
 }, "id" | "trackingNumber">
 
 export type ShipmentOrderByWithAggregationInput = {
@@ -682,6 +685,7 @@ export type ShipmentCreateInput = {
   hubTransfers?: Prisma.HubTransferCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateInput = {
@@ -725,6 +729,7 @@ export type ShipmentUncheckedCreateInput = {
   hubTransfers?: Prisma.HubTransferUncheckedCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentUpdateInput = {
@@ -768,6 +773,7 @@ export type ShipmentUpdateInput = {
   hubTransfers?: Prisma.HubTransferUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateInput = {
@@ -811,6 +817,7 @@ export type ShipmentUncheckedUpdateInput = {
   hubTransfers?: Prisma.HubTransferUncheckedUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentCreateManyInput = {
@@ -1236,8 +1243,18 @@ export type ShipmentUpdateOneRequiredWithoutPickupRequestNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ShipmentUpdateToOneWithWhereWithoutPickupRequestInput, Prisma.ShipmentUpdateWithoutPickupRequestInput>, Prisma.ShipmentUncheckedUpdateWithoutPickupRequestInput>
 }
 
-export type EnumShipmentStatusFieldUpdateOperationsInput = {
-  set?: $Enums.ShipmentStatus
+export type ShipmentCreateNestedOneWithoutRiskAssessmentsInput = {
+  create?: Prisma.XOR<Prisma.ShipmentCreateWithoutRiskAssessmentsInput, Prisma.ShipmentUncheckedCreateWithoutRiskAssessmentsInput>
+  connectOrCreate?: Prisma.ShipmentCreateOrConnectWithoutRiskAssessmentsInput
+  connect?: Prisma.ShipmentWhereUniqueInput
+}
+
+export type ShipmentUpdateOneRequiredWithoutRiskAssessmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.ShipmentCreateWithoutRiskAssessmentsInput, Prisma.ShipmentUncheckedCreateWithoutRiskAssessmentsInput>
+  connectOrCreate?: Prisma.ShipmentCreateOrConnectWithoutRiskAssessmentsInput
+  upsert?: Prisma.ShipmentUpsertWithoutRiskAssessmentsInput
+  connect?: Prisma.ShipmentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ShipmentUpdateToOneWithWhereWithoutRiskAssessmentsInput, Prisma.ShipmentUpdateWithoutRiskAssessmentsInput>, Prisma.ShipmentUncheckedUpdateWithoutRiskAssessmentsInput>
 }
 
 export type EnumDeliveryTypeFieldUpdateOperationsInput = {
@@ -1380,6 +1397,7 @@ export type ShipmentCreateWithoutAssignmentsInput = {
   hubTransfers?: Prisma.HubTransferCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateWithoutAssignmentsInput = {
@@ -1422,6 +1440,7 @@ export type ShipmentUncheckedCreateWithoutAssignmentsInput = {
   hubTransfers?: Prisma.HubTransferUncheckedCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentCreateOrConnectWithoutAssignmentsInput = {
@@ -1480,6 +1499,7 @@ export type ShipmentUpdateWithoutAssignmentsInput = {
   hubTransfers?: Prisma.HubTransferUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateWithoutAssignmentsInput = {
@@ -1522,6 +1542,7 @@ export type ShipmentUncheckedUpdateWithoutAssignmentsInput = {
   hubTransfers?: Prisma.HubTransferUncheckedUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentCreateWithoutDeliveryAttemptsInput = {
@@ -1564,6 +1585,7 @@ export type ShipmentCreateWithoutDeliveryAttemptsInput = {
   trackingEvents?: Prisma.ShipmentTrackingEventCreateNestedManyWithoutShipmentInput
   hubTransfers?: Prisma.HubTransferCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateWithoutDeliveryAttemptsInput = {
@@ -1606,6 +1628,7 @@ export type ShipmentUncheckedCreateWithoutDeliveryAttemptsInput = {
   trackingEvents?: Prisma.ShipmentTrackingEventUncheckedCreateNestedManyWithoutShipmentInput
   hubTransfers?: Prisma.HubTransferUncheckedCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentCreateOrConnectWithoutDeliveryAttemptsInput = {
@@ -1664,6 +1687,7 @@ export type ShipmentUpdateWithoutDeliveryAttemptsInput = {
   trackingEvents?: Prisma.ShipmentTrackingEventUpdateManyWithoutShipmentNestedInput
   hubTransfers?: Prisma.HubTransferUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateWithoutDeliveryAttemptsInput = {
@@ -1706,6 +1730,7 @@ export type ShipmentUncheckedUpdateWithoutDeliveryAttemptsInput = {
   trackingEvents?: Prisma.ShipmentTrackingEventUncheckedUpdateManyWithoutShipmentNestedInput
   hubTransfers?: Prisma.HubTransferUncheckedUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentCreateWithoutCurrentHubInput = {
@@ -1748,6 +1773,7 @@ export type ShipmentCreateWithoutCurrentHubInput = {
   hubTransfers?: Prisma.HubTransferCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateWithoutCurrentHubInput = {
@@ -1790,6 +1816,7 @@ export type ShipmentUncheckedCreateWithoutCurrentHubInput = {
   hubTransfers?: Prisma.HubTransferUncheckedCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentCreateOrConnectWithoutCurrentHubInput = {
@@ -1897,6 +1924,7 @@ export type ShipmentCreateWithoutOriginZoneInput = {
   hubTransfers?: Prisma.HubTransferCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateWithoutOriginZoneInput = {
@@ -1939,6 +1967,7 @@ export type ShipmentUncheckedCreateWithoutOriginZoneInput = {
   hubTransfers?: Prisma.HubTransferUncheckedCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentCreateOrConnectWithoutOriginZoneInput = {
@@ -1991,6 +2020,7 @@ export type ShipmentCreateWithoutDestinationZoneInput = {
   hubTransfers?: Prisma.HubTransferCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateWithoutDestinationZoneInput = {
@@ -2033,6 +2063,7 @@ export type ShipmentUncheckedCreateWithoutDestinationZoneInput = {
   hubTransfers?: Prisma.HubTransferUncheckedCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentCreateOrConnectWithoutDestinationZoneInput = {
@@ -2117,6 +2148,7 @@ export type ShipmentCreateWithoutPaymentsInput = {
   trackingEvents?: Prisma.ShipmentTrackingEventCreateNestedManyWithoutShipmentInput
   hubTransfers?: Prisma.HubTransferCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateWithoutPaymentsInput = {
@@ -2159,6 +2191,7 @@ export type ShipmentUncheckedCreateWithoutPaymentsInput = {
   trackingEvents?: Prisma.ShipmentTrackingEventUncheckedCreateNestedManyWithoutShipmentInput
   hubTransfers?: Prisma.HubTransferUncheckedCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentCreateOrConnectWithoutPaymentsInput = {
@@ -2217,6 +2250,7 @@ export type ShipmentUpdateWithoutPaymentsInput = {
   trackingEvents?: Prisma.ShipmentTrackingEventUpdateManyWithoutShipmentNestedInput
   hubTransfers?: Prisma.HubTransferUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateWithoutPaymentsInput = {
@@ -2259,6 +2293,7 @@ export type ShipmentUncheckedUpdateWithoutPaymentsInput = {
   trackingEvents?: Prisma.ShipmentTrackingEventUncheckedUpdateManyWithoutShipmentNestedInput
   hubTransfers?: Prisma.HubTransferUncheckedUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentCreateWithoutPickupRequestInput = {
@@ -2301,6 +2336,7 @@ export type ShipmentCreateWithoutPickupRequestInput = {
   hubTransfers?: Prisma.HubTransferCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateWithoutPickupRequestInput = {
@@ -2343,6 +2379,7 @@ export type ShipmentUncheckedCreateWithoutPickupRequestInput = {
   hubTransfers?: Prisma.HubTransferUncheckedCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentCreateOrConnectWithoutPickupRequestInput = {
@@ -2401,6 +2438,7 @@ export type ShipmentUpdateWithoutPickupRequestInput = {
   hubTransfers?: Prisma.HubTransferUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateWithoutPickupRequestInput = {
@@ -2438,6 +2476,195 @@ export type ShipmentUncheckedUpdateWithoutPickupRequestInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   items?: Prisma.ShipmentItemUncheckedUpdateManyWithoutShipmentNestedInput
+  assignments?: Prisma.CourierAssignmentUncheckedUpdateManyWithoutShipmentNestedInput
+  trackingEvents?: Prisma.ShipmentTrackingEventUncheckedUpdateManyWithoutShipmentNestedInput
+  hubTransfers?: Prisma.HubTransferUncheckedUpdateManyWithoutShipmentNestedInput
+  deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutShipmentNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedUpdateManyWithoutShipmentNestedInput
+}
+
+export type ShipmentCreateWithoutRiskAssessmentsInput = {
+  id?: string
+  trackingNumber: string
+  status?: $Enums.ShipmentStatus
+  paymentStatus?: $Enums.PaymentStatus
+  senderName: string
+  senderPhone: string
+  senderAddress: string
+  senderCity: string
+  recipientName: string
+  recipientPhone: string
+  recipientAddress: string
+  recipientCity: string
+  deliveryType?: $Enums.DeliveryType
+  parcelType?: $Enums.ParcelType
+  declaredWeightKg: number
+  actualWeightKg?: number | null
+  description?: string | null
+  specialInstructions?: string | null
+  price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  originHubId?: string | null
+  deliveryAttemptCount?: number
+  deliveredAt?: Date | string | null
+  returnedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancellationReason?: string | null
+  returnReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  customer: Prisma.UserCreateNestedOneWithoutShipmentsInput
+  originZone?: Prisma.ZoneCreateNestedOneWithoutShipmentsOriginInput
+  destinationZone?: Prisma.ZoneCreateNestedOneWithoutShipmentsDestinationInput
+  currentHub?: Prisma.HubCreateNestedOneWithoutShipmentsCurrentlyInput
+  items?: Prisma.ShipmentItemCreateNestedManyWithoutShipmentInput
+  pickupRequest?: Prisma.PickupRequestCreateNestedOneWithoutShipmentInput
+  assignments?: Prisma.CourierAssignmentCreateNestedManyWithoutShipmentInput
+  trackingEvents?: Prisma.ShipmentTrackingEventCreateNestedManyWithoutShipmentInput
+  hubTransfers?: Prisma.HubTransferCreateNestedManyWithoutShipmentInput
+  deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutShipmentInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutShipmentInput
+}
+
+export type ShipmentUncheckedCreateWithoutRiskAssessmentsInput = {
+  id?: string
+  trackingNumber: string
+  customerId: string
+  status?: $Enums.ShipmentStatus
+  paymentStatus?: $Enums.PaymentStatus
+  senderName: string
+  senderPhone: string
+  senderAddress: string
+  senderCity: string
+  originZoneId?: string | null
+  recipientName: string
+  recipientPhone: string
+  recipientAddress: string
+  recipientCity: string
+  destinationZoneId?: string | null
+  deliveryType?: $Enums.DeliveryType
+  parcelType?: $Enums.ParcelType
+  declaredWeightKg: number
+  actualWeightKg?: number | null
+  description?: string | null
+  specialInstructions?: string | null
+  price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentHubId?: string | null
+  originHubId?: string | null
+  deliveryAttemptCount?: number
+  deliveredAt?: Date | string | null
+  returnedAt?: Date | string | null
+  cancelledAt?: Date | string | null
+  cancellationReason?: string | null
+  returnReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  items?: Prisma.ShipmentItemUncheckedCreateNestedManyWithoutShipmentInput
+  pickupRequest?: Prisma.PickupRequestUncheckedCreateNestedOneWithoutShipmentInput
+  assignments?: Prisma.CourierAssignmentUncheckedCreateNestedManyWithoutShipmentInput
+  trackingEvents?: Prisma.ShipmentTrackingEventUncheckedCreateNestedManyWithoutShipmentInput
+  hubTransfers?: Prisma.HubTransferUncheckedCreateNestedManyWithoutShipmentInput
+  deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutShipmentInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutShipmentInput
+}
+
+export type ShipmentCreateOrConnectWithoutRiskAssessmentsInput = {
+  where: Prisma.ShipmentWhereUniqueInput
+  create: Prisma.XOR<Prisma.ShipmentCreateWithoutRiskAssessmentsInput, Prisma.ShipmentUncheckedCreateWithoutRiskAssessmentsInput>
+}
+
+export type ShipmentUpsertWithoutRiskAssessmentsInput = {
+  update: Prisma.XOR<Prisma.ShipmentUpdateWithoutRiskAssessmentsInput, Prisma.ShipmentUncheckedUpdateWithoutRiskAssessmentsInput>
+  create: Prisma.XOR<Prisma.ShipmentCreateWithoutRiskAssessmentsInput, Prisma.ShipmentUncheckedCreateWithoutRiskAssessmentsInput>
+  where?: Prisma.ShipmentWhereInput
+}
+
+export type ShipmentUpdateToOneWithWhereWithoutRiskAssessmentsInput = {
+  where?: Prisma.ShipmentWhereInput
+  data: Prisma.XOR<Prisma.ShipmentUpdateWithoutRiskAssessmentsInput, Prisma.ShipmentUncheckedUpdateWithoutRiskAssessmentsInput>
+}
+
+export type ShipmentUpdateWithoutRiskAssessmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  trackingNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumShipmentStatusFieldUpdateOperationsInput | $Enums.ShipmentStatus
+  paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  senderName?: Prisma.StringFieldUpdateOperationsInput | string
+  senderPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  senderAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  senderCity?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientName?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientCity?: Prisma.StringFieldUpdateOperationsInput | string
+  deliveryType?: Prisma.EnumDeliveryTypeFieldUpdateOperationsInput | $Enums.DeliveryType
+  parcelType?: Prisma.EnumParcelTypeFieldUpdateOperationsInput | $Enums.ParcelType
+  declaredWeightKg?: Prisma.FloatFieldUpdateOperationsInput | number
+  actualWeightKg?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  specialInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  originHubId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  customer?: Prisma.UserUpdateOneRequiredWithoutShipmentsNestedInput
+  originZone?: Prisma.ZoneUpdateOneWithoutShipmentsOriginNestedInput
+  destinationZone?: Prisma.ZoneUpdateOneWithoutShipmentsDestinationNestedInput
+  currentHub?: Prisma.HubUpdateOneWithoutShipmentsCurrentlyNestedInput
+  items?: Prisma.ShipmentItemUpdateManyWithoutShipmentNestedInput
+  pickupRequest?: Prisma.PickupRequestUpdateOneWithoutShipmentNestedInput
+  assignments?: Prisma.CourierAssignmentUpdateManyWithoutShipmentNestedInput
+  trackingEvents?: Prisma.ShipmentTrackingEventUpdateManyWithoutShipmentNestedInput
+  hubTransfers?: Prisma.HubTransferUpdateManyWithoutShipmentNestedInput
+  deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutShipmentNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutShipmentNestedInput
+}
+
+export type ShipmentUncheckedUpdateWithoutRiskAssessmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  trackingNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumShipmentStatusFieldUpdateOperationsInput | $Enums.ShipmentStatus
+  paymentStatus?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+  senderName?: Prisma.StringFieldUpdateOperationsInput | string
+  senderPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  senderAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  senderCity?: Prisma.StringFieldUpdateOperationsInput | string
+  originZoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recipientName?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientPhone?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  recipientCity?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationZoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryType?: Prisma.EnumDeliveryTypeFieldUpdateOperationsInput | $Enums.DeliveryType
+  parcelType?: Prisma.EnumParcelTypeFieldUpdateOperationsInput | $Enums.ParcelType
+  declaredWeightKg?: Prisma.FloatFieldUpdateOperationsInput | number
+  actualWeightKg?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  specialInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  currentHubId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originHubId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deliveryAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  returnReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  items?: Prisma.ShipmentItemUncheckedUpdateManyWithoutShipmentNestedInput
+  pickupRequest?: Prisma.PickupRequestUncheckedUpdateOneWithoutShipmentNestedInput
   assignments?: Prisma.CourierAssignmentUncheckedUpdateManyWithoutShipmentNestedInput
   trackingEvents?: Prisma.ShipmentTrackingEventUncheckedUpdateManyWithoutShipmentNestedInput
   hubTransfers?: Prisma.HubTransferUncheckedUpdateManyWithoutShipmentNestedInput
@@ -2485,6 +2712,7 @@ export type ShipmentCreateWithoutItemsInput = {
   hubTransfers?: Prisma.HubTransferCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateWithoutItemsInput = {
@@ -2527,6 +2755,7 @@ export type ShipmentUncheckedCreateWithoutItemsInput = {
   hubTransfers?: Prisma.HubTransferUncheckedCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentCreateOrConnectWithoutItemsInput = {
@@ -2585,6 +2814,7 @@ export type ShipmentUpdateWithoutItemsInput = {
   hubTransfers?: Prisma.HubTransferUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateWithoutItemsInput = {
@@ -2627,6 +2857,7 @@ export type ShipmentUncheckedUpdateWithoutItemsInput = {
   hubTransfers?: Prisma.HubTransferUncheckedUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentCreateWithoutTrackingEventsInput = {
@@ -2669,6 +2900,7 @@ export type ShipmentCreateWithoutTrackingEventsInput = {
   hubTransfers?: Prisma.HubTransferCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateWithoutTrackingEventsInput = {
@@ -2711,6 +2943,7 @@ export type ShipmentUncheckedCreateWithoutTrackingEventsInput = {
   hubTransfers?: Prisma.HubTransferUncheckedCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentCreateOrConnectWithoutTrackingEventsInput = {
@@ -2769,6 +3002,7 @@ export type ShipmentUpdateWithoutTrackingEventsInput = {
   hubTransfers?: Prisma.HubTransferUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateWithoutTrackingEventsInput = {
@@ -2811,6 +3045,7 @@ export type ShipmentUncheckedUpdateWithoutTrackingEventsInput = {
   hubTransfers?: Prisma.HubTransferUncheckedUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentCreateWithoutHubTransfersInput = {
@@ -2853,6 +3088,7 @@ export type ShipmentCreateWithoutHubTransfersInput = {
   trackingEvents?: Prisma.ShipmentTrackingEventCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateWithoutHubTransfersInput = {
@@ -2895,6 +3131,7 @@ export type ShipmentUncheckedCreateWithoutHubTransfersInput = {
   trackingEvents?: Prisma.ShipmentTrackingEventUncheckedCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentCreateOrConnectWithoutHubTransfersInput = {
@@ -2953,6 +3190,7 @@ export type ShipmentUpdateWithoutHubTransfersInput = {
   trackingEvents?: Prisma.ShipmentTrackingEventUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateWithoutHubTransfersInput = {
@@ -2995,6 +3233,7 @@ export type ShipmentUncheckedUpdateWithoutHubTransfersInput = {
   trackingEvents?: Prisma.ShipmentTrackingEventUncheckedUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentCreateWithoutCustomerInput = {
@@ -3037,6 +3276,7 @@ export type ShipmentCreateWithoutCustomerInput = {
   hubTransfers?: Prisma.HubTransferCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateWithoutCustomerInput = {
@@ -3079,6 +3319,7 @@ export type ShipmentUncheckedCreateWithoutCustomerInput = {
   hubTransfers?: Prisma.HubTransferUncheckedCreateNestedManyWithoutShipmentInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedCreateNestedManyWithoutShipmentInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutShipmentInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedCreateNestedManyWithoutShipmentInput
 }
 
 export type ShipmentCreateOrConnectWithoutCustomerInput = {
@@ -3182,6 +3423,7 @@ export type ShipmentUpdateWithoutCurrentHubInput = {
   hubTransfers?: Prisma.HubTransferUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateWithoutCurrentHubInput = {
@@ -3224,6 +3466,7 @@ export type ShipmentUncheckedUpdateWithoutCurrentHubInput = {
   hubTransfers?: Prisma.HubTransferUncheckedUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateManyWithoutCurrentHubInput = {
@@ -3371,6 +3614,7 @@ export type ShipmentUpdateWithoutOriginZoneInput = {
   hubTransfers?: Prisma.HubTransferUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateWithoutOriginZoneInput = {
@@ -3413,6 +3657,7 @@ export type ShipmentUncheckedUpdateWithoutOriginZoneInput = {
   hubTransfers?: Prisma.HubTransferUncheckedUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateManyWithoutOriginZoneInput = {
@@ -3490,6 +3735,7 @@ export type ShipmentUpdateWithoutDestinationZoneInput = {
   hubTransfers?: Prisma.HubTransferUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateWithoutDestinationZoneInput = {
@@ -3532,6 +3778,7 @@ export type ShipmentUncheckedUpdateWithoutDestinationZoneInput = {
   hubTransfers?: Prisma.HubTransferUncheckedUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateManyWithoutDestinationZoneInput = {
@@ -3644,6 +3891,7 @@ export type ShipmentUpdateWithoutCustomerInput = {
   hubTransfers?: Prisma.HubTransferUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateWithoutCustomerInput = {
@@ -3686,6 +3934,7 @@ export type ShipmentUncheckedUpdateWithoutCustomerInput = {
   hubTransfers?: Prisma.HubTransferUncheckedUpdateManyWithoutShipmentNestedInput
   deliveryAttempts?: Prisma.DeliveryAttemptUncheckedUpdateManyWithoutShipmentNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutShipmentNestedInput
+  riskAssessments?: Prisma.ShipmentRiskAssessmentUncheckedUpdateManyWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateManyWithoutCustomerInput = {
@@ -3735,6 +3984,7 @@ export type ShipmentCountOutputType = {
   hubTransfers: number
   deliveryAttempts: number
   payments: number
+  riskAssessments: number
 }
 
 export type ShipmentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3744,6 +3994,7 @@ export type ShipmentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   hubTransfers?: boolean | ShipmentCountOutputTypeCountHubTransfersArgs
   deliveryAttempts?: boolean | ShipmentCountOutputTypeCountDeliveryAttemptsArgs
   payments?: boolean | ShipmentCountOutputTypeCountPaymentsArgs
+  riskAssessments?: boolean | ShipmentCountOutputTypeCountRiskAssessmentsArgs
 }
 
 /**
@@ -3798,6 +4049,13 @@ export type ShipmentCountOutputTypeCountPaymentsArgs<ExtArgs extends runtime.Typ
   where?: Prisma.PaymentWhereInput
 }
 
+/**
+ * ShipmentCountOutputType without action
+ */
+export type ShipmentCountOutputTypeCountRiskAssessmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShipmentRiskAssessmentWhereInput
+}
+
 
 export type ShipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -3844,6 +4102,7 @@ export type ShipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   hubTransfers?: boolean | Prisma.Shipment$hubTransfersArgs<ExtArgs>
   deliveryAttempts?: boolean | Prisma.Shipment$deliveryAttemptsArgs<ExtArgs>
   payments?: boolean | Prisma.Shipment$paymentsArgs<ExtArgs>
+  riskAssessments?: boolean | Prisma.Shipment$riskAssessmentsArgs<ExtArgs>
   _count?: boolean | Prisma.ShipmentCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["shipment"]>
 
@@ -3976,6 +4235,7 @@ export type ShipmentInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   hubTransfers?: boolean | Prisma.Shipment$hubTransfersArgs<ExtArgs>
   deliveryAttempts?: boolean | Prisma.Shipment$deliveryAttemptsArgs<ExtArgs>
   payments?: boolean | Prisma.Shipment$paymentsArgs<ExtArgs>
+  riskAssessments?: boolean | Prisma.Shipment$riskAssessmentsArgs<ExtArgs>
   _count?: boolean | Prisma.ShipmentCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ShipmentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4005,6 +4265,7 @@ export type $ShipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     hubTransfers: Prisma.$HubTransferPayload<ExtArgs>[]
     deliveryAttempts: Prisma.$DeliveryAttemptPayload<ExtArgs>[]
     payments: Prisma.$PaymentPayload<ExtArgs>[]
+    riskAssessments: Prisma.$ShipmentRiskAssessmentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -4445,6 +4706,7 @@ export interface Prisma__ShipmentClient<T, Null = never, ExtArgs extends runtime
   hubTransfers<T extends Prisma.Shipment$hubTransfersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Shipment$hubTransfersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$HubTransferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   deliveryAttempts<T extends Prisma.Shipment$deliveryAttemptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Shipment$deliveryAttemptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DeliveryAttemptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   payments<T extends Prisma.Shipment$paymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Shipment$paymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  riskAssessments<T extends Prisma.Shipment$riskAssessmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Shipment$riskAssessmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShipmentRiskAssessmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5120,6 +5382,30 @@ export type Shipment$paymentsArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.PaymentScalarFieldEnum | Prisma.PaymentScalarFieldEnum[]
+}
+
+/**
+ * Shipment.riskAssessments
+ */
+export type Shipment$riskAssessmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShipmentRiskAssessment
+   */
+  select?: Prisma.ShipmentRiskAssessmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShipmentRiskAssessment
+   */
+  omit?: Prisma.ShipmentRiskAssessmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShipmentRiskAssessmentInclude<ExtArgs> | null
+  where?: Prisma.ShipmentRiskAssessmentWhereInput
+  orderBy?: Prisma.ShipmentRiskAssessmentOrderByWithRelationInput | Prisma.ShipmentRiskAssessmentOrderByWithRelationInput[]
+  cursor?: Prisma.ShipmentRiskAssessmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShipmentRiskAssessmentScalarFieldEnum | Prisma.ShipmentRiskAssessmentScalarFieldEnum[]
 }
 
 /**

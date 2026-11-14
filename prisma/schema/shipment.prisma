@@ -50,7 +50,8 @@ model Shipment {
   trackingEvents  ShipmentTrackingEvent[]
   hubTransfers    HubTransfer[]
   deliveryAttempts DeliveryAttempt[]
-  payments        Payment[]
+  payments         Payment[]
+  riskAssessments  ShipmentRiskAssessment[]
 
   @@index([customerId])
   @@index([trackingNumber])

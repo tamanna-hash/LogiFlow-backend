@@ -1,0 +1,62 @@
+// ── Shipment Risk Assessment ──────────────────────────────────────────────────
+// Stores the result of each deterministic risk assessment for a shipment.
+// A shipment can accumulate multiple assessments over time (append-only history).
+// The latest assessment is used for operational dashboards and alerts (Day 2+).
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// ASSESSED   — scoring completed successfully with sufficient data.
+// INSUFFICIENT_DATA — the shipment has no tracking events yet (defensive guard).
+enum RiskAssessmentStatus {
+  ASSESSED
+  INSUFFICIENT_DATA
+}
+
+// One value per scorable risk factor. Used as the discriminator in the factors
+// JSON array so callers can filter, group, and explain individual contributions.
+enum RiskFactorCode {
+  STATUS_INACTIVE_WARNING   // Shipment has been in current status 50–100% of threshold
+  STATUS_INACTIVE_CRITICAL  // Shipment has been in current status > 100% of threshold
+  FAILED_DELIVERY_ATTEMPT_1 // 1 failed delivery attempt
+  FAILED_DELIVERY_ATTEMPT_2 // 2 failed delivery attempts
+  FAILED_DELIVERY_ATTEMPT_MAX // At or near the maximum allowed delivery attempts
+  COURIER_NOT_ACCEPTED      // Active assignment unaccepted for more than 4 hours
+  MULTIPLE_HUB_TRANSFERS    // More than 2 hub transfers for this shipment
+}
+
+model ShipmentRiskAssessment {
+  id               String                 @id @default(cuid())
+  shipmentId       String
+
+  // ── Scoring output ────────────────────────────────────────────────────────
+  riskScore        Int                    // 0–100, clamped
+  riskLevel        RiskLevel
+  assessmentStatus RiskAssessmentStatus   @default(ASSESSED)
+
+  // factors is a JSON array of { code: RiskFactorCode; score: number; evidence: string }
+  // Using Json so the structure is flexible for Day 2 extensions without schema changes.
+  factors          Json                   @default("[]")
+
+  // ── Snapshot of shipment state at assessment time ─────────────────────────
+  // Stored so historical assessments remain interpretable after the shipment
+  // progresses to a later status.
+  shipmentStatus   ShipmentStatus
+
+  // The createdAt of the most recent ShipmentTrackingEvent at assessment time.
+  // Null only when assessmentStatus = INSUFFICIENT_DATA.
+  lastEventAt      DateTime?
+
+  assessedAt       DateTime               @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+
+  @@index([shipmentId])
+  @@index([shipmentId, assessedAt(sort: Desc)])
+  @@index([riskLevel])
+  @@index([assessedAt(sort: Desc)])
+  @@map("shipment_risk_assessments")
+}

@@ -406,6 +406,7 @@ export const ModelName = {
   CustomerProfile: 'CustomerProfile',
   CourierProfile: 'CourierProfile',
   HubManagerProfile: 'HubManagerProfile',
+  ShipmentRiskAssessment: 'ShipmentRiskAssessment',
   Shipment: 'Shipment',
   ShipmentItem: 'ShipmentItem',
   ShipmentTrackingEvent: 'ShipmentTrackingEvent',
@@ -427,7 +428,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "courierAssignment" | "auditLog" | "deliveryAttempt" | "hub" | "zone" | "notification" | "payment" | "pickupRequest" | "pricingRule" | "customerProfile" | "courierProfile" | "hubManagerProfile" | "shipment" | "shipmentItem" | "shipmentTrackingEvent" | "hubTransfer" | "user" | "refreshToken"
+    modelProps: "courierAssignment" | "auditLog" | "deliveryAttempt" | "hub" | "zone" | "notification" | "payment" | "pickupRequest" | "pricingRule" | "customerProfile" | "courierProfile" | "hubManagerProfile" | "shipmentRiskAssessment" | "shipment" | "shipmentItem" | "shipmentTrackingEvent" | "hubTransfer" | "user" | "refreshToken"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1319,6 +1320,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ShipmentRiskAssessment: {
+      payload: Prisma.$ShipmentRiskAssessmentPayload<ExtArgs>
+      fields: Prisma.ShipmentRiskAssessmentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ShipmentRiskAssessmentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentRiskAssessmentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ShipmentRiskAssessmentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentRiskAssessmentPayload>
+        }
+        findFirst: {
+          args: Prisma.ShipmentRiskAssessmentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentRiskAssessmentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ShipmentRiskAssessmentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentRiskAssessmentPayload>
+        }
+        findMany: {
+          args: Prisma.ShipmentRiskAssessmentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentRiskAssessmentPayload>[]
+        }
+        create: {
+          args: Prisma.ShipmentRiskAssessmentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentRiskAssessmentPayload>
+        }
+        createMany: {
+          args: Prisma.ShipmentRiskAssessmentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ShipmentRiskAssessmentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentRiskAssessmentPayload>[]
+        }
+        delete: {
+          args: Prisma.ShipmentRiskAssessmentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentRiskAssessmentPayload>
+        }
+        update: {
+          args: Prisma.ShipmentRiskAssessmentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentRiskAssessmentPayload>
+        }
+        deleteMany: {
+          args: Prisma.ShipmentRiskAssessmentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ShipmentRiskAssessmentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ShipmentRiskAssessmentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentRiskAssessmentPayload>[]
+        }
+        upsert: {
+          args: Prisma.ShipmentRiskAssessmentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentRiskAssessmentPayload>
+        }
+        aggregate: {
+          args: Prisma.ShipmentRiskAssessmentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShipmentRiskAssessment>
+        }
+        groupBy: {
+          args: Prisma.ShipmentRiskAssessmentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShipmentRiskAssessmentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ShipmentRiskAssessmentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShipmentRiskAssessmentCountAggregateOutputType> | number
+        }
+      }
+    }
     Shipment: {
       payload: Prisma.$ShipmentPayload<ExtArgs>
       fields: Prisma.ShipmentFieldRefs
@@ -2005,6 +2080,21 @@ export const HubManagerProfileScalarFieldEnum = {
 export type HubManagerProfileScalarFieldEnum = (typeof HubManagerProfileScalarFieldEnum)[keyof typeof HubManagerProfileScalarFieldEnum]
 
 
+export const ShipmentRiskAssessmentScalarFieldEnum = {
+  id: 'id',
+  shipmentId: 'shipmentId',
+  riskScore: 'riskScore',
+  riskLevel: 'riskLevel',
+  assessmentStatus: 'assessmentStatus',
+  factors: 'factors',
+  shipmentStatus: 'shipmentStatus',
+  lastEventAt: 'lastEventAt',
+  assessedAt: 'assessedAt'
+} as const
+
+export type ShipmentRiskAssessmentScalarFieldEnum = (typeof ShipmentRiskAssessmentScalarFieldEnum)[keyof typeof ShipmentRiskAssessmentScalarFieldEnum]
+
+
 export const ShipmentScalarFieldEnum = {
   id: 'id',
   trackingNumber: 'trackingNumber',
@@ -2139,6 +2229,13 @@ export const NullableJsonNullValueInput = {
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -2432,6 +2529,34 @@ export type ListEnumCourierAvailabilityFieldRefInput<$PrismaModel> = FieldRefInp
 
 
 /**
+ * Reference to a field of type 'RiskLevel'
+ */
+export type EnumRiskLevelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RiskLevel'>
+    
+
+
+/**
+ * Reference to a field of type 'RiskLevel[]'
+ */
+export type ListEnumRiskLevelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RiskLevel[]'>
+    
+
+
+/**
+ * Reference to a field of type 'RiskAssessmentStatus'
+ */
+export type EnumRiskAssessmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RiskAssessmentStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'RiskAssessmentStatus[]'
+ */
+export type ListEnumRiskAssessmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RiskAssessmentStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'ShipmentStatus'
  */
 export type EnumShipmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ShipmentStatus'>
@@ -2559,6 +2684,7 @@ export type GlobalOmitConfig = {
   customerProfile?: Prisma.CustomerProfileOmit
   courierProfile?: Prisma.CourierProfileOmit
   hubManagerProfile?: Prisma.HubManagerProfileOmit
+  shipmentRiskAssessment?: Prisma.ShipmentRiskAssessmentOmit
   shipment?: Prisma.ShipmentOmit
   shipmentItem?: Prisma.ShipmentItemOmit
   shipmentTrackingEvent?: Prisma.ShipmentTrackingEventOmit

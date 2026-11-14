@@ -212,7 +212,38 @@ export const AuditAction = {
   PRICING_RULE_UPDATED: 'PRICING_RULE_UPDATED',
   PRICING_RULE_DEACTIVATED: 'PRICING_RULE_DEACTIVATED',
   PASSWORD_RESET_REQUESTED: 'PASSWORD_RESET_REQUESTED',
-  PASSWORD_RESET_COMPLETED: 'PASSWORD_RESET_COMPLETED'
+  PASSWORD_RESET_COMPLETED: 'PASSWORD_RESET_COMPLETED',
+  RISK_ASSESSMENT_CREATED: 'RISK_ASSESSMENT_CREATED'
 } as const
 
 export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction]
+
+
+export const RiskLevel = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH'
+} as const
+
+export type RiskLevel = (typeof RiskLevel)[keyof typeof RiskLevel]
+
+
+export const RiskAssessmentStatus = {
+  ASSESSED: 'ASSESSED',
+  INSUFFICIENT_DATA: 'INSUFFICIENT_DATA'
+} as const
+
+export type RiskAssessmentStatus = (typeof RiskAssessmentStatus)[keyof typeof RiskAssessmentStatus]
+
+
+export const RiskFactorCode = {
+  STATUS_INACTIVE_WARNING: 'STATUS_INACTIVE_WARNING',
+  STATUS_INACTIVE_CRITICAL: 'STATUS_INACTIVE_CRITICAL',
+  FAILED_DELIVERY_ATTEMPT_1: 'FAILED_DELIVERY_ATTEMPT_1',
+  FAILED_DELIVERY_ATTEMPT_2: 'FAILED_DELIVERY_ATTEMPT_2',
+  FAILED_DELIVERY_ATTEMPT_MAX: 'FAILED_DELIVERY_ATTEMPT_MAX',
+  COURIER_NOT_ACCEPTED: 'COURIER_NOT_ACCEPTED',
+  MULTIPLE_HUB_TRANSFERS: 'MULTIPLE_HUB_TRANSFERS'
+} as const
+
+export type RiskFactorCode = (typeof RiskFactorCode)[keyof typeof RiskFactorCode]

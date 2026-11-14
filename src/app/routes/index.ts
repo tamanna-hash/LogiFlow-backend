@@ -11,6 +11,7 @@ import operationsRoutes from '../modules/operations/operations.routes';
 import paymentRoutes from '../modules/payment/payment.routes';
 import notificationRoutes from '../modules/notification/notification.routes';
 import adminRoutes from '../modules/admin/admin.routes';
+import riskRoutes from '../modules/shipment-risk/risk.routes';
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use('/operations', operationsRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/admin', adminRoutes);
+router.use('/risk', riskRoutes);
 
 export default router;

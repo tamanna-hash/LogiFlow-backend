@@ -100,6 +100,11 @@ export type CourierProfile = Prisma.CourierProfileModel
  */
 export type HubManagerProfile = Prisma.HubManagerProfileModel
 /**
+ * Model ShipmentRiskAssessment
+ * 
+ */
+export type ShipmentRiskAssessment = Prisma.ShipmentRiskAssessmentModel
+/**
  * Model Shipment
  * 
  */
@@ -174,3 +179,12 @@ export const NotificationType = $Enums.NotificationType
 
 export type AuditAction = $Enums.AuditAction
 export const AuditAction = $Enums.AuditAction
+
+export type RiskLevel = $Enums.RiskLevel
+export const RiskLevel = $Enums.RiskLevel
+
+export type RiskAssessmentStatus = $Enums.RiskAssessmentStatus
+export const RiskAssessmentStatus = $Enums.RiskAssessmentStatus
+
+export type RiskFactorCode = $Enums.RiskFactorCode
+export const RiskFactorCode = $Enums.RiskFactorCode
