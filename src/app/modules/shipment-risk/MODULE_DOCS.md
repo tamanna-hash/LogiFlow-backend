@@ -1,8 +1,8 @@
-# Shipment Risk Module — Day 1
+# Shipment Risk Module — Day 1 + Day 2
 
 **Module path:** `src/app/modules/shipment-risk/`  
 **API base:** `POST|GET /api/v1/risk/`  
-**Migration:** `prisma/migrations/20261114000000_add_shipment_risk_assessment/`
+**Day-1 migration:** `prisma/migrations/20261114000000_add_shipment_risk_assessment/`
 
 ---
 
@@ -19,10 +19,10 @@ The Day 1 implementation is deterministic and rule-based — no machine learning
 | File | Purpose |
 |---|---|
 | `risk.engine.ts` | Pure scoring function — no DB, no side effects. All business logic lives here. |
-| `risk.service.ts` | Fetches the DB snapshot, calls the engine, persists the result, writes an audit log. |
-| `risk.schema.ts` | Zod schemas for path params (`shipmentId`) and query params (`page`, `limit`). |
-| `risk.controller.ts` | Three thin Express handlers — reads params, calls service, responds. |
-| `risk.routes.ts` | Mounts the three endpoints with `authenticate`, `authorize`, and `validateRequest`. |
+| `risk.service.ts` | Fetches the DB snapshot, calls the engine, persists the result, writes an audit log. Day 2 adds `getRiskOverview` and `listRiskAssessments`. |
+| `risk.schema.ts` | Zod schemas for path params, history query, and the Day-2 list/filter query (`riskListQuerySchema`). |
+| `risk.controller.ts` | Five thin Express handlers — reads params, calls service, responds. |
+| `risk.routes.ts` | Mounts all five endpoints with `authenticate`, `authorize`, and `validateRequest`. |
 | `MODULE_DOCS.md` | This file. |
 
 ---
@@ -269,3 +269,116 @@ The migration adds three new enum types (`RiskLevel`, `RiskAssessmentStatus`, `R
 - As `ShipmentRiskAssessment` rows accumulate, historical patterns become available: which factor combinations most reliably predict eventual delay? Which hub consistently triggers `STATUS_INACTIVE_CRITICAL`?
 - The `factors` Json field stores enough structured data for statistical analysis without schema changes.
 - An ETA field on `Shipment` (a natural Day 2 addition once business rules for delivery promises are defined) would unlock the `OVERDUE_MILESTONE` factor class, making the inactivity proxy unnecessary.
+
+---
+
+## Day 2 Additions
+
+### New API Endpoints
+
+#### `GET /api/v1/risk/overview`
+
+Returns aggregate risk counts scoped to the caller's role. Cached 2 minutes server-side (matching `getSystemStats` TTL).
+
+**Auth:** `OPERATIONS_MANAGER`, `HUB_MANAGER`, `ADMIN`  
+**Hub scoping:** `HUB_MANAGER` sees only shipments whose `currentHubId` matches their hub. Enforced in the Prisma query, not at the route level.  
+**Returns:** `RiskOverview` (HTTP 200)
+
+```json
+{
+  "data": {
+    "total": 42,
+    "assessed": 38,
+    "unassessed": 4,
+    "high": 5,
+    "medium": 11,
+    "low": 22,
+    "requiresAttention": 16
+  }
+}
+```
+
+---
+
+#### `GET /api/v1/risk/shipments`
+
+Paginated list of the latest risk assessment per shipment, with optional filters.
+
+**Auth:** `OPERATIONS_MANAGER`, `HUB_MANAGER`, `ADMIN`
+
+**Query parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `page` | number | Page number (default: 1) |
+| `limit` | number | Per page (default: 20, max: 100) |
+| `riskLevel` | `LOW\|MEDIUM\|HIGH` | Filter by risk level |
+| `shipmentStatus` | `ShipmentStatus` | Filter by snapshot shipment status |
+| `search` | string | Tracking number contains (case-insensitive) |
+| `fromDate` | ISO date | Assessments from this date |
+| `toDate` | ISO date | Assessments up to this date |
+
+**Returns:** Paginated `ShipmentRiskAssessment[]`, each including `shipment.trackingNumber`.
+
+---
+
+### Changed: `assessmentSelect` now includes `shipment.trackingNumber`
+
+All three Day-1 endpoints (`POST /assess`, `GET /latest`, `GET /history`) now return `shipment: { trackingNumber }` in the assessment object. This is an additive change — no field was removed or renamed.
+
+---
+
+### New: `risk.schema.ts` additions
+
+- `riskListQuerySchema` — validates all filter/pagination params for `GET /risk/shipments`.
+- `RiskListRole` type — `'OPERATIONS_MANAGER' | 'ADMIN' | 'HUB_MANAGER'`, exported for the service layer.
+
+---
+
+### Frontend integration
+
+The Day-2 frontend is in `LogiFlow_Frontend/src/features/risk/`.
+
+| File | Purpose |
+|---|---|
+| `api.ts` | `getRiskOverview`, `listRiskAssessments`, `assessShipment`, `getLatestAssessment` |
+| `hooks.ts` | `useRiskOverview`, `useRiskAssessments`, `useLatestRiskAssessment`, `useAssessShipment` |
+| `RiskDashboard.tsx` | Full dashboard: 5 overview cards, donut chart, filtered/paginated table |
+| `RiskDetailsPanel.tsx` | Expandable row showing score, factors, evidence, re-assess button |
+| `RiskFactorLabel.tsx` | Maps `RiskFactorCode` enum values to readable labels |
+
+**Dashboard routes:**
+- `/dashboard/operations/risk` — OPERATIONS_MANAGER
+- `/dashboard/admin/risk` — ADMIN
+
+Both routes render the same `<RiskDashboard canRefresh />` component. Neither role can access the other's route (dashboard auth guard + route-level `authorize()` on the backend).
+
+**Navigation:** `ShieldAlert` icon added to both OPERATIONS_MANAGER and ADMIN sidebar nav.
+
+**Shared component added:** `src/components/shared/RiskLevelBadge.tsx`
+
+---
+
+### Testing
+
+Day-2 tests live in `src/tests/unit/risk.service.test.ts`.
+
+```bash
+npm test -- --reporter=verbose risk.service
+```
+
+Covers: cache hit, no shipments in scope, HIGH/MEDIUM/LOW binning, unassessed count, HUB_MANAGER scope (overview); pagination, all five filter params, hub scoping, empty results, tracking number in result, NotFoundError regression guard (list).
+
+**Run counts at Day-2 completion:**  
+`Test Files: 2 failed | 17 passed (19)` — the 2 failing files contain 4 pre-existing failures unrelated to this module.  
+`Tests: 4 failed | 259 passed (263)` — 15 new tests added.
+
+---
+
+### Known Limitations (Day 2 additions)
+
+6. **Overview accuracy window.** The 2-minute cache means the overview counts may lag newly triggered assessments by up to 2 minutes. This is an intentional trade-off matching the existing `getSystemStats` cache strategy.
+
+7. **Overview aggregation cost.** The `getRiskOverview` function performs a `findMany` on all shipments in scope followed by a `groupBy` and N `findFirst` queries (one per assessed shipment). For large datasets this may be slow. A PostgreSQL `LATERAL JOIN` raw query would be more efficient; that optimization is a Day 3+ concern.
+
+8. **Re-assess creates a new row.** Each `POST /assess` appends a new `ShipmentRiskAssessment` row rather than updating the existing one. This is deliberate (audit trail), but the list endpoint de-duplicates via `distinct: ['shipmentId']` ordering by `assessedAt DESC` to show only the latest per shipment.

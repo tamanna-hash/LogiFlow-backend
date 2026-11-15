@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticate, authorize } from '../../middleware/checkAuth';
 import { validateRequest } from '../../middleware/validateRequest';
-import { shipmentIdParamSchema } from './risk.schema';
+import { shipmentIdParamSchema, riskListQuerySchema } from './risk.schema';
 import * as controller from './risk.controller';
 
 const router = Router();
@@ -10,11 +10,38 @@ const router = Router();
 router.use(authenticate);
 
 const idParam = { params: shipmentIdParamSchema };
+const listQuery = { query: riskListQuerySchema };
+
+// ── New Day-2 endpoints ───────────────────────────────────────────────────────
+
+/**
+ * GET /api/v1/risk/overview
+ * Aggregate risk counts scoped to the caller's role.
+ * HUB_MANAGER sees only their hub's shipments.
+ */
+router.get(
+  '/overview',
+  authorize('OPERATIONS_MANAGER', 'HUB_MANAGER', 'ADMIN'),
+  controller.getRiskOverview,
+);
+
+/**
+ * GET /api/v1/risk/shipments
+ * Paginated latest-assessment-per-shipment list.
+ * Supports riskLevel, shipmentStatus, search, fromDate, toDate filters.
+ */
+router.get(
+  '/shipments',
+  authorize('OPERATIONS_MANAGER', 'HUB_MANAGER', 'ADMIN'),
+  validateRequest(listQuery),
+  controller.listRiskAssessments,
+);
+
+// ── Existing Day-1 endpoints (unchanged) ─────────────────────────────────────
 
 /**
  * POST /api/v1/risk/shipments/:shipmentId/assess
- * Trigger a fresh risk assessment. Staff roles only — customers do not
- * receive risk scores directly (operational data, not customer-facing).
+ * Trigger a fresh risk assessment. Staff roles only.
  */
 router.post(
   '/shipments/:shipmentId/assess',

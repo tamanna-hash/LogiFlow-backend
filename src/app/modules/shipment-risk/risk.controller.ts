@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { sendSuccess, sendCreated } from '../../utils/response';
 import * as riskService from './risk.service';
-import { riskHistoryQuerySchema, type ShipmentIdParam } from './risk.schema';
+import { riskHistoryQuerySchema, riskListQuerySchema, type ShipmentIdParam, type RiskListRole } from './risk.schema';
 
 /**
  * POST /risk/shipments/:shipmentId/assess
@@ -32,4 +32,29 @@ export async function listAssessmentHistory(req: Request, res: Response): Promis
   const query = riskHistoryQuerySchema.parse(req.query);
   const result = await riskService.listAssessmentHistory(shipmentId, query);
   sendSuccess(res, result.assessments, 'Assessment history retrieved.', 200, result.meta);
+}
+
+/**
+ * GET /risk/overview
+ * Aggregate risk counts for the caller's authorized scope.
+ * Cached 2 minutes server-side.
+ */
+export async function getRiskOverview(req: Request, res: Response): Promise<void> {
+  const role = req.user!.role as RiskListRole;
+  const hubId = req.user!.hubId ?? null;
+  const overview = await riskService.getRiskOverview(role, hubId);
+  sendSuccess(res, overview, 'Risk overview retrieved.');
+}
+
+/**
+ * GET /risk/shipments
+ * Paginated list of the latest risk assessment per shipment.
+ * Supports filtering by riskLevel, shipmentStatus, search, and date range.
+ */
+export async function listRiskAssessments(req: Request, res: Response): Promise<void> {
+  const role = req.user!.role as RiskListRole;
+  const hubId = req.user!.hubId ?? null;
+  const query = riskListQuerySchema.parse(req.query);
+  const result = await riskService.listRiskAssessments(role, hubId, query);
+  sendSuccess(res, result.assessments, 'Risk assessments retrieved.', 200, result.meta);
 }
