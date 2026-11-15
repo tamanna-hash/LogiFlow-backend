@@ -382,3 +382,112 @@ Covers: cache hit, no shipments in scope, HIGH/MEDIUM/LOW binning, unassessed co
 7. **Overview aggregation cost.** The `getRiskOverview` function performs a `findMany` on all shipments in scope followed by a `groupBy` and N `findFirst` queries (one per assessed shipment). For large datasets this may be slow. A PostgreSQL `LATERAL JOIN` raw query would be more efficient; that optimization is a Day 3+ concern.
 
 8. **Re-assess creates a new row.** Each `POST /assess` appends a new `ShipmentRiskAssessment` row rather than updating the existing one. This is deliberate (audit trail), but the list endpoint de-duplicates via `distinct: ['shipmentId']` ordering by `assessedAt DESC` to show only the latest per shipment.
+
+---
+
+## Day 3 — AI Shipment Investigator
+
+### Module
+
+`src/app/modules/ai-investigation/`
+
+| File | Purpose |
+|---|---|
+| `investigation.schema.ts` | Zod schemas: request body validation + `InvestigationResponseSchema` (structured AI output) |
+| `investigation.context.ts` | Shipment context builder — fetches privacy-safe operational data for LLM |
+| `investigation.service.ts` | Investigation orchestrator — access check → context → LLM call → validation → return |
+| `investigation.controller.ts` | Thin Express handler |
+| `investigation.routes.ts` | Route with `authenticate` + `authorize` + `validateRequest` + `rateLimiter('aiInvestigation')` |
+
+### Provider
+
+**OpenAI** `gpt-4o-mini` via the official `openai` npm package (v7).
+
+- Selected because: (1) Zod v4 already in the project, (2) `zodResponseFormat` provides 100% schema-constrained output enforced at decode time, (3) TypeScript-native SDK, (4) $0.15/1M input + $0.60/1M output — ~$0.0001 per investigation.
+- Adapter at `src/app/lib/openai.ts` — lazy singleton mirroring `stripe.ts`.
+- API key stored in `OPENAI_API_KEY` env var (optional — server starts without it).
+
+### API Endpoint
+
+#### `POST /api/v1/ai/shipments/:shipmentId/investigate`
+
+Triggers an AI investigation of the specified shipment.
+
+**Auth:** `OPERATIONS_MANAGER`, `HUB_MANAGER`, `ADMIN`  
+**Rate limit:** 10 per hour per user (`aiInvestigation` bucket)  
+**Hub scoping:** `HUB_MANAGER` sees only shipments at their hub.
+
+**Request body:**
+
+```json
+{
+  "question": "Why is this shipment considered high risk?"
+}
+```
+
+- `question`: 3–500 characters, trimmed.
+
+**Response (HTTP 201):**
+
+```json
+{
+  "data": {
+    "answer": "The shipment has 2 failed delivery attempts...",
+    "overallAssessment": "The shipment requires operational attention.",
+    "officialRiskScore": 55,
+    "officialRiskLevel": "MEDIUM",
+    "findings": [{ "title": "...", "detail": "...", "severity": "WARNING", "evidence": [...] }],
+    "relevantTrackingEvents": [{ "timestamp": "...", "status": "...", "description": "...", "significance": "..." }],
+    "recommendedActions": [{ "action": "...", "priority": "HIGH", "rationale": "..." }],
+    "dataLimitations": "",
+    "shipmentId": "...",
+    "trackingNumber": "LF-20261114-...",
+    "investigatedAt": "2026-11-14T..."
+  }
+}
+```
+
+**Error responses:**
+
+| Status | Cause |
+|---|---|
+| 404 | Shipment not found or not in caller's hub scope |
+| 422 | Question validation failed |
+| 429 | Rate limit exceeded |
+| 503 | AI provider not configured, timed out, or rate-limited by OpenAI |
+| 400 | Model refused to process the request |
+
+### Security measures
+
+1. **API key** — server-side only, never in `NEXT_PUBLIC_*`, never sent to browser.
+2. **Prompt injection protection** — user question and shipment data wrapped in `<shipment_data>` / `<user_question>` XML delimiters; system prompt explicitly instructs the model to treat their contents as untrusted data.
+3. **Privacy** — context builder excludes customer names, phone numbers, addresses, courier PII, and internal IDs. Only city, zone, hub name, operational timestamps, and risk assessment data are sent to OpenAI.
+4. **Risk score integrity** — the AI's returned `officialRiskScore` and `officialRiskLevel` are overwritten with the deterministic engine's values in `investigation.service.ts` before returning to the frontend. The AI cannot change the official risk score.
+5. **Rate limiting** — 10 investigations per hour per user via Upstash sliding window.
+6. **Output cap** — `max_tokens: 1000`, `temperature: 0.2`.
+7. **Timeout** — 30-second hard timeout on the OpenAI client.
+
+### Environment variable
+
+```
+OPENAI_API_KEY=sk-proj-your_key_here
+```
+
+When unset, the endpoint returns `503 ServiceUnavailableError` with a clear message.
+
+### Persistence
+
+None. Investigations are stateless — computed on demand, returned, not stored. The `ShipmentRiskAssessment` table from Day 1 remains the source of truth for risk scores.
+
+### Frontend
+
+Entry point: "Investigate" button (Sparkles icon) in each row of the Risk Dashboard table. Opens an `InvestigationPanel` below the existing `RiskDetailsPanel`.
+
+The panel provides:
+- 4 suggested questions (one-click investigation)
+- Custom question input (max 500 chars)
+- Loading state with spinner and "5–10 seconds" expectation text
+- Error state with retry button
+- Investigation report with expandable sections: summary, findings (with evidence), tracking events, recommended actions, data limitations
+- "Ask another question" reset button
+- Advisory notice: "AI findings are advisory..."

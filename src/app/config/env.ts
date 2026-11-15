@@ -68,6 +68,11 @@ const envSchema = z.object({
 
   MAX_DELIVERY_ATTEMPTS: z.coerce.number().int().positive().default(3),
 
+  // ── AI Investigation (optional — server starts without it) ───────────────
+  // OPENAI_API_KEY=sk-proj-...  (from https://platform.openai.com/api-keys)
+  // Keep server-side only. NEVER expose via NEXT_PUBLIC_* or browser bundles.
+  OPENAI_API_KEY: z.string().optional(),
+
   // ── Demo mode ────────────────────────────────────────────────────────────────
   // When set, any user whose email ends with @<DEMO_DOMAIN> is restricted to
   // read-only access. All mutating requests (POST/PATCH/PUT/DELETE) outside the

@@ -115,3 +115,12 @@ vi.mock('../app/lib/cloudinary', () => ({
   uploadToCloudinary: vi.fn().mockResolvedValue('https://res.cloudinary.com/mock/image.jpg'),
   deleteFromCloudinary: vi.fn().mockResolvedValue(undefined),
 }));
+
+// Mock OpenAI
+vi.mock('../app/lib/openai', () => ({
+  isOpenAIConfigured: vi.fn().mockReturnValue(false),
+  getOpenAI: vi.fn(),
+  INVESTIGATION_MODEL: 'gpt-4o-mini',
+  MAX_INVESTIGATION_TOKENS: 1000,
+  _resetOpenAIClient: vi.fn(),
+}));

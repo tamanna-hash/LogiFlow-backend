@@ -66,6 +66,15 @@ const limiters = {
     limiter: Ratelimit.slidingWindow(60, '1 m'),
     prefix: 'rl:unauth-api',
   }),
+
+  // AI Investigation — 10 per hour per user
+  // LLM calls are expensive; this prevents accidental runaway usage while
+  // allowing a full workday of normal investigative activity.
+  aiInvestigation: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, '1 h'),
+    prefix: 'rl:ai-investigation',
+  }),
 } as const;
 
 type LimiterKey = keyof typeof limiters;
