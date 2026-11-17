@@ -1,0 +1,31 @@
+// ── Hub Route Network (Day 4) ──────────────────────────────────────────────────
+// Represents the directed, weighted hub-to-hub transportation network.
+// Each HubRoute is a directed edge in the logistics graph.
+// The cost is a unitless composite weight representing relative transportation
+// effort — NOT currency, minutes, or kilometres. It is admin-configured and
+// deterministic. Future phases can replace it with real travel-time or
+// distance data without changing the algorithm.
+
+model HubRoute {
+  id        String   @id @default(cuid())
+  fromHubId String
+  toHubId   String
+
+  // Non-negative transportation cost weight.
+  // Higher = more effort/expense to move a shipment along this connection.
+  cost      Float    @default(1)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fromHub Hub @relation("RouteFromHub", fields: [fromHubId], references: [id])
+  toHub   Hub @relation("RouteToHub", fields: [toHubId], references: [id])
+
+  // No duplicate directed edges: one active route per (from, to) pair.
+  @@unique([fromHubId, toHubId])
+  @@index([fromHubId])
+  @@index([toHubId])
+  @@index([isActive])
+  @@map("hub_routes")
+}

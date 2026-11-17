@@ -105,6 +105,11 @@ export type HubManagerProfile = Prisma.HubManagerProfileModel
  */
 export type ShipmentRiskAssessment = Prisma.ShipmentRiskAssessmentModel
 /**
+ * Model HubRoute
+ * 
+ */
+export type HubRoute = Prisma.HubRouteModel
+/**
  * Model Shipment
  * 
  */

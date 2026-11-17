@@ -36,9 +36,74 @@
 | **Payments** | bKash tokenized checkout + Stripe Checkout |
 | **File Uploads** | Cloudinary |
 | **Validation** | Zod |
-| **Testing** | Vitest (107+ tests) |
+| **Testing** | Vitest (316+ tests) |
 | **Build** | tsup |
 | **Linting** | ESLint + Biome |
+| **AI Investigation** | OpenAI GPT-4.0 (optional) |
+
+---
+
+## 🎯 Intelligence & Optimization Features
+
+LogiFlow includes four advanced operational intelligence systems built incrementally across Days 1–4:
+
+### Day 1: Deterministic Shipment Risk Engine ⚠️
+Real-time risk scoring (0–100) with categorical classification (LOW/MEDIUM/HIGH) based on:
+- **Status inactivity:** shipments exceeding status-specific thresholds (e.g., 48h in `DELIVERY_FAILED`)
+- **Failed delivery attempts:** escalating scores based on attempt count vs. max allowed
+- **Unaccepted courier assignments:** assignments pending acceptance beyond 4h
+- **Hub transfer frequency:** shipments with excessive inter-hub movements
+
+**Key guarantees:**
+- Terminal statuses (`DELIVERED`, `CANCELLED`, `RETURNED`) score 0 risk
+- Append-only assessment history for auditability
+- No external dependencies — deterministic, blazingly fast
+
+**Endpoints:**
+- `GET /api/v1/risk/overview` — aggregate risk counts by level (LOW/MEDIUM/HIGH)
+- `GET /api/v1/risk/assessments` — paginated list of all assessments with filters
+- `GET /api/v1/risk/shipments/:shipmentId/assessment` — latest assessment for one shipment
+
+### Day 2: Risk Persistence & Hub-Scoped Access 🏢
+- `ShipmentRiskAssessment` model persists all scoring events to PostgreSQL
+- 4 indexes optimize queries: by shipmentId, by (shipmentId, assessedAt DESC), by riskLevel, by assessedAt
+- Hub-level scoping: `HUB_MANAGER` sees only shipments at their assigned hub
+- Redis caching (2-minute TTL) for the overview endpoint to reduce DB load
+
+### Day 3: AI-Powered Shipment Investigation 🤖
+Contextual LLM analysis when automated scoring isn't enough:
+- Ingests full shipment history: tracking events, hub transfers, delivery attempts, assignments
+- Enforces official risk score from the engine (model cannot override)
+- XML-delimited prompt structure prevents injection attacks
+- Structured Zod schema ensures parseable, actionable output
+
+**Endpoint:**
+- `POST /api/v1/investigation/shipments/:shipmentId/investigate`
+  - Body: `{ question: "Why is this shipment high risk?" }`
+  - Returns: findings, recommended actions, relevant events, official risk score
+
+**Optional dependency:** Set `OPENAI_API_KEY` to enable. Returns `503 Service Unavailable` if not configured.
+
+### Day 4: Dijkstra Route Optimization 🗺️
+Shortest-path routing between distribution hubs using weighted directed graphs:
+- `HubRoute` model stores (fromHubId, toHubId, cost, isActive)
+- Dijkstra algorithm finds lowest-cost path between any two hubs
+- Unique constraint prevents duplicate directed edges
+- Admins can create/update/delete routes; operations teams query optimal paths
+
+**Endpoints:**
+- `GET /api/v1/routes/optimize?fromHubId=X&toHubId=Y` — find lowest-cost route
+- `GET /api/v1/routes/shipments/:shipmentId/optimized-route` — route for a specific shipment (origin → destination hubs)
+- `POST /api/v1/routes` — create a new hub route (ADMIN only)
+- `PATCH /api/v1/routes/:id` — update cost or active status (ADMIN only)
+- `DELETE /api/v1/routes/:id` — delete a route (ADMIN only)
+
+**Frontend Dashboards (Next.js 16):**
+- `/dashboard/admin/risk` — risk overview + assessment list
+- `/dashboard/admin/route-optimization` — route query + shipment route lookup
+- `/dashboard/admin/routes` — CRUD for hub routes
+- `/dashboard/operations/risk` — hub-scoped risk overview
+- `/dashboard/operations/route-optimization` — route query tool
 
 ---
 
@@ -144,8 +209,17 @@ STRIPE_WEBHOOK_SECRET=whsec_your_signing_secret
 # ── Frontend ──────────────────────────────────────────
 FRONTEND_URL=https://logiflow-hash.vercel.app
 
+# ── AI Investigation (optional) ───────────────────────
+# Get API key from https://platform.openai.com/api-keys
+# Keep server-side only — NEVER expose via NEXT_PUBLIC_ or browser.
+OPENAI_API_KEY=sk-proj-your_key_here
+
 # ── Business Rules ────────────────────────────────────
 MAX_DELIVERY_ATTEMPTS=3
+
+# ── Demo Mode (optional) ──────────────────────────────
+# Set to restrict demo accounts to read-only operations
+DEMO_DOMAIN=demo.logiflow.app
 ```
 
 ---

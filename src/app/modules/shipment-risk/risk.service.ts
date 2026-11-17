@@ -251,6 +251,14 @@ export async function getRiskOverview(role: RiskListRole, hubId?: string | null)
 
   // Step C: fetch the actual riskLevel for each of those "latest" assessments.
   // Build (shipmentId, assessedAt) pairs and fetch the matching rows.
+  //
+  // PERFORMANCE NOTE (Day 5): This results in N parallel findFirst() queries,
+  // one per assessed shipment (N = number of unique assessed shipments).
+  // For the current scale (3 hubs, O(10s) of shipments) this is fast.
+  // At larger scale, replace with a raw SQL lateral join or a materialized
+  // "latest_assessment_per_shipment" view to collapse this into one query.
+  // The 2-minute Redis cache (see riskOverviewCacheKey above) limits the
+  // frequency of these queries in practice.
   const latestAssessments = await Promise.all(
     latestPerShipment.map((g) =>
       prisma.shipmentRiskAssessment.findFirst({

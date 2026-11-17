@@ -1513,6 +1513,38 @@ async function main() {
   console.log(`   ✓ ${extraAuditLogs.length} extra audit logs seeded`);
   console.log('\n✅  Phase 2 enrichment complete!');
 
+  // ── Hub route network (Day 4) ─────────────────────────────────────────────────
+  // Populates the directed hub-to-hub route graph used by the Dijkstra route
+  // optimizer.  Hub IDs come from the IDS map that was resolved by upsert above
+  // — never hardcoded.  Uses @@unique([fromHubId, toHubId]) as the idempotency
+  // key so running the seed multiple times is safe.
+  console.log('\n🗺️   Seeding hub route network…');
+
+  if (!IDS.hubDhaka || !IDS.hubCumilla || !IDS.hubCTG) {
+    console.warn('   ⚠️  One or more required hubs not found — skipping route seeding.');
+    console.warn(`   hubDhaka=${IDS.hubDhaka || 'MISSING'}, hubCumilla=${IDS.hubCumilla || 'MISSING'}, hubCTG=${IDS.hubCTG || 'MISSING'}`);
+  } else {
+    const routesData = [
+      { fromHubId: IDS.hubDhaka,   toHubId: IDS.hubCumilla, cost: 5,  label: 'Dhaka → Cumilla' },
+      { fromHubId: IDS.hubCumilla, toHubId: IDS.hubDhaka,   cost: 5,  label: 'Cumilla → Dhaka' },
+      { fromHubId: IDS.hubDhaka,   toHubId: IDS.hubCTG,     cost: 12, label: 'Dhaka → Chattogram' },
+      { fromHubId: IDS.hubCTG,     toHubId: IDS.hubDhaka,   cost: 12, label: 'Chattogram → Dhaka' },
+      { fromHubId: IDS.hubCumilla, toHubId: IDS.hubCTG,     cost: 7,  label: 'Cumilla → Chattogram' },
+      { fromHubId: IDS.hubCTG,     toHubId: IDS.hubCumilla, cost: 7,  label: 'Chattogram → Cumilla' },
+    ];
+
+    for (const r of routesData) {
+      await prisma.hubRoute.upsert({
+        where: { fromHubId_toHubId: { fromHubId: r.fromHubId, toHubId: r.toHubId } },
+        update: { cost: r.cost, isActive: true },
+        create: { fromHubId: r.fromHubId, toHubId: r.toHubId, cost: r.cost, isActive: true },
+      });
+      console.log(`   ✓ Route: ${r.label} (cost: ${r.cost})`);
+    }
+
+    console.log(`   ✓ ${routesData.length} hub routes seeded`);
+  }
+
   // ── Done ───────────────────────────────────────────────────────────────────────
 
   console.log('\n✅  Demo seed complete!\n');

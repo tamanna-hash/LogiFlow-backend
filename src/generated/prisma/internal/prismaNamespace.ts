@@ -407,6 +407,7 @@ export const ModelName = {
   CourierProfile: 'CourierProfile',
   HubManagerProfile: 'HubManagerProfile',
   ShipmentRiskAssessment: 'ShipmentRiskAssessment',
+  HubRoute: 'HubRoute',
   Shipment: 'Shipment',
   ShipmentItem: 'ShipmentItem',
   ShipmentTrackingEvent: 'ShipmentTrackingEvent',
@@ -428,7 +429,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "courierAssignment" | "auditLog" | "deliveryAttempt" | "hub" | "zone" | "notification" | "payment" | "pickupRequest" | "pricingRule" | "customerProfile" | "courierProfile" | "hubManagerProfile" | "shipmentRiskAssessment" | "shipment" | "shipmentItem" | "shipmentTrackingEvent" | "hubTransfer" | "user" | "refreshToken"
+    modelProps: "courierAssignment" | "auditLog" | "deliveryAttempt" | "hub" | "zone" | "notification" | "payment" | "pickupRequest" | "pricingRule" | "customerProfile" | "courierProfile" | "hubManagerProfile" | "shipmentRiskAssessment" | "hubRoute" | "shipment" | "shipmentItem" | "shipmentTrackingEvent" | "hubTransfer" | "user" | "refreshToken"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1394,6 +1395,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    HubRoute: {
+      payload: Prisma.$HubRoutePayload<ExtArgs>
+      fields: Prisma.HubRouteFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HubRouteFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HubRoutePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HubRouteFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HubRoutePayload>
+        }
+        findFirst: {
+          args: Prisma.HubRouteFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HubRoutePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HubRouteFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HubRoutePayload>
+        }
+        findMany: {
+          args: Prisma.HubRouteFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HubRoutePayload>[]
+        }
+        create: {
+          args: Prisma.HubRouteCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HubRoutePayload>
+        }
+        createMany: {
+          args: Prisma.HubRouteCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HubRouteCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HubRoutePayload>[]
+        }
+        delete: {
+          args: Prisma.HubRouteDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HubRoutePayload>
+        }
+        update: {
+          args: Prisma.HubRouteUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HubRoutePayload>
+        }
+        deleteMany: {
+          args: Prisma.HubRouteDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HubRouteUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HubRouteUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HubRoutePayload>[]
+        }
+        upsert: {
+          args: Prisma.HubRouteUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HubRoutePayload>
+        }
+        aggregate: {
+          args: Prisma.HubRouteAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHubRoute>
+        }
+        groupBy: {
+          args: Prisma.HubRouteGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HubRouteGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HubRouteCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HubRouteCountAggregateOutputType> | number
+        }
+      }
+    }
     Shipment: {
       payload: Prisma.$ShipmentPayload<ExtArgs>
       fields: Prisma.ShipmentFieldRefs
@@ -2095,6 +2170,19 @@ export const ShipmentRiskAssessmentScalarFieldEnum = {
 export type ShipmentRiskAssessmentScalarFieldEnum = (typeof ShipmentRiskAssessmentScalarFieldEnum)[keyof typeof ShipmentRiskAssessmentScalarFieldEnum]
 
 
+export const HubRouteScalarFieldEnum = {
+  id: 'id',
+  fromHubId: 'fromHubId',
+  toHubId: 'toHubId',
+  cost: 'cost',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HubRouteScalarFieldEnum = (typeof HubRouteScalarFieldEnum)[keyof typeof HubRouteScalarFieldEnum]
+
+
 export const ShipmentScalarFieldEnum = {
   id: 'id',
   trackingNumber: 'trackingNumber',
@@ -2685,6 +2773,7 @@ export type GlobalOmitConfig = {
   courierProfile?: Prisma.CourierProfileOmit
   hubManagerProfile?: Prisma.HubManagerProfileOmit
   shipmentRiskAssessment?: Prisma.ShipmentRiskAssessmentOmit
+  hubRoute?: Prisma.HubRouteOmit
   shipment?: Prisma.ShipmentOmit
   shipmentItem?: Prisma.ShipmentItemOmit
   shipmentTrackingEvent?: Prisma.ShipmentTrackingEventOmit

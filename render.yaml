@@ -57,3 +57,15 @@ services:
         sync: false
       - key: MAX_DELIVERY_ATTEMPTS
         value: "3"
+      # ── AI Investigation (optional — set to enable AI shipment investigation)
+      # Get key from https://platform.openai.com/api-keys
+      # Keep server-side only — NEVER expose via NEXT_PUBLIC_ or browser.
+      - key: OPENAI_API_KEY
+        sync: false
+      # ── Email provider (default: gmail)
+      - key: EMAIL_PROVIDER
+        value: resend
+      # ── Demo mode (optional — set to restrict demo accounts to read-only)
+      # e.g. DEMO_DOMAIN=demo.logiflow.app
+      - key: DEMO_DOMAIN
+        sync: false

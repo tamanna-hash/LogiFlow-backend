@@ -13,6 +13,7 @@ import notificationRoutes from '../modules/notification/notification.routes';
 import adminRoutes from '../modules/admin/admin.routes';
 import riskRoutes from '../modules/shipment-risk/risk.routes';
 import aiRoutes from '../modules/ai-investigation/investigation.routes';
+import routeRoutes from '../modules/route-optimization/route.routes';
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use('/notifications', notificationRoutes);
 router.use('/admin', adminRoutes);
 router.use('/risk', riskRoutes);
 router.use('/ai', aiRoutes);
+router.use('/routes', routeRoutes);
 
 export default router;

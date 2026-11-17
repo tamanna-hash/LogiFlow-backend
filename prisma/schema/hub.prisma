@@ -16,6 +16,8 @@ model Hub {
   shipmentsCurrently Shipment[]         @relation("CurrentHub")
   transfersFrom      HubTransfer[]      @relation("FromHub")
   transfersTo        HubTransfer[]      @relation("ToHub")
+  routesFrom         HubRoute[]         @relation("RouteFromHub")
+  routesTo           HubRoute[]         @relation("RouteToHub")
 
   @@index([isActive])
   @@index([deletedAt])
