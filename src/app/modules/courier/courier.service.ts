@@ -9,6 +9,7 @@ import type { AssignmentStatus, AssignmentType, DeliveryFailureReason } from '..
 import type { PrismaTx } from '../../types/prisma';
 import { claimShipment, assignmentReversal, releaseCourier } from '../../utils/lifecycle';
 import { ConflictError } from '../../errors';
+import { assessAndPersistRisk } from '../shipment-risk/risk.service';
 
 async function getCourierProfile(userId: string) {
   const profile = await prisma.courierProfile.findUnique({
@@ -125,6 +126,9 @@ await createAuditLog({ actorId: userId, action: 'PICKUP_COMPLETED', resourceType
   });
 
   await cacheDel(CacheKeys.tracking(shipment.trackingNumber));
+
+  // Fire-and-forget risk assessment — status changed to PICKED_UP
+  void assessAndPersistRisk(shipmentId, userId);
 }
 
 export async function recordDelivery(shipmentId: string, userId: string, notes?: string, proofBuffer?: Buffer) {
@@ -183,6 +187,9 @@ await createAuditLog({ actorId: userId, action: 'DELIVERY_CONFIRMED', resourceTy
     trackingNumber: shipment.trackingNumber,
     shipmentId,
   });
+
+  // Fire-and-forget risk assessment — terminal status DELIVERED, will score 0
+  void assessAndPersistRisk(shipmentId, userId);
 }
 
 export async function recordDeliveryFailed(
@@ -249,6 +256,9 @@ await createAuditLog({ actorId: userId, action: 'DELIVERY_FAILED', resourceType:
     reason: failureReason.replace(/_/g, ' '),
     shipmentId,
   });
+
+  // Fire-and-forget risk assessment — DELIVERY_FAILED is highest risk status
+  void assessAndPersistRisk(shipmentId, userId);
 }
 
 export async function getEarnings(userId: string, params: { page: number; limit: number; fromDate?: string; toDate?: string }) {

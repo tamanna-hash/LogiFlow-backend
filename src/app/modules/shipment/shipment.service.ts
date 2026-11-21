@@ -15,6 +15,7 @@ import {
 } from '../../types/enums';
 import type { CreateShipmentInput } from './shipment.schema';
 import type { PrismaTx } from '../../types/prisma';
+import { assessAndPersistRisk } from '../shipment-risk/risk.service';
 
 const shipmentListSelect = {
   id: true, trackingNumber: true, status: true, paymentStatus: true,
@@ -121,6 +122,9 @@ export async function createShipment(
     price: priceBreakdown.total.toString(),
     shipmentId: shipment.id,
   });
+
+  // Fire-and-forget risk assessment — runs asynchronously, does not block the response
+  void assessAndPersistRisk(shipment.id, customerId);
 
   return { ...shipment, priceBreakdown };
 }
@@ -278,6 +282,9 @@ export async function cancelShipment(
 
   await cacheDel(CacheKeys.tracking(shipment.trackingNumber), CacheKeys.shipmentTracking(id));
   await createAuditLog({ actorId: userId, action: 'SHIPMENT_CANCELLED', resourceType: 'Shipment', resourceId: id, after: { reason } });
+
+  // Fire-and-forget risk assessment — terminal status, will score 0
+  void assessAndPersistRisk(id, userId);
 }
 
 export async function requestPickup(
@@ -314,6 +321,10 @@ export async function requestPickup(
 
   await cacheDel(CacheKeys.tracking(shipment.trackingNumber));
   await createAuditLog({ actorId: userId, action: 'PICKUP_REQUESTED', resourceType: 'PickupRequest', resourceId: pickup.id });
+
+  // Fire-and-forget risk assessment — status changed to PICKUP_REQUESTED
+  void assessAndPersistRisk(shipmentId, userId);
+
   return pickup;
 }
 
@@ -345,4 +356,7 @@ export async function initiateReturn(shipmentId: string, reason: string, actorId
 
   await cacheDel(CacheKeys.tracking(shipment.trackingNumber));
   await createAuditLog({ actorId, action: 'RETURN_INITIATED', resourceType: 'Shipment', resourceId: shipmentId });
+
+  // Fire-and-forget risk assessment — status changed to RETURN_INITIATED
+  void assessAndPersistRisk(shipmentId, actorId);
 }

@@ -8,6 +8,7 @@ import { isValidTransition } from '../../types/enums';
 import type { PrismaTx } from '../../types/prisma';
 import { claimShipment, assignmentReversal, releaseCourier } from '../../utils/lifecycle';
 import { env } from '../../config/env';
+import { assessAndPersistRisk } from '../shipment-risk/risk.service';
 
 export async function assignCourier(
   input: { shipmentId: string; courierProfileId: string; type: AssignmentType },
@@ -47,11 +48,15 @@ export async function assignCourier(
     return { assignment, shipment };
   });
   await cacheDel(CacheKeys.tracking(shipment.trackingNumber));
+
+  // Fire-and-forget risk assessment — courier assigned, status changed
+  void assessAndPersistRisk(assignment.shipmentId, actorId);
+
   return assignment;
 }
 
 export async function cancelAssignment(assignmentId: string, reason: string, actorId: string) {
-  const trackingNumber = await prisma.$transaction(async (tx: PrismaTx) => {
+  const { trackingNumber, shipmentId } = await prisma.$transaction(async (tx: PrismaTx) => {
     const assignment = await tx.courierAssignment.findUnique({ where: { id: assignmentId }, include: { shipment: true } });
     if (!assignment) throw new NotFoundError('Assignment not found.');
     if (assignment.status !== 'ACTIVE') throw new BadRequestError('Assignment is not active.');
@@ -64,9 +69,12 @@ export async function cancelAssignment(assignmentId: string, reason: string, act
     await releaseCourier(tx, assignment.courierProfileId);
     await tx.shipmentTrackingEvent.create({ data: { shipmentId: assignment.shipmentId, status: previous, description: `Assignment cancelled: ${reason}`, actorId } });
     await createAuditLog({ actorId, action: 'COURIER_ASSIGNMENT_CANCELLED', resourceType: 'CourierAssignment', resourceId: assignmentId }, tx);
-    return assignment.shipment.trackingNumber;
+    return { trackingNumber: assignment.shipment.trackingNumber, shipmentId: assignment.shipmentId };
   });
   await cacheDel(CacheKeys.tracking(trackingNumber));
+
+  // Fire-and-forget risk assessment — assignment cancelled, courier unaccepted risk factor changes
+  void assessAndPersistRisk(shipmentId, actorId);
 }
 
 export async function updateShipmentStatus(shipmentId: string, newStatus: ShipmentStatus, reason: string | undefined, actorId: string, actorRole: Role = 'OPERATIONS_MANAGER') {
@@ -97,6 +105,9 @@ export async function updateShipmentStatus(shipmentId: string, newStatus: Shipme
     return shipment.trackingNumber;
   });
   await cacheDel(CacheKeys.tracking(trackingNumber));
+
+  // Fire-and-forget risk assessment — status changed (AT_ORIGIN_HUB or RETURNED)
+  void assessAndPersistRisk(shipmentId, actorId);
 }
 
 export async function listCouriers(params: {

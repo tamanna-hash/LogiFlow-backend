@@ -13,6 +13,9 @@ vi.mock('../../app/modules/notification/notification.service', () => ({
 vi.mock('../../app/utils/trackingNumber', () => ({
   generateTrackingNumber: vi.fn().mockResolvedValue('LF-20260905-TESTNUM1'),
 }));
+vi.mock('../../app/modules/shipment-risk/risk.service', () => ({
+  assessAndPersistRisk: vi.fn().mockResolvedValue(undefined),
+}));
 
 const baseShipment = {
   id: 'ship_01',

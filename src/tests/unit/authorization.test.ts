@@ -10,6 +10,9 @@ vi.mock('../../app/modules/audit/audit.service', () => ({ createAuditLog: vi.fn(
 vi.mock('../../app/modules/notification/notification.service', () => ({
   notifyGeneric: vi.fn(),
 }));
+vi.mock('../../app/modules/shipment-risk/risk.service', () => ({
+  assessAndPersistRisk: vi.fn().mockResolvedValue(undefined),
+}));
 
 const mockShipment = {
   id: 'ship_01',
