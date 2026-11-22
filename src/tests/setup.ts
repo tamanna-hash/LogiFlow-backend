@@ -121,7 +121,7 @@ vi.mock('../app/lib/cloudinary', () => ({
 vi.mock('../app/lib/gemini', () => ({
   isGeminiConfigured: vi.fn().mockReturnValue(false),
   getGemini: vi.fn(),
-  INVESTIGATION_MODEL: 'gemini-1.5-flash',
+  INVESTIGATION_MODEL: 'gemini-2.0-flash',
   MAX_INVESTIGATION_TOKENS: 2000,
   _resetGeminiClient: vi.fn(),
 }));
