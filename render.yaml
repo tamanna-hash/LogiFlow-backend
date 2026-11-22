@@ -58,9 +58,9 @@ services:
       - key: MAX_DELIVERY_ATTEMPTS
         value: "3"
       # ── AI Investigation (optional — set to enable AI shipment investigation)
-      # Get key from https://platform.openai.com/api-keys
+      # Get key from https://aistudio.google.com/app/apikey (free tier available)
       # Keep server-side only — NEVER expose via NEXT_PUBLIC_ or browser.
-      - key: OPENAI_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
       # ── Email provider (default: gmail)
       - key: EMAIL_PROVIDER

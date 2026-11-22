@@ -43,9 +43,9 @@ Ensure these are set in your Render dashboard under **Environment**:
 - `MAX_DELIVERY_ATTEMPTS=3`
 
 #### ⚠️ NEW — Days 1–4 Additions
-- **`OPENAI_API_KEY`** (optional but recommended)
-  - Get from: https://platform.openai.com/api-keys
-  - Format: `sk-proj-...`
+- **`GEMINI_API_KEY`** (optional but recommended)
+  - Get from: https://aistudio.google.com/app/apikey (free tier, no credit card)
+  - Format: `AIzaSy...`
   - If not set, AI investigation endpoint returns `503 Service Unavailable`
   - **Security:** Server-side only — never expose via `NEXT_PUBLIC_*`
 

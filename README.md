@@ -39,71 +39,38 @@
 | **Testing** | Vitest (316+ tests) |
 | **Build** | tsup |
 | **Linting** | ESLint + Biome |
-| **AI Investigation** | OpenAI GPT-4.0 (optional) |
+| **AI Investigation** | Google Gemini 1.5 Flash (optional) |
+
+---
+
+## ✨ Core Features
+
+| Feature | Description |
+|---------|-------------|
+| **Authentication** | JWT access + refresh tokens, Google OAuth, OTP email verification, password reset |
+| **Shipment Lifecycle** | Full end-to-end: create → pickup → transit → delivery → return |
+| **Multi-Hub Logistics** | Hub transfers, hub-scoped roles, inter-hub routing |
+| **Courier Management** | Assignment, acceptance/rejection, pickup confirmation, delivery proof |
+| **Payments** | bKash tokenized checkout + Stripe Checkout, payment status tracking |
+| **Real-Time Tracking** | Append-only event log per shipment, accessible by all roles |
+| **Notifications** | Email notifications at key lifecycle events via Resend or Gmail SMTP |
+| **Pricing Engine** | Zone-based pricing with delivery type and parcel weight factors |
+| **Role-Based Access** | 5 roles with scoped permissions across every endpoint |
+| **Audit Logging** | Immutable audit trail for all mutations |
+| **Admin Operations** | User management, hub management, analytics, full platform oversight |
 
 ---
 
 ## 🎯 Intelligence & Optimization Features
 
-LogiFlow includes four advanced operational intelligence systems built incrementally across Days 1–4:
+### Shipment Risk Engine ⚠️
+Automatically scores every shipment (0–100) on each status change, classifying risk as LOW, MEDIUM, or HIGH. Factors include status inactivity, failed delivery attempts, unaccepted courier assignments, and excessive hub transfers. Terminal statuses always score 0. All assessments are persisted for auditability. Hub Managers see only shipments at their hub.
 
-### Day 1: Deterministic Shipment Risk Engine ⚠️
-Real-time risk scoring (0–100) with categorical classification (LOW/MEDIUM/HIGH) based on:
-- **Status inactivity:** shipments exceeding status-specific thresholds (e.g., 48h in `DELIVERY_FAILED`)
-- **Failed delivery attempts:** escalating scores based on attempt count vs. max allowed
-- **Unaccepted courier assignments:** assignments pending acceptance beyond 4h
-- **Hub transfer frequency:** shipments with excessive inter-hub movements
+### AI-Powered Investigation 🤖
+When a shipment needs deeper analysis, staff can ask a natural-language question and get a structured report — findings, recommended actions, and relevant events — grounded in the shipment's full history. Requires `GEMINI_API_KEY`; returns `503` if not configured.
 
-**Key guarantees:**
-- Terminal statuses (`DELIVERED`, `CANCELLED`, `RETURNED`) score 0 risk
-- Append-only assessment history for auditability
-- No external dependencies — deterministic, blazingly fast
-
-**Endpoints:**
-- `GET /api/v1/risk/overview` — aggregate risk counts by level (LOW/MEDIUM/HIGH)
-- `GET /api/v1/risk/assessments` — paginated list of all assessments with filters
-- `GET /api/v1/risk/shipments/:shipmentId/assessment` — latest assessment for one shipment
-
-### Day 2: Risk Persistence & Hub-Scoped Access 🏢
-- `ShipmentRiskAssessment` model persists all scoring events to PostgreSQL
-- 4 indexes optimize queries: by shipmentId, by (shipmentId, assessedAt DESC), by riskLevel, by assessedAt
-- Hub-level scoping: `HUB_MANAGER` sees only shipments at their assigned hub
-- Redis caching (2-minute TTL) for the overview endpoint to reduce DB load
-
-### Day 3: AI-Powered Shipment Investigation 🤖
-Contextual LLM analysis when automated scoring isn't enough:
-- Ingests full shipment history: tracking events, hub transfers, delivery attempts, assignments
-- Enforces official risk score from the engine (model cannot override)
-- XML-delimited prompt structure prevents injection attacks
-- Structured Zod schema ensures parseable, actionable output
-
-**Endpoint:**
-- `POST /api/v1/investigation/shipments/:shipmentId/investigate`
-  - Body: `{ question: "Why is this shipment high risk?" }`
-  - Returns: findings, recommended actions, relevant events, official risk score
-
-**Optional dependency:** Set `OPENAI_API_KEY` to enable. Returns `503 Service Unavailable` if not configured.
-
-### Day 4: Dijkstra Route Optimization 🗺️
-Shortest-path routing between distribution hubs using weighted directed graphs:
-- `HubRoute` model stores (fromHubId, toHubId, cost, isActive)
-- Dijkstra algorithm finds lowest-cost path between any two hubs
-- Unique constraint prevents duplicate directed edges
-- Admins can create/update/delete routes; operations teams query optimal paths
-
-**Endpoints:**
-- `GET /api/v1/routes/optimize?fromHubId=X&toHubId=Y` — find lowest-cost route
-- `GET /api/v1/routes/shipments/:shipmentId/optimized-route` — route for a specific shipment (origin → destination hubs)
-- `POST /api/v1/routes` — create a new hub route (ADMIN only)
-- `PATCH /api/v1/routes/:id` — update cost or active status (ADMIN only)
-- `DELETE /api/v1/routes/:id` — delete a route (ADMIN only)
-
-**Frontend Dashboards (Next.js 16):**
-- `/dashboard/admin/risk` — risk overview + assessment list
-- `/dashboard/admin/route-optimization` — route query + shipment route lookup
-- `/dashboard/admin/routes` — CRUD for hub routes
-- `/dashboard/operations/risk` — hub-scoped risk overview
-- `/dashboard/operations/route-optimization` — route query tool
+### Route Optimization 🗺️
+Dijkstra's algorithm finds the lowest-cost path between any two hubs across the weighted route network. Admins manage hub routes (create, update, deactivate); operations teams query optimal paths for active shipments.
 
 ---
 
@@ -210,9 +177,9 @@ STRIPE_WEBHOOK_SECRET=whsec_your_signing_secret
 FRONTEND_URL=https://logiflow-hash.vercel.app
 
 # ── AI Investigation (optional) ───────────────────────
-# Get API key from https://platform.openai.com/api-keys
+# Get API key from https://aistudio.google.com/app/apikey (free tier)
 # Keep server-side only — NEVER expose via NEXT_PUBLIC_ or browser.
-OPENAI_API_KEY=sk-proj-your_key_here
+GEMINI_API_KEY=AIzaSy_your_key_here
 
 # ── Business Rules ────────────────────────────────────
 MAX_DELIVERY_ATTEMPTS=3

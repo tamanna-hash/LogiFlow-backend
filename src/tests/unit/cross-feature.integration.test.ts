@@ -39,11 +39,11 @@ import { NotFoundError, ServiceUnavailableError } from '../../app/errors';
 
 // Mock investigation dependencies
 vi.mock('../../app/modules/ai-investigation/investigation.context');
-vi.mock('../../app/lib/openai');
+vi.mock('../../app/lib/gemini');
 vi.mock('../../app/modules/audit/audit.service', () => ({ createAuditLog: vi.fn() }));
 
 import { buildInvestigationContext } from '../../app/modules/ai-investigation/investigation.context';
-import { getOpenAI } from '../../app/lib/openai';
+import { getGemini } from '../../app/lib/gemini';
 import { investigateShipment } from '../../app/modules/ai-investigation/investigation.service';
 
 // ── Shared fixtures ───────────────────────────────────────────────────────────
@@ -116,30 +116,23 @@ function makeContext(riskScore = 85, riskLevel = 'HIGH') {
   };
 }
 
-/** Build a minimal OpenAI mock client. */
-function makeMockOpenAI(aiRiskScore = 85, aiRiskLevel = 'HIGH') {
+/** Build a minimal Gemini mock model. */
+function makeMockGemini(aiRiskScore = 85, aiRiskLevel = 'HIGH') {
   return {
-    chat: {
-      completions: {
-        parse: vi.fn().mockResolvedValue({
-          choices: [{
-            message: {
-              refusal: null,
-              parsed: {
-                answer: 'The shipment has reached maximum delivery attempts.',
-                overallAssessment: 'Urgent attention required.',
-                officialRiskScore: aiRiskScore,
-                officialRiskLevel: aiRiskLevel,
-                findings: [{ title: 'Max delivery attempts reached', detail: '3 failed attempts.', severity: 'CRITICAL', evidence: [{ fact: '3 attempts', source: 'DeliveryAttempt records' }] }],
-                relevantTrackingEvents: [{ timestamp: NOW.toISOString(), status: 'DELIVERY_FAILED', description: 'Delivery failed', significance: 'Most recent failure event.' }],
-                recommendedActions: [{ action: 'Initiate return.', priority: 'HIGH', rationale: 'Max attempts exceeded.' }],
-                dataLimitations: '',
-              },
-            },
-          }],
+    generateContent: vi.fn().mockResolvedValue({
+      response: {
+        text: () => JSON.stringify({
+          answer: 'The shipment has reached maximum delivery attempts.',
+          overallAssessment: 'Urgent attention required.',
+          officialRiskScore: aiRiskScore,
+          officialRiskLevel: aiRiskLevel,
+          findings: [{ title: 'Max delivery attempts reached', detail: '3 failed attempts.', severity: 'CRITICAL', evidence: [{ fact: '3 attempts', source: 'DeliveryAttempt records' }] }],
+          relevantTrackingEvents: [{ timestamp: NOW.toISOString(), status: 'DELIVERY_FAILED', description: 'Delivery failed', significance: 'Most recent failure event.' }],
+          recommendedActions: [{ action: 'Initiate return.', priority: 'HIGH', rationale: 'Max attempts exceeded.' }],
+          dataLimitations: '',
         }),
       },
-    },
+    }),
   };
 }
 
@@ -173,7 +166,7 @@ describe('Cross-feature: Risk Engine + AI Investigation', () => {
 
     // The AI investigation context includes the same risk data
     vi.mocked(buildInvestigationContext).mockResolvedValue(makeContext(engineResult.score, engineResult.riskLevel) as never);
-    vi.mocked(getOpenAI).mockReturnValue(makeMockOpenAI(engineResult.score, engineResult.riskLevel) as never);
+    vi.mocked(getGemini).mockReturnValue(makeMockGemini(engineResult.score, engineResult.riskLevel) as never);
 
     const report = await investigateShipment(HIGH_RISK_SHIPMENT_ID, 'Why is this high risk?', 'OPERATIONS_MANAGER', null);
 
@@ -198,7 +191,7 @@ describe('Cross-feature: Risk Engine + AI Investigation', () => {
     ctx.riskAssessment!.riskScore = 0;
     ctx.riskAssessment!.riskLevel = 'LOW';
     vi.mocked(buildInvestigationContext).mockResolvedValue(ctx as never);
-    vi.mocked(getOpenAI).mockReturnValue(makeMockOpenAI(0, 'LOW') as never);
+    vi.mocked(getGemini).mockReturnValue(makeMockGemini(0, 'LOW') as never);
 
     const report = await investigateShipment(HIGH_RISK_SHIPMENT_ID, 'Is this delivered?', 'ADMIN', null);
 
@@ -212,7 +205,7 @@ describe('Cross-feature: Risk Engine + AI Investigation', () => {
     // Context has correct engine values
     vi.mocked(buildInvestigationContext).mockResolvedValue(makeContext(engineScore, engineLevel) as never);
     // But the AI model returns wrong values
-    vi.mocked(getOpenAI).mockReturnValue(makeMockOpenAI(99, 'MEDIUM') as never);
+    vi.mocked(getGemini).mockReturnValue(makeMockGemini(99, 'MEDIUM') as never);
 
     const report = await investigateShipment(HIGH_RISK_SHIPMENT_ID, 'What is the risk?', 'ADMIN', null);
 
@@ -227,7 +220,7 @@ describe('Cross-feature: Hub Scoping Consistency', () => {
 
   it('scenario 3: HUB_MANAGER scoping: investigation context uses currentHubId same as risk service', async () => {
     vi.mocked(buildInvestigationContext).mockResolvedValue(makeContext() as never);
-    vi.mocked(getOpenAI).mockReturnValue(makeMockOpenAI() as never);
+    vi.mocked(getGemini).mockReturnValue(makeMockGemini() as never);
 
     await investigateShipment(HIGH_RISK_SHIPMENT_ID, 'Any issues?', 'HUB_MANAGER', HUB_DHAKA_ID);
 
@@ -315,7 +308,7 @@ describe('Cross-feature: Authorization Boundary Enforcement', () => {
 
   it('scenario 9: AI investigation throws ServiceUnavailableError when provider not configured', async () => {
     // This is the equivalent of a misconfigured deployment — OPENAI_API_KEY missing
-    vi.mocked(getOpenAI).mockImplementation(() => {
+    vi.mocked(getGemini).mockImplementation(() => {
       throw new ServiceUnavailableError('AI investigation is not configured.');
     });
 
@@ -328,7 +321,7 @@ describe('Cross-feature: Authorization Boundary Enforcement', () => {
   });
 
   it('scenario 9b: HUB_MANAGER investigation is denied when shipment is at another hub', async () => {
-    vi.mocked(getOpenAI).mockReturnValue(makeMockOpenAI() as never);
+    vi.mocked(getGemini).mockReturnValue(makeMockGemini() as never);
     // Context builder returns NotFoundError (hub scoping: shipment not at this hub)
     vi.mocked(buildInvestigationContext).mockRejectedValue(new NotFoundError('Shipment not found.'));
 
@@ -364,7 +357,7 @@ describe('Cross-feature: Tracking Number Consistency', () => {
 
     // AI investigation: tracking number is attached to report from context
     vi.mocked(buildInvestigationContext).mockResolvedValue(makeContext() as never);
-    vi.mocked(getOpenAI).mockReturnValue(makeMockOpenAI() as never);
+    vi.mocked(getGemini).mockReturnValue(makeMockGemini() as never);
 
     const report = await investigateShipment(HIGH_RISK_SHIPMENT_ID, 'What is happening?', 'ADMIN', null);
     expect(report.trackingNumber).toBe(HIGH_RISK_TRACKING_NUM);

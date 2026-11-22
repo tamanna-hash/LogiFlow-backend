@@ -117,11 +117,11 @@ vi.mock('../app/lib/cloudinary', () => ({
   deleteFromCloudinary: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock OpenAI
-vi.mock('../app/lib/openai', () => ({
-  isOpenAIConfigured: vi.fn().mockReturnValue(false),
-  getOpenAI: vi.fn(),
-  INVESTIGATION_MODEL: 'gpt-4o-mini',
-  MAX_INVESTIGATION_TOKENS: 1000,
-  _resetOpenAIClient: vi.fn(),
+// Mock Gemini
+vi.mock('../app/lib/gemini', () => ({
+  isGeminiConfigured: vi.fn().mockReturnValue(false),
+  getGemini: vi.fn(),
+  INVESTIGATION_MODEL: 'gemini-1.5-flash',
+  MAX_INVESTIGATION_TOKENS: 2000,
+  _resetGeminiClient: vi.fn(),
 }));
