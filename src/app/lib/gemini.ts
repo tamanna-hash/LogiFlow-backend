@@ -46,7 +46,7 @@ export function getGemini(): GenerativeModel {
 }
 
 /** Gemini model for all shipment investigations. Free tier supports this. */
-export const INVESTIGATION_MODEL = 'gemini-2.0-flash' as const;
+export const INVESTIGATION_MODEL = 'gemini-3.8-flash' as const;
 
 /** Hard output cap — a full investigation fits well within 2000 tokens. */
 export const MAX_INVESTIGATION_TOKENS = 2000;
